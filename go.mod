@@ -7,7 +7,7 @@ require (
 	github.com/go-courier/logr v0.0.2
 	github.com/go-courier/metax v1.3.0
 	github.com/google/uuid v1.3.0
-	github.com/lib/pq v1.10.3
+	github.com/lib/pq v1.10.6
 	github.com/octohelm/x v0.0.0-20220702024522-85805599670c
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
