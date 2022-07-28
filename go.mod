@@ -12,7 +12,7 @@ require (
 	github.com/octohelm/gengo v0.0.0-20220723092459-55d67223abc7
 	github.com/octohelm/x v0.0.0-20220721104447-6248adcd9f3f
 	github.com/pkg/errors v0.9.1
-	modernc.org/sqlite v1.17.3
+	modernc.org/sqlite v1.18.0
 )
 
 require (
