@@ -7,8 +7,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-courier/logr v0.0.2
 	github.com/google/uuid v1.3.0
-	github.com/jackc/pgconn v1.12.1
-	github.com/jackc/pgx/v4 v4.16.1
+	github.com/jackc/pgconn v1.13.0
+	github.com/jackc/pgx/v4 v4.17.0
 	github.com/octohelm/gengo v0.0.0-20220804040340-bb8285a232d3
 	github.com/octohelm/x v0.0.0-20220721104447-6248adcd9f3f
 	github.com/pkg/errors v0.9.1
@@ -19,9 +19,9 @@ require (
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.11.0 // indirect
+	github.com/jackc/pgtype v1.12.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/onsi/gomega v1.20.0 // indirect
