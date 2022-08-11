@@ -4,51 +4,51 @@ import (
 	"context"
 )
 
-type CombinationAddition struct {
+type CombinationAddition interface {
+	Addition
+	All(stmtSelect SelectStatement) CombinationAddition
+	Distinct(stmtSelect SelectStatement) CombinationAddition
 }
 
-func (CombinationAddition) AdditionType() AdditionType {
-	return AdditionCombination
-}
-
-func Union() *combination {
+func Union() CombinationAddition {
 	return &combination{
 		operator: "UNION",
 	}
 }
 
-func Intersect() *combination {
+func Intersect() CombinationAddition {
 	return &combination{
 		operator: "INTERSECT",
 	}
 }
 
-func Expect() *combination {
+func Expect() CombinationAddition {
 	return &combination{
 		operator: "EXCEPT",
 	}
 }
 
-var _ Addition = (*combination)(nil)
-
 type combination struct {
-	CombinationAddition
 	operator   string // UNION | INTERSECT | EXCEPT
 	method     string // ALL | DISTINCT
 	stmtSelect SelectStatement
+}
+
+func (combination) AdditionType() AdditionType {
+	return AdditionCombination
 }
 
 func (c *combination) IsNil() bool {
 	return c == nil || IsNilExpr(c.stmtSelect)
 }
 
-func (c combination) All(stmtSelect SelectStatement) *combination {
+func (c combination) All(stmtSelect SelectStatement) CombinationAddition {
 	c.method = "ALL"
 	c.stmtSelect = stmtSelect
 	return &c
 }
 
-func (c combination) Distinct(stmtSelect SelectStatement) *combination {
+func (c combination) Distinct(stmtSelect SelectStatement) CombinationAddition {
 	c.method = "DISTINCT"
 	c.stmtSelect = stmtSelect
 	return &c

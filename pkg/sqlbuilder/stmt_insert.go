@@ -14,7 +14,7 @@ func Insert(modifiers ...string) *StmtInsert {
 type StmtInsert struct {
 	table       Table
 	modifiers   []string
-	assignments []*Assignment
+	assignments []Assignment
 	additions   Additions
 }
 
@@ -65,7 +65,7 @@ func (s *StmtInsert) Ex(ctx context.Context) *Ex {
 	return e.Ex(ctx)
 }
 
-func OnDuplicateKeyUpdate(assignments ...*Assignment) *OtherAddition {
+func OnDuplicateKeyUpdate(assignments ...Assignment) *OtherAddition {
 	assigns := assignments
 	if len(assignments) == 0 {
 		return nil

@@ -5,16 +5,7 @@ import (
 	"math"
 )
 
-type SqlAssignment interface {
-	SqlExpr
-	SqlAssignmentMarker
-}
-
-type SqlAssignmentMarker interface {
-	asCondition()
-}
-
-func WriteAssignments(e *Ex, assignments ...*Assignment) {
+func WriteAssignments(e *Ex, assignments ...Assignment) {
 	count := 0
 
 	for i := range assignments {
@@ -33,30 +24,34 @@ func WriteAssignments(e *Ex, assignments ...*Assignment) {
 	}
 }
 
-func ColumnsAndValues(columnOrColumns SqlExpr, values ...interface{}) *Assignment {
+type Assignment interface {
+	SqlExpr
+	SqlAssignment()
+}
+
+func ColumnsAndValues(columnOrColumns SqlExpr, values ...interface{}) Assignment {
 	lenOfColumn := 1
 	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
 		lenOfColumn = canLen.Len()
 	}
-	return &Assignment{columnOrColumns: columnOrColumns, lenOfColumn: lenOfColumn, values: values}
+	return &assignment{columnOrColumns: columnOrColumns, lenOfColumn: lenOfColumn, values: values}
 }
 
-type Assignments []*Assignment
+type Assignments []Assignment
 
-type Assignment struct {
-	SqlAssignmentMarker
-
+type assignment struct {
 	columnOrColumns SqlExpr
 	lenOfColumn     int
-
-	values []interface{}
+	values          []any
 }
 
-func (a *Assignment) IsNil() bool {
+func (assignment) SqlAssignment() {}
+
+func (a *assignment) IsNil() bool {
 	return a == nil || IsNilExpr(a.columnOrColumns) || len(a.values) == 0
 }
 
-func (a *Assignment) Ex(ctx context.Context) *Ex {
+func (a *assignment) Ex(ctx context.Context) *Ex {
 	e := Expr("")
 	e.Grow(len(a.values))
 

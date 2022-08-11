@@ -32,7 +32,7 @@ type Querier interface {
 	Offset(v int64) Querier
 
 	Distinct() Querier
-	Select(target sqlbuilder.SqlExpr) Querier
+	Select(projects ...sqlbuilder.SqlExpr) Querier
 
 	Scan(v any) Querier
 
@@ -69,8 +69,8 @@ type querier struct {
 
 	distinct bool
 
-	where   sqlbuilder.SqlCondition
-	project sqlbuilder.SqlExpr
+	where    sqlbuilder.SqlCondition
+	projects []sqlbuilder.SqlExpr
 
 	joins []sqlbuilder.Addition
 
@@ -120,7 +120,6 @@ func resolveModel(v any) any {
 		for tpe.Kind() == reflect.Ptr {
 			tpe = tpe.Elem()
 		}
-		tpe = tpe.Elem()
 		if tpe.Kind() == reflect.Struct {
 			return reflect.New(tpe).Interface().(sqlbuilder.Model)
 		}
@@ -129,17 +128,17 @@ func resolveModel(v any) any {
 }
 
 func (q querier) Scan(v any) Querier {
-	if q.project == nil {
+	if len(q.projects) == 0 {
 		if m, ok := resolveModel(v).(sqlbuilder.Model); ok {
-			q.project = sqlbuilder.ColumnsByStruct(m)
+			q.projects = []sqlbuilder.SqlExpr{sqlbuilder.ColumnsByStruct(m)}
 		}
 	}
 	q.recv = v
 	return &q
 }
 
-func (q querier) Select(project sqlbuilder.SqlExpr) Querier {
-	q.project = project
+func (q querier) Select(projects ...sqlbuilder.SqlExpr) Querier {
+	q.projects = projects
 	return &q
 }
 
@@ -200,7 +199,7 @@ func (q *querier) build() sqlbuilder.SqlExpr {
 		modifies = append(modifies, "DISTINCT")
 	}
 
-	additions := make([]sqlbuilder.Addition, 0)
+	additions := make([]sqlbuilder.Addition, 0, 10)
 
 	if where := q.buildWhere(from); where != nil {
 		additions = append(additions, sqlbuilder.Where(where))
@@ -222,7 +221,11 @@ func (q *querier) build() sqlbuilder.SqlExpr {
 		additions = append(additions, sqlbuilder.Limit(q.limit).Offset(q.offset))
 	}
 
-	return sqlbuilder.Select(q.project).From(from, additions...)
+	if q.projects == nil {
+		return sqlbuilder.Select(nil).From(from, additions...)
+	}
+
+	return sqlbuilder.Select(sqlbuilder.MultiMayAutoAlias(q.projects...)).From(from, additions...)
 }
 
 func (q *querier) Find(ctx context.Context, s Session) error {

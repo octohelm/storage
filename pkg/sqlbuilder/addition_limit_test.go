@@ -40,6 +40,7 @@ WHERE f_a = ?
 `, 1,
 		)
 	})
+
 	t.Run("select limit and offset", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
 			Select(nil).
@@ -48,12 +49,12 @@ WHERE f_a = ?
 					Where(
 						Col("F_a").Eq(1),
 					),
-					Limit(1).Offset(200),
+					Limit(10).Offset(200),
 				),
 			`
 SELECT * FROM T
 WHERE f_a = ?
-LIMIT 1 OFFSET 200
+LIMIT 10 OFFSET 200
 `,
 			1,
 		)

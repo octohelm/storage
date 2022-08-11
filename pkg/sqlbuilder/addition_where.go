@@ -4,23 +4,18 @@ import (
 	"context"
 )
 
-type WhereAddition struct{}
-
-func (WhereAddition) AdditionType() AdditionType {
-	return AdditionWhere
-}
-
-func Where(c SqlCondition) *where {
+func Where(c SqlCondition) Addition {
 	return &where{
 		condition: c,
 	}
 }
 
-var _ Addition = (*where)(nil)
-
 type where struct {
-	WhereAddition
 	condition SqlCondition
+}
+
+func (*where) AdditionType() AdditionType {
+	return AdditionWhere
 }
 
 func (w *where) IsNil() bool {

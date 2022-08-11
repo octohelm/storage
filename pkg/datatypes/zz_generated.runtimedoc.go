@@ -19,6 +19,19 @@ func (Bool) RuntimeDoc(names ...string) ([]string, bool) {
 		"openapi:type boolean",
 	}, true
 }
+func (v Datetime) RuntimeDoc(names ...string) ([]string, bool) {
+	if len(names) > 0 {
+		switch names[0] {
+
+		}
+
+		return nil, false
+	}
+	return []string{
+		"openapi:strfmt date-time",
+	}, true
+}
+
 func (SFID) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{
 		"openapi:strfmt snowflake-id",
@@ -26,4 +39,16 @@ func (SFID) RuntimeDoc(names ...string) ([]string, bool) {
 }
 func (SFIDs) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
+}
+func (v Timestamp) RuntimeDoc(names ...string) ([]string, bool) {
+	if len(names) > 0 {
+		switch names[0] {
+
+		}
+
+		return nil, false
+	}
+	return []string{
+		"openapi:strfmt date-time",
+	}, true
 }

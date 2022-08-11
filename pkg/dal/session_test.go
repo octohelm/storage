@@ -20,7 +20,7 @@ func TestCRUD(t *testing.T) {
 	for i := range ctxs {
 		ctx := ctxs[i]
 
-		db := FromContext(ctx, "dal_sql_crud")
+		db := SessionFor(ctx, "dal_sql_crud")
 
 		t.Run("Save one user", func(t *testing.T) {
 			usr := &model.User{
@@ -285,8 +285,7 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 		EnableMigrate: true,
 	}
 
-	db.BindCatalog(name, cat)
-
+	db.ApplyCatalog(name, cat)
 	db.SetDefaults()
 	err := db.Init(ctx)
 	testutil.Expect(t, err, testutil.Be[error](nil))
@@ -297,7 +296,7 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	testutil.Expect(t, err, testutil.Be[error](nil))
 
 	t.Cleanup(func() {
-		a := FromContext(ctx, name).Adapter()
+		a := SessionFor(ctx, name).Adapter()
 
 		cat.Range(func(table sqlbuilder.Table, idx int) bool {
 			_, e := a.Exec(ctx, a.Dialect().DropTable(table))

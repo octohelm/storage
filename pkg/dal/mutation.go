@@ -22,12 +22,17 @@ func Prepare[T any](v *T) Mutation[T] {
 
 type Mutation[T any] interface {
 	IncludesZero(zeroFields ...sqlbuilder.Column) Mutation[T]
+
 	ForDelete(opts ...OptionFunc) Mutation[T]
+	ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation[T]
+
 	Where(where sqlbuilder.SqlCondition) Mutation[T]
+
 	OnConflict(cols sqlbuilder.ColumnCollection) Mutation[T]
 	DoNothing() Mutation[T]
 	DoUpdateSet(cols ...sqlbuilder.Column) Mutation[T]
-	Returning(cols ...sqlbuilder.Column) Mutation[T]
+
+	Returning(cols ...sqlbuilder.SqlExpr) Mutation[T]
 	Scan(recv any) Mutation[T]
 
 	Save(ctx context.Context, session Session) error
@@ -37,12 +42,14 @@ type mutation[T any] struct {
 	target             *T
 	recv               any
 	zeroFieldsIncludes []sqlbuilder.Column
-	where              sqlbuilder.SqlCondition
+
+	assignmentsForUpdate sqlbuilder.Assignments
+	where                sqlbuilder.SqlCondition
 
 	conflict              sqlbuilder.ColumnCollection
 	onConflictDoUpdateSet []sqlbuilder.Column
 
-	returning []sqlbuilder.Column
+	returning []sqlbuilder.SqlExpr
 
 	forDelete bool
 
@@ -61,6 +68,11 @@ func (c mutation[T]) ForDelete(fns ...OptionFunc) Mutation[T] {
 	for i := range fns {
 		fns[i](&c)
 	}
+	return &c
+}
+
+func (c mutation[T]) ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation[T] {
+	c.assignmentsForUpdate = assignments
 	return &c
 }
 
@@ -84,11 +96,11 @@ func (c mutation[T]) DoUpdateSet(cols ...sqlbuilder.Column) Mutation[T] {
 	return &c
 }
 
-func (c mutation[T]) Returning(cols ...sqlbuilder.Column) Mutation[T] {
+func (c mutation[T]) Returning(cols ...sqlbuilder.SqlExpr) Mutation[T] {
 	if len(cols) != 0 {
 		c.returning = cols
 	} else {
-		c.returning = make([]sqlbuilder.Column, 0)
+		c.returning = make([]sqlbuilder.SqlExpr, 0)
 	}
 	return &c
 }
@@ -161,7 +173,7 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 			})
 		}
 
-		assignments := make([]*sqlbuilder.Assignment, len(cols))
+		assignments := make([]sqlbuilder.Assignment, len(cols))
 
 		for idx, col := range cols {
 			assignments[idx] = col.ValueBy(sqlbuilder.Expr("EXCLUDED.?", sqlbuilder.Expr(col.Name())))
@@ -184,9 +196,13 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 	var stmt sqlbuilder.SqlExpr
 
 	if where := c.buildWhere(t); where != nil {
+		assignmentsForUpdate := c.assignmentsForUpdate
+		if len(assignmentsForUpdate) == 0 {
+			assignmentsForUpdate = sqlbuilder.AssignmentsByFieldValues(t, fieldValues)
+		}
 		stmt = sqlbuilder.Update(t).
 			Where(where, additions...).
-			Set(sqlbuilder.AssignmentsByFieldValues(t, fieldValues)...)
+			Set(assignmentsForUpdate...)
 	} else {
 		cols, vals := sqlbuilder.ColumnsAndValuesByFieldValues(t, fieldValues)
 		stmt = sqlbuilder.Insert().Into(t, additions...).
@@ -217,7 +233,7 @@ func (c *mutation[T]) withReturning(t sqlbuilder.Table, additions []sqlbuilder.A
 		if len(c.returning) == 0 {
 			additions = append(additions, sqlbuilder.Returning(sqlbuilder.Expr("*")))
 		} else {
-			additions = append(additions, sqlbuilder.Returning(sqlbuilder.ColumnCollectionFromList(c.returning)))
+			additions = append(additions, sqlbuilder.Returning(sqlbuilder.MultiMayAutoAlias(c.returning...)))
 		}
 	}
 

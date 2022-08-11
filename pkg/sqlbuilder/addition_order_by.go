@@ -4,14 +4,7 @@ import (
 	"context"
 )
 
-type OrderByAddition struct {
-}
-
-func (OrderByAddition) AdditionType() AdditionType {
-	return AdditionOrderBy
-}
-
-func OrderBy(orders ...*Order) *orderBy {
+func OrderBy(orders ...*Order) Addition {
 	finalOrders := make([]*Order, 0)
 
 	for i := range orders {
@@ -26,11 +19,12 @@ func OrderBy(orders ...*Order) *orderBy {
 	}
 }
 
-var _ Addition = (*orderBy)(nil)
-
 type orderBy struct {
-	OrderByAddition
 	orders []*Order
+}
+
+func (orderBy) AdditionType() AdditionType {
+	return AdditionOrderBy
 }
 
 func (o *orderBy) IsNil() bool {

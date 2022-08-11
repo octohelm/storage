@@ -25,7 +25,7 @@ type Column interface {
 
 	FieldName() string
 
-	ValueBy(v any) *Assignment
+	ValueBy(v any) Assignment
 	Incr(d int) SqlExpr
 	Dec(d int) SqlExpr
 	Like(v string) SqlCondition
@@ -186,7 +186,7 @@ func (c *column) Expr(query string, args ...any) *Ex {
 	return e
 }
 
-func (c *column) ValueBy(v any) *Assignment {
+func (c *column) ValueBy(v any) Assignment {
 	return ColumnsAndValues(c, v)
 }
 

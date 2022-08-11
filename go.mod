@@ -2,8 +2,6 @@ module github.com/octohelm/storage
 
 go 1.19
 
-replace github.com/octohelm/gengo => ../../../github.com/octohelm/gengo
-
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/davecgh/go-spew v1.1.1
@@ -11,10 +9,10 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.0
-	github.com/octohelm/gengo v0.0.0-20220804040340-bb8285a232d3
+	github.com/octohelm/gengo v0.0.0-20220810095312-7254de8952c1
 	github.com/octohelm/x v0.0.0-20220721104447-6248adcd9f3f
 	github.com/pkg/errors v0.9.1
-	modernc.org/sqlite v1.18.0
+	modernc.org/sqlite v1.18.1
 )
 
 require (

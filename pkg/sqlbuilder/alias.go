@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func Alias(expr SqlExpr, name string) *exAlias {
+func Alias(expr SqlExpr, name string) SqlExpr {
 	return &exAlias{
 		name:    name,
 		SqlExpr: expr,
@@ -26,7 +26,7 @@ func (alias *exAlias) Ex(ctx context.Context) *Ex {
 	}))
 }
 
-func MultiMayAutoAlias(columns ...SqlExpr) *exMayAutoAlias {
+func MultiMayAutoAlias(columns ...SqlExpr) SqlExpr {
 	return &exMayAutoAlias{
 		columns: columns,
 	}

@@ -4,23 +4,16 @@ import (
 	"context"
 )
 
-type CommentAddition struct {
-}
-
-func (CommentAddition) AdditionType() AdditionType {
-	return AdditionComment
-}
-
-func Comment(c string) *comment {
+func Comment(c string) Addition {
 	return &comment{text: []byte(c)}
 }
 
-var _ Addition = (*comment)(nil)
-
 type comment struct {
-	CommentAddition
-
 	text []byte
+}
+
+func (comment) AdditionType() AdditionType {
+	return AdditionComment
 }
 
 func (c *comment) IsNil() bool {

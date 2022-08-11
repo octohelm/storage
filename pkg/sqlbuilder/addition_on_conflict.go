@@ -4,33 +4,34 @@ import (
 	"context"
 )
 
-type OnConflictAddition struct {
+type OnConflictAddition interface {
+	Addition
+	DoNothing() OnConflictAddition
+	DoUpdateSet(assignments ...Assignment) OnConflictAddition
 }
 
-func (OnConflictAddition) AdditionType() AdditionType {
-	return AdditionOnConflict
-}
-
-func OnConflict(columns ColumnCollection) *onConflict {
+func OnConflict(columns ColumnCollection) OnConflictAddition {
 	return &onConflict{
 		columns: columns,
 	}
 }
 
 type onConflict struct {
-	OnConflictAddition
-
 	columns     ColumnCollection
 	doNothing   bool
-	assignments []*Assignment
+	assignments []Assignment
 }
 
-func (o onConflict) DoNothing() *onConflict {
+func (onConflict) AdditionType() AdditionType {
+	return AdditionOnConflict
+}
+
+func (o onConflict) DoNothing() OnConflictAddition {
 	o.doNothing = true
 	return &o
 }
 
-func (o onConflict) DoUpdateSet(assignments ...*Assignment) *onConflict {
+func (o onConflict) DoUpdateSet(assignments ...Assignment) OnConflictAddition {
 	o.assignments = assignments
 	return &o
 }

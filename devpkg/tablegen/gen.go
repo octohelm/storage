@@ -26,17 +26,31 @@ func (*tableGen) New(ctx gengo.Context) gengo.Generator {
 	return &tableGen{}
 }
 
-func toDefaultTableName(name string) string {
+func toDefaultTableName(name string, tableGroup string) string {
+	if tableGroup != "" && strings.ToLower(tableGroup) != strings.ToLower(name) {
+		return gengo.LowerSnakeCase("t_" + tableGroup + "_" + name)
+	}
 	return gengo.LowerSnakeCase("t_" + name)
 }
 
 func (g *tableGen) GenerateType(c gengo.Context, named *types.Named) error {
-	t := g.scanTable(c, named)
+	if !named.Obj().Exported() {
+		return gengo.ErrSkip
+	}
 
-	g.generateIndexInterfaces(c, t, named)
-	g.generateTableStatics(c, t, named)
+	if _, ok := named.Underlying().(*types.Struct); ok {
+		t, err := g.scanTable(c, named)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		g.generateIndexInterfaces(c, t, named)
+		g.generateTableStatics(c, t, named)
+
+		return nil
+	}
+
+	return gengo.ErrSkip
 }
 
 func (g *tableGen) generateTableStatics(c gengo.Context, t sqlbuilder.Table, named *types.Named) {
@@ -323,10 +337,18 @@ func (@Type) Indexes() @sqlbuilderIndexes {
 	}
 }
 
-func (g *tableGen) scanTable(c gengo.Context, named *types.Named) sqlbuilder.Table {
+func (g *tableGen) scanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 	tags, _ := c.Package(named.Obj().Pkg().Path()).Doc(named.Obj().Pos())
 
-	tableName := toDefaultTableName(named.Obj().Name())
+	tableGroup := ""
+
+	if r, ok := tags["gengo:table:group"]; ok {
+		if len(r) > 0 {
+			tableGroup = r[0]
+		}
+	}
+
+	tableName := toDefaultTableName(named.Obj().Name(), tableGroup)
 	if tn, ok := tags["gengo:table:name"]; ok {
 		if n := tn[0]; len(n) > 0 {
 			tableName = n
@@ -383,7 +405,7 @@ func (g *tableGen) scanTable(c gengo.Context, named *types.Named) sqlbuilder.Tab
 		}
 	}
 
-	return t
+	return t, nil
 }
 
 func commentAndDesc(docs []string) (comment string, desc []string) {

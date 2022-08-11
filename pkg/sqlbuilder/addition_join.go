@@ -5,55 +5,56 @@ import (
 	"strings"
 )
 
-type JoinAddition struct{}
-
-func (JoinAddition) AdditionType() AdditionType {
-	return AdditionJoin
+type JoinAddition interface {
+	Addition
+	On(joinCondition SqlCondition) JoinAddition
+	Using(joinColumnList ...Column) JoinAddition
 }
 
-func Join(table SqlExpr, prefixes ...string) *join {
+func Join(table SqlExpr, prefixes ...string) JoinAddition {
 	return &join{
 		prefix: strings.Join(prefixes, " "),
 		target: table,
 	}
 }
 
-func InnerJoin(table SqlExpr) *join {
+func InnerJoin(table SqlExpr) JoinAddition {
 	return Join(table, "INNER")
 }
 
-func LeftJoin(table SqlExpr) *join {
+func LeftJoin(table SqlExpr) JoinAddition {
 	return Join(table, "LEFT")
 }
 
-func RightJoin(table SqlExpr) *join {
+func RightJoin(table SqlExpr) JoinAddition {
 	return Join(table, "RIGHT")
 }
 
-func FullJoin(table SqlExpr) *join {
+func FullJoin(table SqlExpr) JoinAddition {
 	return Join(table, "FULL")
 }
 
-func CrossJoin(table SqlExpr) *join {
+func CrossJoin(table SqlExpr) JoinAddition {
 	return Join(table, "CROSS")
 }
-
-var _ Addition = (*join)(nil)
 
 type join struct {
 	prefix         string
 	target         SqlExpr
 	joinCondition  SqlCondition
 	joinColumnList []Column
-	JoinAddition
 }
 
-func (j join) On(joinCondition SqlCondition) *join {
+func (j join) AdditionType() AdditionType {
+	return AdditionJoin
+}
+
+func (j join) On(joinCondition SqlCondition) JoinAddition {
 	j.joinCondition = joinCondition
 	return &j
 }
 
-func (j join) Using(joinColumnList ...Column) *join {
+func (j join) Using(joinColumnList ...Column) JoinAddition {
 	j.joinColumnList = joinColumnList
 	return &j
 }

@@ -4,13 +4,16 @@ import (
 	"context"
 )
 
-func GroupBy(groups ...SqlExpr) *groupBy {
+type GroupByAddition interface {
+	Addition
+	Having(cond SqlCondition) GroupByAddition
+}
+
+func GroupBy(groups ...SqlExpr) GroupByAddition {
 	return &groupBy{
 		groups: groups,
 	}
 }
-
-var _ Addition = (*groupBy)(nil)
 
 type groupBy struct {
 	groups []SqlExpr
@@ -18,11 +21,11 @@ type groupBy struct {
 	havingCond SqlCondition
 }
 
-func (g groupBy) AdditionType() AdditionType {
+func (groupBy) AdditionType() AdditionType {
 	return AdditionGroupBy
 }
 
-func (g groupBy) Having(cond SqlCondition) *groupBy {
+func (g groupBy) Having(cond SqlCondition) GroupByAddition {
 	g.havingCond = cond
 	return &g
 }

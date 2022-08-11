@@ -2,9 +2,10 @@ version: "3.0"
 
 services:
   postgres:
-    image: docker.io/postgis/postgis:11-3.2
+    image: docker.io/library/postgres:14-alpine
     environment:
       POSTGRES_PASSWORD: ""
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - 5432:5432
+      - "5432:5432"
+    restart: always

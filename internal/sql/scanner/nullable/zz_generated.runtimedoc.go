@@ -13,3 +13,14 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 	}
 	return nil, false
 }
+
+func (v NullIgnoreScanner) RuntimeDoc(names ...string) ([]string, bool) {
+	if len(names) > 0 {
+		switch names[0] {
+
+		}
+
+		return nil, false
+	}
+	return []string{}, true
+}

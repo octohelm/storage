@@ -40,9 +40,16 @@ func (d *Database) SetDefaults() {
 	}
 }
 
-func (d *Database) BindCatalog(name string, tables *sqlbuilder.Tables) {
+func (d *Database) ApplyCatalog(name string, tables ...*sqlbuilder.Tables) {
 	d.name = name
-	d.tables = tables
+	d.tables = &sqlbuilder.Tables{}
+
+	for i := range tables {
+		tables[i].Range(func(tab sqlbuilder.Table, idx int) bool {
+			d.tables.Add(tab)
+			return true
+		})
+	}
 }
 
 func (d *Database) Init(ctx context.Context) error {
@@ -58,6 +65,8 @@ func (d *Database) Init(ctx context.Context) error {
 
 	ConfigureAdapter(d.db, 10, 1*time.Hour)
 
+	registerSessionCatalog(d.name, d.tables)
+
 	return nil
 }
 
@@ -69,5 +78,5 @@ func (d *Database) Run(ctx context.Context) error {
 	if d.EnableMigrate == false {
 		return nil
 	}
-	return migrator.Migrate(ctx, FromContext(ctx, d.name).Adapter(), d.tables)
+	return migrator.Migrate(ctx, d.db, d.tables)
 }

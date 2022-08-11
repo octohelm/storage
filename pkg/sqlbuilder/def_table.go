@@ -99,6 +99,7 @@ func T(tableName string, tableDefinitions ...TableDefinition) Table {
 }
 
 type table struct {
+	database    string
 	name        string
 	description []string
 	ColumnCollection
@@ -119,6 +120,7 @@ func (t *table) AddKey(keys ...Key) {
 
 func (t table) WithTableName(name string) Table {
 	newTable := &table{
+		database:    t.database,
 		name:        name,
 		description: t.description,
 	}

@@ -20,7 +20,7 @@ func Update(table Table, modifiers ...string) *StmtUpdate {
 type StmtUpdate struct {
 	table       Table
 	modifiers   []string
-	assignments []*Assignment
+	assignments []Assignment
 	additions   []Addition
 }
 
@@ -28,7 +28,7 @@ func (s *StmtUpdate) IsNil() bool {
 	return s == nil || IsNilExpr(s.table) || len(s.assignments) == 0
 }
 
-func (s StmtUpdate) Set(assignments ...*Assignment) *StmtUpdate {
+func (s StmtUpdate) Set(assignments ...Assignment) *StmtUpdate {
 	s.assignments = assignments
 	return &s
 }

@@ -3,22 +3,43 @@ package dal
 import (
 	"context"
 	"fmt"
-
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	contextx "github.com/octohelm/x/context"
+	"sync"
 )
 
-type repositoryContext struct {
+var catalogs = sync.Map{}
+
+func registerSessionCatalog(name string, tables *sqlbuilder.Tables) {
+	tables.Range(func(tab sqlbuilder.Table, idx int) bool {
+		catalogs.Store(tab, name)
+		return true
+	})
+}
+
+func SessionFor(ctx context.Context, nameOrTable any) Session {
+	switch x := nameOrTable.(type) {
+	case string:
+		return FromContext(ctx, x)
+	case sqlbuilder.Table:
+		if t, ok := catalogs.Load(x); ok {
+			return FromContext(ctx, t.(string))
+		}
+	}
+	return nil
+}
+
+type contextSession struct {
 	name string
 }
 
 func InjectContext(ctx context.Context, repo Session) context.Context {
-	return contextx.WithValue(ctx, repositoryContext{name: repo.Name()}, repo)
+	return contextx.WithValue(ctx, contextSession{name: repo.Name()}, repo)
 }
 
 func FromContext(ctx context.Context, name string) Session {
-	r, ok := ctx.Value(repositoryContext{name: name}).(Session)
+	r, ok := ctx.Value(contextSession{name: name}).(Session)
 	if ok {
 		return r
 	}
@@ -28,9 +49,9 @@ func FromContext(ctx context.Context, name string) Session {
 type Session interface {
 	// Name of database
 	Name() string
-	Close() error
 	T(m any) sqlbuilder.Table
 	Tx(ctx context.Context, fn func(ctx context.Context) error) error
+
 	Adapter() adapter.Adapter
 }
 
@@ -44,10 +65,6 @@ func New(a adapter.Adapter, name string) Session {
 type session struct {
 	name    string
 	adapter adapter.Adapter
-}
-
-func (s *session) Close() error {
-	return s.adapter.Close()
 }
 
 func (s *session) Adapter() adapter.Adapter {

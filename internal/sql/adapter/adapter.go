@@ -19,11 +19,12 @@ type DB interface {
 	Close() error
 }
 
+type Connector interface {
+	Open(ctx context.Context, dsn *url.URL) (Adapter, error)
+}
+
 type Adapter interface {
 	DB
-
-	Open(ctx context.Context, dsn *url.URL) (Adapter, error)
-
 	DriverName() string
 	Dialect() Dialect
 	Catalog(ctx context.Context) (*sqlbuilder.Tables, error)
@@ -65,7 +66,7 @@ func Open(ctx context.Context, dsn string) (a Adapter, err error) {
 
 	adapters.Range(func(key, value any) bool {
 		if key.(string) == u.Scheme {
-			a, err = value.(Adapter).Open(ctx, u)
+			a, err = value.(Connector).Open(ctx, u)
 			return false
 		}
 		return true
