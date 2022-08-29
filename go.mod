@@ -8,7 +8,7 @@ require (
 	github.com/go-courier/logr v0.0.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
-	github.com/jackc/pgx/v4 v4.17.0
+	github.com/jackc/pgx/v4 v4.17.1
 	github.com/octohelm/gengo v0.0.0-20220810095312-7254de8952c1
 	github.com/octohelm/x v0.0.0-20220721104447-6248adcd9f3f
 	github.com/pkg/errors v0.9.1
