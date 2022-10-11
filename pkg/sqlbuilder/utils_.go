@@ -242,7 +242,7 @@ func scanDefToTable(tab *table, i interface{}) {
 	}
 
 	EachStructField(context.Background(), tpe, func(f *StructField) bool {
-		c := &column{
+		c := &column[any]{
 			fieldName: f.FieldName,
 			name:      f.Name,
 			def:       f.ColumnType,

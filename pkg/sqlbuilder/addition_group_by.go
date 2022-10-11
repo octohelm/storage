@@ -6,7 +6,7 @@ import (
 
 type GroupByAddition interface {
 	Addition
-	Having(cond SqlCondition) GroupByAddition
+	Having(cond SqlExpr) GroupByAddition
 }
 
 func GroupBy(groups ...SqlExpr) GroupByAddition {
@@ -18,14 +18,14 @@ func GroupBy(groups ...SqlExpr) GroupByAddition {
 type groupBy struct {
 	groups []SqlExpr
 	// HAVING
-	havingCond SqlCondition
+	havingCond SqlExpr
 }
 
 func (groupBy) AdditionType() AdditionType {
 	return AdditionGroupBy
 }
 
-func (g groupBy) Having(cond SqlCondition) GroupByAddition {
+func (g groupBy) Having(cond SqlExpr) GroupByAddition {
 	g.havingCond = cond
 	return &g
 }

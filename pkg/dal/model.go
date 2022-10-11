@@ -1,6 +1,8 @@
 package dal
 
-import "database/sql/driver"
+import (
+	"database/sql/driver"
+)
 
 type ModelWithAutoIncrement interface {
 	SetAutoIncrementID(u int64)
@@ -16,6 +18,5 @@ type ModelWithUpdationTime interface {
 
 type ModelWithSoftDelete interface {
 	MarkDeletedAt()
-
-	SoftDeleteFieldAndValue() (string, driver.Value)
+	SoftDeleteFieldAndZeroValue() (string, driver.Value)
 }

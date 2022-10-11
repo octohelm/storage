@@ -26,7 +26,7 @@ type Mutation[T any] interface {
 	ForDelete(opts ...OptionFunc) Mutation[T]
 	ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation[T]
 
-	Where(where sqlbuilder.SqlCondition) Mutation[T]
+	Where(where sqlbuilder.SqlExpr) Mutation[T]
 
 	OnConflict(cols sqlbuilder.ColumnCollection) Mutation[T]
 	DoNothing() Mutation[T]
@@ -35,7 +35,7 @@ type Mutation[T any] interface {
 	Returning(cols ...sqlbuilder.SqlExpr) Mutation[T]
 	Scan(recv any) Mutation[T]
 
-	Save(ctx context.Context, session Session) error
+	Save(ctx context.Context) error
 }
 
 type mutation[T any] struct {
@@ -44,7 +44,7 @@ type mutation[T any] struct {
 	zeroFieldsIncludes []sqlbuilder.Column
 
 	assignmentsForUpdate sqlbuilder.Assignments
-	where                sqlbuilder.SqlCondition
+	where                sqlbuilder.SqlExpr
 
 	conflict              sqlbuilder.ColumnCollection
 	onConflictDoUpdateSet []sqlbuilder.Column
@@ -76,7 +76,7 @@ func (c mutation[T]) ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation
 	return &c
 }
 
-func (c mutation[T]) Where(where sqlbuilder.SqlCondition) Mutation[T] {
+func (c mutation[T]) Where(where sqlbuilder.SqlExpr) Mutation[T] {
 	c.where = where
 	return &c
 }
@@ -110,7 +110,8 @@ func (c mutation[T]) Scan(recv any) Mutation[T] {
 	return &c
 }
 
-func (c *mutation[T]) Save(ctx context.Context, s Session) error {
+func (c *mutation[T]) Save(ctx context.Context) error {
+	s := SessionFor(ctx, c.target)
 	if c.forDelete {
 		return c.del(ctx, s.T(c.target), s)
 	}
@@ -124,11 +125,14 @@ func (c *mutation[T]) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlCondition {
 	where := c.where
 	if c.feature.softDelete {
 		if soft, ok := any(c.target).(ModelWithSoftDelete); ok {
-			f, v := soft.SoftDeleteFieldAndValue()
-			return sqlbuilder.And(where, t.F(f).Eq(v))
+			f, v := soft.SoftDeleteFieldAndZeroValue()
+			return sqlbuilder.And(
+				where,
+				t.F(f).Expr("# = ?", v),
+			)
 		}
 	}
-	return where
+	return sqlbuilder.AsCond(where)
 }
 
 func (c *mutation[T]) del(ctx context.Context, t sqlbuilder.Table, s Session) error {
@@ -145,8 +149,11 @@ func (c *mutation[T]) del(ctx context.Context, t sqlbuilder.Table, s Session) er
 	if c.feature.softDelete {
 		if soft, ok := any(c.target).(ModelWithSoftDelete); ok {
 			soft.MarkDeletedAt()
-			f, v := soft.SoftDeleteFieldAndValue()
-			stmt = sqlbuilder.Update(t).Where(where, additions...).Set(t.F(f).ValueBy(v))
+			f, v := soft.SoftDeleteFieldAndZeroValue()
+			col := t.F(f)
+			stmt = sqlbuilder.Update(t).Where(where, additions...).Set(
+				sqlbuilder.ColumnsAndValues(col, v),
+			)
 		}
 	}
 
@@ -176,7 +183,9 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 		assignments := make([]sqlbuilder.Assignment, len(cols))
 
 		for idx, col := range cols {
-			assignments[idx] = col.ValueBy(sqlbuilder.Expr("EXCLUDED.?", sqlbuilder.Expr(col.Name())))
+			assignments[idx] = sqlbuilder.ColumnsAndValues(
+				col, col.Expr("EXCLUDED.?", sqlbuilder.Expr(col.Name())),
+			)
 		}
 
 		onConflict = onConflict.DoUpdateSet(assignments...)

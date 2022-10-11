@@ -3,17 +3,22 @@ package dal
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	contextx "github.com/octohelm/x/context"
-	"sync"
 )
+
+func Tx(ctx context.Context, m sqlbuilder.Model, action func(ctx context.Context) error) error {
+	return SessionFor(ctx, m).Tx(ctx, action)
+}
 
 var catalogs = sync.Map{}
 
 func registerSessionCatalog(name string, tables *sqlbuilder.Tables) {
 	tables.Range(func(tab sqlbuilder.Table, idx int) bool {
-		catalogs.Store(tab, name)
+		catalogs.Store(tab.TableName(), name)
 		return true
 	})
 }
@@ -22,8 +27,8 @@ func SessionFor(ctx context.Context, nameOrTable any) Session {
 	switch x := nameOrTable.(type) {
 	case string:
 		return FromContext(ctx, x)
-	case sqlbuilder.Table:
-		if t, ok := catalogs.Load(x); ok {
+	case sqlbuilder.Model:
+		if t, ok := catalogs.Load(x.TableName()); ok {
 			return FromContext(ctx, t.(string))
 		}
 	}

@@ -32,7 +32,7 @@ func AssignmentsByFieldValues(t Table, fieldValues FieldValues) (assignments Ass
 	for fieldName, value := range fieldValues {
 		col := t.F(fieldName)
 		if col != nil {
-			assignments = append(assignments, col.ValueBy(value))
+			assignments = append(assignments, CastCol[any](col).By(Value(value)))
 		}
 	}
 	return

@@ -19,7 +19,7 @@ type OperateTimeWithDeleted struct {
 
 //var _ dal.ModelWithSoftDelete = &OperateTimeWithDeleted{}
 
-func (v *OperateTimeWithDeleted) SoftDeleteFieldAndValue() (string, driver.Value) {
+func (v *OperateTimeWithDeleted) SoftDeleteFieldAndZeroValue() (string, driver.Value) {
 	return "DeletedAt", int64(v.DeletedAt)
 }
 

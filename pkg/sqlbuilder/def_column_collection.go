@@ -102,7 +102,7 @@ func (cols *columns) Cols(names ...string) ColumnCollection {
 	for _, colName := range names {
 		col := cols.F(colName)
 		if col == nil {
-			panic(fmt.Errorf("unknown column %s", colName))
+			panic(fmt.Errorf("unknown column %s, %v", colName, names))
 		}
 		newCols.AddCol(col)
 	}

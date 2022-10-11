@@ -29,7 +29,7 @@ type Assignment interface {
 	SqlAssignment()
 }
 
-func ColumnsAndValues(columnOrColumns SqlExpr, values ...interface{}) Assignment {
+func ColumnsAndValues(columnOrColumns SqlExpr, values ...any) Assignment {
 	lenOfColumn := 1
 	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
 		lenOfColumn = canLen.Len()

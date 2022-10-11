@@ -20,8 +20,6 @@ func TestCRUD(t *testing.T) {
 	for i := range ctxs {
 		ctx := ctxs[i]
 
-		db := SessionFor(ctx, "dal_sql_crud")
-
 		t.Run("Save one user", func(t *testing.T) {
 			usr := &model.User{
 				Name: uuid.New().String(),
@@ -29,7 +27,7 @@ func TestCRUD(t *testing.T) {
 			}
 			err := Prepare(usr).IncludesZero(model.UserT.Nickname).
 				Returning(model.UserT.ID).Scan(usr).
-				Save(ctx, db)
+				Save(ctx)
 
 			testutil.Expect(t, err, testutil.Be[error](nil))
 			testutil.Expect(t, usr.ID, testutil.Not(testutil.Be(uint64(0))))
@@ -38,7 +36,7 @@ func TestCRUD(t *testing.T) {
 				usr2 := &model.User{
 					Name: usr.Name,
 				}
-				err := Prepare(usr2).Save(ctx, db)
+				err := Prepare(usr2).Save(ctx)
 				testutil.Expect(t, dberr.IsErrConflict(err), testutil.Be(true))
 			})
 
@@ -51,7 +49,7 @@ func TestCRUD(t *testing.T) {
 				err := Prepare(usr2).
 					OnConflict(model.UserT.I.IName).DoNothing().
 					Returning(model.UserT.ID, model.UserT.Age).Scan(usr2).
-					Save(ctx, db)
+					Save(ctx)
 
 				testutil.Expect(t, err, testutil.Be[error](nil))
 			})
@@ -65,7 +63,7 @@ func TestCRUD(t *testing.T) {
 				err := Prepare(usr2).
 					OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
 					Returning(model.UserT.ID, model.UserT.Age, model.UserT.Username).Scan(usr2).
-					Save(ctx, db)
+					Save(ctx)
 
 				testutil.Expect(t, err, testutil.Be[error](nil))
 				testutil.Expect(t, usr2.ID, testutil.Be(usr.ID))
@@ -77,9 +75,9 @@ func TestCRUD(t *testing.T) {
 					Nickname: "test test",
 				}
 				update := Prepare(usr2).
-					Where(model.UserT.ID.Eq(100))
+					Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
 
-				err := update.Save(ctx, db)
+				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
 			})
 
@@ -87,9 +85,9 @@ func TestCRUD(t *testing.T) {
 				deletedUser := &model.User{}
 				update := Prepare(&model.User{}).ForDelete().
 					Returning().Scan(deletedUser).
-					Where(model.UserT.ID.Eq(usr.ID))
+					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
 
-				err := update.Save(ctx, db)
+				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
 				testutil.Expect(t, deletedUser.ID, testutil.Be(usr.ID))
 				testutil.Expect(t, deletedUser.ID, testutil.Be(usr.ID))
@@ -100,24 +98,21 @@ func TestCRUD(t *testing.T) {
 
 				update := Prepare(&model.User{}).ForDelete(HardDelete()).
 					Returning().Scan(deletedUser).
-					Where(model.UserT.ID.Eq(usr.ID))
+					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
 
-				err := update.Save(ctx, db)
+				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
 				testutil.Expect(t, deletedUser.ID, testutil.Be(usr.ID))
 			})
 		})
 
 		t.Run("Insert multi Users and Orgs", func(t *testing.T) {
-			err := db.Tx(ctx, func(ctx context.Context) error {
+			err := Tx(ctx, &model.Org{}, func(ctx context.Context) error {
 				for i := 0; i < 2; i++ {
 					org := &model.Org{
 						Name: uuid.New().String(),
 					}
-					err := Prepare(org).
-						Returning(model.OrgT.ID).Scan(org).
-						Save(ctx, db)
-					if err != nil {
+					if err := Prepare(org).Returning(model.OrgT.ID).Scan(org).Save(ctx); err != nil {
 						return err
 					}
 				}
@@ -130,13 +125,15 @@ func TestCRUD(t *testing.T) {
 
 					err := Prepare(usr).IncludesZero(model.UserT.Nickname).
 						Returning(model.UserT.ID).Scan(usr).
-						Save(ctx, db)
+						Save(ctx)
 					if err != nil {
 						return err
 					}
 
 					if i >= 100 {
-						if err := Prepare(usr).ForDelete().Where(model.UserT.Age.Eq(usr.Age)).Save(ctx, db); err != nil {
+						if err := Prepare(usr).ForDelete().Where(
+							model.UserT.Age.V(sqlbuilder.Eq[int64](usr.Age)),
+						).Save(ctx); err != nil {
 							return err
 						}
 					}
@@ -145,18 +142,19 @@ func TestCRUD(t *testing.T) {
 						UserID: usr.ID,
 						OrgID:  usr.ID%2 + 1,
 					}
-					if err := Prepare(orgUsr).Save(ctx, db); err != nil {
+					if err := Prepare(orgUsr).Save(ctx); err != nil {
 						return err
 					}
 				}
 
 				return nil
 			})
+
 			testutil.Expect(t, err, testutil.Be[error](nil))
 
 			t.Run("Then Queries", func(t *testing.T) {
 				t.Run("Count", func(t *testing.T) {
-					c, err := From(model.UserT).Count(ctx, db)
+					c, err := From(model.UserT).Count(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, c, testutil.Be(100))
@@ -167,7 +165,7 @@ func TestCRUD(t *testing.T) {
 
 					err := From(model.UserT).
 						Scan(&users).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(100))
@@ -178,7 +176,7 @@ func TestCRUD(t *testing.T) {
 
 					err := From(model.UserT, IncludeAllRecord()).
 						Scan(&users).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(110))
@@ -190,7 +188,7 @@ func TestCRUD(t *testing.T) {
 					err := From(model.UserT).
 						Limit(10).
 						Scan(&users).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(10))
@@ -202,7 +200,7 @@ func TestCRUD(t *testing.T) {
 					err := From(model.UserT).
 						Offset(10).Limit(10).
 						Scan(&users).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(10))
@@ -216,7 +214,7 @@ func TestCRUD(t *testing.T) {
 						OrderBy(sqlbuilder.DescOrder(model.UserT.ID)).
 						Offset(10).Limit(10).
 						Scan(&users).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(10))
@@ -227,9 +225,9 @@ func TestCRUD(t *testing.T) {
 					users := make([]model.User, 0)
 
 					err := From(model.UserT).
-						Where(model.UserT.Age.Eq(10)).
+						Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))).
 						Scan(&users).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(1))
@@ -239,11 +237,12 @@ func TestCRUD(t *testing.T) {
 					orgUsers := make([]model.OrgUser, 0)
 
 					err := From(model.OrgUserT).
-						Where(model.OrgUserT.UserID.In(
-							From(model.UserT).Select(model.UserT.ID).Where(model.UserT.Age.Eq(10)),
-						)).
+						Where(model.OrgUserT.UserID.V(InSelect(
+							model.UserT.ID,
+							From(model.UserT).Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))),
+						))).
 						Scan(&orgUsers).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(orgUsers), testutil.Be(1))
@@ -256,11 +255,11 @@ func TestCRUD(t *testing.T) {
 					}, 0)
 
 					err := From(model.UserT).
-						Join(model.OrgUserT, model.OrgUserT.UserID.Eq(model.UserT.ID)).
-						Join(model.OrgT, model.OrgT.ID.Eq(model.OrgUserT.OrgID)).
-						Where(model.UserT.Age.Eq(10)).
+						Join(model.OrgUserT, model.OrgUserT.UserID.V(sqlbuilder.EqCol(model.UserT.ID))).
+						Join(model.OrgT, model.OrgT.ID.V(sqlbuilder.EqCol(model.OrgUserT.OrgID))).
+						Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))).
 						Scan(&users).
-						Find(ctx, db)
+						Find(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(1))

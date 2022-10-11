@@ -28,7 +28,11 @@ func TestJoin(t *testing.T) {
 				Alias(tOrg.F("f_org_name"), "f_org_name"),
 			)).From(
 				tUser,
-				Join(Alias(tOrg, "t_org")).On(tUser.F("f_org_id").Eq(tOrg.F("f_org_id"))),
+				Join(Alias(tOrg, "t_org")).On(
+					TypedColOf[int](tUser, "f_org_id").V(
+						EqCol(TypedColOf[int](tOrg, "f_org_id")),
+					),
+				),
 			),
 			`
 SELECT t_user.f_id AS f_id, t_user.f_name AS f_name, t_user.f_org_id AS f_org_id, t_org.f_org_name AS f_org_name FROM t_user

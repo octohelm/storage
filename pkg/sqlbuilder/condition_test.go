@@ -8,19 +8,30 @@ import (
 )
 
 func TestConditions(t *testing.T) {
+	colA := TypedCol[int]("a")
+	colB := TypedCol[string]("b")
+	colC := TypedCol[int]("c")
+	colD := TypedCol[string]("d")
+
 	t.Run("Chain Condition", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("a").Eq(1).
-				And(nil).
-				And(Col("b").LeftLike("text")).
-				Or(Col("a").Eq(2)).
-				Xor(Col("b").RightLike("g")),
-
-			"(((a = ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
+			Xor(
+				Or(
+					And(
+						nil,
+						TypedCol[int]("a").V(Lt(1)),
+						TypedCol[string]("b").V(LeftLike[string]("text")),
+					),
+					TypedCol[int]("a").V(Eq(2)),
+				),
+				TypedCol[string]("b").V(RightLike[string]("g")),
+			),
+			"(((a < ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
 			1, "%text", 2, "g%",
 		)
 	})
 	t.Run("Compose Condition", func(t *testing.T) {
+
 		testutil.ShouldBeExpr(t,
 			Xor(
 				Or(
@@ -29,14 +40,14 @@ func TestConditions(t *testing.T) {
 						(*Condition)(nil),
 						(*Condition)(nil),
 						(*Condition)(nil),
-						Col("c").In(1, 2),
-						Col("c").In([]int{3, 4}),
-						Col("a").Eq(1),
-						Col("b").Like("text"),
+						colC.V(In(1, 2)),
+						colC.V(In(3, 4)),
+						colA.V(Eq(1)),
+						colB.V(Like("text")),
 					),
-					Col("a").Eq(2),
+					colA.V(Eq(2)),
 				),
-				Col("b").Like("g"),
+				colB.V(Like("g")),
 			),
 
 			"(((c IN (?,?)) AND (c IN (?,?)) AND (a = ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
@@ -46,17 +57,17 @@ func TestConditions(t *testing.T) {
 	t.Run("skip nil", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
 			Xor(
-				Col("a").In(),
+				colA.V(In[int]()),
 				Or(
-					Col("a").NotIn(),
+					colA.V(NotIn[int]()),
 					And(
 						nil,
-						Col("a").Eq(1),
-						Col("b").Like("text"),
+						colA.V(Eq(1)),
+						colB.V(Like("text")),
 					),
-					Col("a").Eq(2),
+					colA.V(Eq(2)),
 				),
-				Col("b").Like("g"),
+				colB.V(Like("g")),
 			),
 			"(((a = ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
 			1, "%text%", 2, "%g%",
@@ -65,17 +76,16 @@ func TestConditions(t *testing.T) {
 	t.Run("XOR and OR", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
 			Xor(
-				Col("a").In(),
 				Or(
-					Col("a").NotIn(),
+					colA.V(NotIn[int]()),
 					And(
 						nil,
-						Col("a").Eq(1),
-						Col("b").Like("text"),
+						colA.V(Eq(1)),
+						colB.V(Like("text")),
 					),
-					Col("a").Eq(2),
+					colA.V(Eq(2)),
 				),
-				Col("b").Like("g"),
+				colB.V(Like("g")),
 			),
 			"(((a = ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
 			1, "%text%", 2, "%g%",
@@ -84,8 +94,8 @@ func TestConditions(t *testing.T) {
 	t.Run("XOR", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
 			Xor(
-				Col("a").Eq(1),
-				Col("b").Like("g"),
+				colA.V(Eq(1)),
+				colB.V(Like("g")),
 			),
 			"(a = ?) XOR (b LIKE ?)",
 			1, "%g%",
@@ -93,88 +103,93 @@ func TestConditions(t *testing.T) {
 	})
 	t.Run("Like", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Like("e"),
+			colD.V(Like("e")),
 			"d LIKE ?",
 			"%e%",
 		)
 	})
+
 	t.Run("Not like", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").NotLike("e"),
+			colD.V(NotLike("e")),
 			"d NOT LIKE ?",
 			"%e%",
 		)
 	})
+
 	t.Run("Equal", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Eq("e"),
+			colD.V(Eq("e")),
 			"d = ?", "e",
 		)
 	})
 	t.Run("Not Equal", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Neq("e"),
+			colD.V(Neq("e")),
 			"d <> ?",
 			"e",
 		)
 	})
 	t.Run("In", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").In("e", "f"),
+			colD.V(In("e", "f")),
 			"d IN (?,?)", "e", "f",
 		)
 	})
 	t.Run("NotIn", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").NotIn("e", "f"),
+			colD.V(NotIn("e", "f")),
 			"d NOT IN (?,?)", "e", "f",
 		)
 	})
 	t.Run("Less than", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Lt(3),
-			"d < ?", 3,
+			colC.V(Lt(3)),
+			"c < ?", 3,
 		)
 	})
 	t.Run("Less or equal than", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Lte(3),
-			"d <= ?", 3,
+			colC.V(Lte(3)),
+			"c <= ?", 3,
 		)
 	})
 	t.Run("Greater than", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Gt(3),
-			"d > ?", 3,
+			colC.V(Gt(3)),
+			"c > ?", 3,
 		)
 	})
 	t.Run("Greater or equal than", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Gte(3),
-			"d >= ?", 3,
+			colC.V(Gte(3)),
+			"c >= ?", 3,
 		)
 	})
 	t.Run("Between", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").Between(0, 2),
-			"d BETWEEN ? AND ?", 0, 2,
+			colC.V(Between(0, 2)),
+			"c BETWEEN ? AND ?", 0, 2,
 		)
 	})
+
 	t.Run("Not between", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").NotBetween(0, 2),
-			"d NOT BETWEEN ? AND ?", 0, 2,
+			colC.V(NotBetween(0, 2)),
+			"c NOT BETWEEN ? AND ?", 0, 2,
 		)
 	})
+
 	t.Run("Is null", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").IsNull(),
+			colD.V(IsNull[string]()),
 			"d IS NULL",
 		)
 	})
+
 	t.Run("Is not null", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Col("d").IsNotNull(),
+			colD.V(IsNotNull[string]()),
 			"d IS NOT NULL",
 		)
 	})

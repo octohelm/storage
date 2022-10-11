@@ -13,7 +13,7 @@ func TestStmtDelete(t *testing.T) {
 	t.Run("delete", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
 			Delete().From(table,
-				Where(Col("F_a").Eq(1)),
+				Where(TypedCol[int]("F_a").V(Eq(1))),
 				Comment("Comment"),
 			),
 			`

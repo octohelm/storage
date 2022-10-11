@@ -8,12 +8,12 @@ import (
 
 type ScanIterator interface {
 	// New a ptr value for scan
-	New() interface{}
+	New() any
 	// Next For receive scanned value
-	Next(v interface{}) error
+	Next(v any) error
 }
 
-func ScanIteratorFor(v interface{}) (ScanIterator, error) {
+func ScanIteratorFor(v any) (ScanIterator, error) {
 	switch x := v.(type) {
 	case ScanIterator:
 		return x, nil
@@ -36,25 +36,25 @@ type SliceScanIterator struct {
 	rv       reflect.Value
 }
 
-func (s *SliceScanIterator) New() interface{} {
+func (s *SliceScanIterator) New() any {
 	return reflectx.New(s.elemType).Addr().Interface()
 }
 
-func (s *SliceScanIterator) Next(v interface{}) error {
+func (s *SliceScanIterator) Next(v any) error {
 	s.rv.Set(reflect.Append(s.rv, reflect.ValueOf(v).Elem()))
 	return nil
 }
 
 type SingleScanIterator struct {
-	target     interface{}
+	target     any
 	hasResults bool
 }
 
-func (s *SingleScanIterator) New() interface{} {
+func (s *SingleScanIterator) New() any {
 	return s.target
 }
 
-func (s *SingleScanIterator) Next(v interface{}) error {
+func (s *SingleScanIterator) Next(v any) error {
 	s.hasResults = true
 	return nil
 }

@@ -12,14 +12,17 @@ func TestStmtUpdate(t *testing.T) {
 	table := T("T")
 
 	t.Run("update", func(t *testing.T) {
+		fa := TypedCol[int]("F_a")
+		fb := TypedCol[int]("F_b")
+
 		testutil.ShouldBeExpr(t,
 			Update(table).
 				Set(
-					Col("F_a").ValueBy(1),
-					Col("F_b").ValueBy(2),
+					fa.By(Value(1)),
+					fb.By(Value(2)),
 				).
 				Where(
-					Col("F_a").Eq(1),
+					fa.V(Eq(1)),
 					Comment("Comment"),
 				),
 			`

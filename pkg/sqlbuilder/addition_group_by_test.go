@@ -15,9 +15,9 @@ func TestGroupBy(t *testing.T) {
 			Select(nil).
 				From(
 					table,
-					Where(Col("F_a").Eq(1)),
+					Where(TypedCol[int]("F_a").V(Eq(1))),
 					GroupBy(Col("F_a")).
-						Having(Col("F_a").Eq(1)),
+						Having(TypedCol[int]("F_a").V(Eq(1))),
 				),
 			`SELECT * FROM T
 WHERE f_a = ?
@@ -32,7 +32,7 @@ GROUP BY f_a HAVING f_a = ?
 			Select(nil).
 				From(
 					table,
-					Where(Col("F_a").Eq(1)),
+					Where(TypedCol[int]("F_a").V(Eq(1))),
 					GroupBy(AscOrder(Col("F_a")), DescOrder(Col("F_b"))),
 				),
 			`
@@ -48,7 +48,7 @@ GROUP BY (f_a) ASC,(f_b) DESC
 			Select(nil).
 				From(
 					table,
-					Where(Col("F_a").Eq(1)),
+					Where(TypedCol[int]("F_a").V(Eq(1))),
 					GroupBy(AscOrder(Col("F_a")), DescOrder(Col("F_b"))),
 				),
 
