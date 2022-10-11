@@ -11,10 +11,6 @@ func EmptyCond() SqlCondition {
 type SqlCondition interface {
 	SqlExpr
 	SqlConditionMarker
-
-	And(cond SqlCondition) SqlCondition
-	Or(cond SqlCondition) SqlCondition
-	Xor(cond SqlCondition) SqlCondition
 }
 
 type SqlConditionMarker interface {
@@ -22,6 +18,9 @@ type SqlConditionMarker interface {
 }
 
 func AsCond(ex SqlExpr) *Condition {
+	if c, ok := ex.(*Condition); ok {
+		return c
+	}
 	return &Condition{expr: ex}
 }
 
@@ -41,44 +40,23 @@ func (c *Condition) IsNil() bool {
 	return c == nil || IsNilExpr(c.expr)
 }
 
-func (c *Condition) And(cond SqlCondition) SqlCondition {
-	if IsNilExpr(cond) {
-		return c
-	}
-	return And(c, cond)
-}
-
-func (c *Condition) Or(cond SqlCondition) SqlCondition {
-	if IsNilExpr(cond) {
-		return c
-	}
-	return Or(c, cond)
-}
-
-func (c *Condition) Xor(cond SqlCondition) SqlCondition {
-	if IsNilExpr(cond) {
-		return c
-	}
-	return Xor(c, cond)
-}
-
-func And(conditions ...SqlCondition) SqlCondition {
+func And(conditions ...SqlExpr) SqlCondition {
 	return composedCondition("AND", filterNilCondition(conditions)...)
 }
 
-func Or(conditions ...SqlCondition) SqlCondition {
+func Or(conditions ...SqlExpr) SqlCondition {
 	return composedCondition("OR", filterNilCondition(conditions)...)
 }
 
-func Xor(conditions ...SqlCondition) SqlCondition {
+func Xor(conditions ...SqlExpr) SqlCondition {
 	return composedCondition("XOR", filterNilCondition(conditions)...)
 }
 
-func filterNilCondition(conditions []SqlCondition) []SqlCondition {
+func filterNilCondition(conditions []SqlExpr) []SqlCondition {
 	finals := make([]SqlCondition, 0, len(conditions))
 
 	for i := range conditions {
-		condition := conditions[i]
+		condition := AsCond(conditions[i])
 		if IsNilExpr(condition) {
 			continue
 		}

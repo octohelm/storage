@@ -77,7 +77,7 @@ func TestCRUD(t *testing.T) {
 					Nickname: "test test",
 				}
 				update := Prepare(usr2).
-					Where(model.UserT.ID.Eq(100))
+					Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
 
 				err := update.Save(ctx, db)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -87,7 +87,7 @@ func TestCRUD(t *testing.T) {
 				deletedUser := &model.User{}
 				update := Prepare(&model.User{}).ForDelete().
 					Returning().Scan(deletedUser).
-					Where(model.UserT.ID.Eq(usr.ID))
+					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
 
 				err := update.Save(ctx, db)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -100,7 +100,7 @@ func TestCRUD(t *testing.T) {
 
 				update := Prepare(&model.User{}).ForDelete(HardDelete()).
 					Returning().Scan(deletedUser).
-					Where(model.UserT.ID.Eq(usr.ID))
+					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
 
 				err := update.Save(ctx, db)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -136,7 +136,9 @@ func TestCRUD(t *testing.T) {
 					}
 
 					if i >= 100 {
-						if err := Prepare(usr).ForDelete().Where(model.UserT.Age.Eq(usr.Age)).Save(ctx, db); err != nil {
+						if err := Prepare(usr).ForDelete().Where(
+							model.UserT.Age.V(sqlbuilder.Eq[int64](usr.Age)),
+						).Save(ctx, db); err != nil {
 							return err
 						}
 					}
@@ -227,7 +229,7 @@ func TestCRUD(t *testing.T) {
 					users := make([]model.User, 0)
 
 					err := From(model.UserT).
-						Where(model.UserT.Age.Eq(10)).
+						Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))).
 						Scan(&users).
 						Find(ctx, db)
 
@@ -239,9 +241,10 @@ func TestCRUD(t *testing.T) {
 					orgUsers := make([]model.OrgUser, 0)
 
 					err := From(model.OrgUserT).
-						Where(model.OrgUserT.UserID.In(
-							From(model.UserT).Select(model.UserT.ID).Where(model.UserT.Age.Eq(10)),
-						)).
+						Where(model.OrgUserT.UserID.V(InSelect(
+							model.UserT.ID,
+							From(model.UserT).Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))),
+						))).
 						Scan(&orgUsers).
 						Find(ctx, db)
 
@@ -256,9 +259,9 @@ func TestCRUD(t *testing.T) {
 					}, 0)
 
 					err := From(model.UserT).
-						Join(model.OrgUserT, model.OrgUserT.UserID.Eq(model.UserT.ID)).
-						Join(model.OrgT, model.OrgT.ID.Eq(model.OrgUserT.OrgID)).
-						Where(model.UserT.Age.Eq(10)).
+						Join(model.OrgUserT, model.OrgUserT.UserID.V(sqlbuilder.EqCol(model.UserT.ID))).
+						Join(model.OrgT, model.OrgT.ID.V(sqlbuilder.EqCol(model.OrgUserT.OrgID))).
+						Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))).
 						Scan(&users).
 						Find(ctx, db)
 

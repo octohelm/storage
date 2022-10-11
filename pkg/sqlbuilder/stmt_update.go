@@ -33,7 +33,7 @@ func (s StmtUpdate) Set(assignments ...Assignment) *StmtUpdate {
 	return &s
 }
 
-func (s StmtUpdate) Where(c SqlCondition, additions ...Addition) *StmtUpdate {
+func (s StmtUpdate) Where(c SqlExpr, additions ...Addition) *StmtUpdate {
 	s.additions = []Addition{Where(c)}
 	if len(additions) > 0 {
 		s.additions = append(s.additions, additions...)

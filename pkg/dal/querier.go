@@ -12,21 +12,27 @@ import (
 //Intersect(q Querier) Querier
 //Except(q Querier) Querier
 
+func InSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.ColumnValueExpr[T] {
+	return func(v sqlbuilder.Column) sqlbuilder.SqlExpr {
+		return sqlbuilder.Expr("? IN (?)", v, q.Select(col))
+	}
+}
+
 type Querier interface {
 	sqlbuilder.SqlExpr
 
-	Join(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier
-	CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier
-	LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier
-	RightJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier
-	FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier
+	Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
+	CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
+	LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
+	RightJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
+	FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
 
-	Where(where sqlbuilder.SqlCondition) Querier
+	Where(where sqlbuilder.SqlExpr) Querier
 
 	OrderBy(orders ...*sqlbuilder.Order) Querier
 
 	GroupBy(cols ...sqlbuilder.SqlExpr) Querier
-	Having(where sqlbuilder.SqlCondition) Querier
+	Having(where sqlbuilder.SqlExpr) Querier
 
 	Limit(v int64) Querier
 	Offset(v int64) Querier
@@ -62,14 +68,14 @@ type querier struct {
 	orders []*sqlbuilder.Order
 
 	groupBy []sqlbuilder.SqlExpr
-	having  sqlbuilder.SqlCondition
+	having  sqlbuilder.SqlExpr
 
 	limit  int64
 	offset int64
 
 	distinct bool
 
-	where    sqlbuilder.SqlCondition
+	where    sqlbuilder.SqlExpr
 	projects []sqlbuilder.SqlExpr
 
 	joins []sqlbuilder.Addition
@@ -79,28 +85,28 @@ type querier struct {
 	recv any
 }
 
-func (q querier) CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier {
-	q.joins = append(q.joins, sqlbuilder.CrossJoin(t).On(on))
+func (q querier) CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.joins = append(q.joins, sqlbuilder.CrossJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier {
-	q.joins = append(q.joins, sqlbuilder.LeftJoin(t).On(on))
+func (q querier) LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.joins = append(q.joins, sqlbuilder.LeftJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) RightJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier {
-	q.joins = append(q.joins, sqlbuilder.RightJoin(t).On(on))
+func (q querier) RightJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.joins = append(q.joins, sqlbuilder.RightJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier {
-	q.joins = append(q.joins, sqlbuilder.FullJoin(t).On(on))
+func (q querier) FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.joins = append(q.joins, sqlbuilder.FullJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) Join(t sqlbuilder.Table, on sqlbuilder.SqlCondition) Querier {
-	q.joins = append(q.joins, sqlbuilder.Join(t).On(on))
+func (q querier) Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.joins = append(q.joins, sqlbuilder.Join(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
@@ -142,7 +148,7 @@ func (q querier) Select(projects ...sqlbuilder.SqlExpr) Querier {
 	return &q
 }
 
-func (q querier) Where(where sqlbuilder.SqlCondition) Querier {
+func (q querier) Where(where sqlbuilder.SqlExpr) Querier {
 	q.where = where
 	return &q
 }
@@ -157,7 +163,7 @@ func (q querier) GroupBy(cols ...sqlbuilder.SqlExpr) Querier {
 	return &q
 }
 
-func (q querier) Having(having sqlbuilder.SqlCondition) Querier {
+func (q querier) Having(having sqlbuilder.SqlExpr) Querier {
 	q.having = having
 	return &q
 }
@@ -177,13 +183,16 @@ func (q querier) Distinct() Querier {
 	return &q
 }
 
-func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlCondition {
+func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlExpr {
 	if q.feature.softDelete {
 		if newModel, ok := q.from.(interface{ New() sqlbuilder.Model }); ok {
 			m := newModel.New()
 			if soft, ok := m.(ModelWithSoftDelete); ok {
 				f, _ := soft.SoftDeleteFieldAndValue()
-				return sqlbuilder.And(q.where, t.F(f).Eq(0))
+				return sqlbuilder.And(
+					q.where,
+					sqlbuilder.CastCol[int](t.F(f)).V(sqlbuilder.Eq(0)),
+				)
 			}
 		}
 	}
@@ -202,7 +211,7 @@ func (q *querier) build() sqlbuilder.SqlExpr {
 	additions := make([]sqlbuilder.Addition, 0, 10)
 
 	if where := q.buildWhere(from); where != nil {
-		additions = append(additions, sqlbuilder.Where(where))
+		additions = append(additions, sqlbuilder.Where(sqlbuilder.AsCond(where)))
 	}
 
 	if n := len(q.joins); n > 0 {
@@ -214,7 +223,7 @@ func (q *querier) build() sqlbuilder.SqlExpr {
 	}
 
 	if n := len(q.groupBy); n > 0 {
-		additions = append(additions, sqlbuilder.GroupBy(q.groupBy...).Having(q.having))
+		additions = append(additions, sqlbuilder.GroupBy(q.groupBy...).Having(sqlbuilder.AsCond(q.having)))
 	}
 
 	if q.limit > 0 {

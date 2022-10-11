@@ -7,6 +7,7 @@ package model
 import (
 	context "context"
 
+	github_com_octohelm_storage_pkg_datatypes "github.com/octohelm/storage/pkg/datatypes"
 	github_com_octohelm_storage_pkg_sqlbuilder "github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
@@ -71,11 +72,11 @@ func (t *tableOrg) Keys(names ...string) github_com_octohelm_storage_pkg_sqlbuil
 type tableOrg struct {
 	I         indexNameOfOrg
 	table     github_com_octohelm_storage_pkg_sqlbuilder.Table
-	ID        github_com_octohelm_storage_pkg_sqlbuilder.Column
-	Name      github_com_octohelm_storage_pkg_sqlbuilder.Column
-	CreatedAt github_com_octohelm_storage_pkg_sqlbuilder.Column
-	UpdatedAt github_com_octohelm_storage_pkg_sqlbuilder.Column
-	DeletedAt github_com_octohelm_storage_pkg_sqlbuilder.Column
+	ID        github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[uint64]
+	Name      github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[string]
+	CreatedAt github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[github_com_octohelm_storage_pkg_datatypes.Datetime]
+	UpdatedAt github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[int64]
+	DeletedAt github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[int64]
 }
 
 type indexNameOfOrg struct {
@@ -84,11 +85,11 @@ type indexNameOfOrg struct {
 }
 
 var OrgT = &tableOrg{
-	ID:        github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("ID"),
-	Name:      github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("Name"),
-	CreatedAt: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("CreatedAt"),
-	UpdatedAt: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("UpdatedAt"),
-	DeletedAt: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("DeletedAt"),
+	ID:        github_com_octohelm_storage_pkg_sqlbuilder.CastCol[uint64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("ID")),
+	Name:      github_com_octohelm_storage_pkg_sqlbuilder.CastCol[string](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("Name")),
+	CreatedAt: github_com_octohelm_storage_pkg_sqlbuilder.CastCol[github_com_octohelm_storage_pkg_datatypes.Datetime](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("CreatedAt")),
+	UpdatedAt: github_com_octohelm_storage_pkg_sqlbuilder.CastCol[int64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("UpdatedAt")),
+	DeletedAt: github_com_octohelm_storage_pkg_sqlbuilder.CastCol[int64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).F("DeletedAt")),
 
 	I: indexNameOfOrg{
 		Primary: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&Org{}).Cols([]string{
@@ -155,9 +156,9 @@ func (t *tableOrgUser) Keys(names ...string) github_com_octohelm_storage_pkg_sql
 type tableOrgUser struct {
 	I      indexNameOfOrgUser
 	table  github_com_octohelm_storage_pkg_sqlbuilder.Table
-	ID     github_com_octohelm_storage_pkg_sqlbuilder.Column
-	UserID github_com_octohelm_storage_pkg_sqlbuilder.Column
-	OrgID  github_com_octohelm_storage_pkg_sqlbuilder.Column
+	ID     github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[uint64]
+	UserID github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[uint64]
+	OrgID  github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[uint64]
 }
 
 type indexNameOfOrgUser struct {
@@ -166,9 +167,9 @@ type indexNameOfOrgUser struct {
 }
 
 var OrgUserT = &tableOrgUser{
-	ID:     github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&OrgUser{}).F("ID"),
-	UserID: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&OrgUser{}).F("UserID"),
-	OrgID:  github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&OrgUser{}).F("OrgID"),
+	ID:     github_com_octohelm_storage_pkg_sqlbuilder.CastCol[uint64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&OrgUser{}).F("ID")),
+	UserID: github_com_octohelm_storage_pkg_sqlbuilder.CastCol[uint64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&OrgUser{}).F("UserID")),
+	OrgID:  github_com_octohelm_storage_pkg_sqlbuilder.CastCol[uint64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&OrgUser{}).F("OrgID")),
 
 	I: indexNameOfOrgUser{
 		Primary: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&OrgUser{}).Cols([]string{
@@ -251,15 +252,15 @@ func (t *tableUser) Keys(names ...string) github_com_octohelm_storage_pkg_sqlbui
 type tableUser struct {
 	I         indexNameOfUser
 	table     github_com_octohelm_storage_pkg_sqlbuilder.Table
-	ID        github_com_octohelm_storage_pkg_sqlbuilder.Column
-	Name      github_com_octohelm_storage_pkg_sqlbuilder.Column
-	Nickname  github_com_octohelm_storage_pkg_sqlbuilder.Column
-	Username  github_com_octohelm_storage_pkg_sqlbuilder.Column
-	Gender    github_com_octohelm_storage_pkg_sqlbuilder.Column
-	Age       github_com_octohelm_storage_pkg_sqlbuilder.Column
-	CreatedAt github_com_octohelm_storage_pkg_sqlbuilder.Column
-	UpdatedAt github_com_octohelm_storage_pkg_sqlbuilder.Column
-	DeletedAt github_com_octohelm_storage_pkg_sqlbuilder.Column
+	ID        github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[uint64]
+	Name      github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[string]
+	Nickname  github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[string]
+	Username  github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[string]
+	Gender    github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[Gender]
+	Age       github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[int64]
+	CreatedAt github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[github_com_octohelm_storage_pkg_datatypes.Datetime]
+	UpdatedAt github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[int64]
+	DeletedAt github_com_octohelm_storage_pkg_sqlbuilder.TypedColumn[int64]
 }
 
 type indexNameOfUser struct {
@@ -269,15 +270,15 @@ type indexNameOfUser struct {
 }
 
 var UserT = &tableUser{
-	ID:        github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("ID"),
-	Name:      github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Name"),
-	Nickname:  github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Nickname"),
-	Username:  github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Username"),
-	Gender:    github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Gender"),
-	Age:       github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Age"),
-	CreatedAt: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("CreatedAt"),
-	UpdatedAt: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("UpdatedAt"),
-	DeletedAt: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("DeletedAt"),
+	ID:        github_com_octohelm_storage_pkg_sqlbuilder.CastCol[uint64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("ID")),
+	Name:      github_com_octohelm_storage_pkg_sqlbuilder.CastCol[string](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Name")),
+	Nickname:  github_com_octohelm_storage_pkg_sqlbuilder.CastCol[string](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Nickname")),
+	Username:  github_com_octohelm_storage_pkg_sqlbuilder.CastCol[string](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Username")),
+	Gender:    github_com_octohelm_storage_pkg_sqlbuilder.CastCol[Gender](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Gender")),
+	Age:       github_com_octohelm_storage_pkg_sqlbuilder.CastCol[int64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("Age")),
+	CreatedAt: github_com_octohelm_storage_pkg_sqlbuilder.CastCol[github_com_octohelm_storage_pkg_datatypes.Datetime](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("CreatedAt")),
+	UpdatedAt: github_com_octohelm_storage_pkg_sqlbuilder.CastCol[int64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("UpdatedAt")),
+	DeletedAt: github_com_octohelm_storage_pkg_sqlbuilder.CastCol[int64](github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).F("DeletedAt")),
 
 	I: indexNameOfUser{
 		Primary: github_com_octohelm_storage_pkg_sqlbuilder.TableFromModel(&User{}).Cols([]string{

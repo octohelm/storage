@@ -7,7 +7,7 @@ import (
 
 type JoinAddition interface {
 	Addition
-	On(joinCondition SqlCondition) JoinAddition
+	On(joinCondition SqlExpr) JoinAddition
 	Using(joinColumnList ...Column) JoinAddition
 }
 
@@ -41,7 +41,7 @@ func CrossJoin(table SqlExpr) JoinAddition {
 type join struct {
 	prefix         string
 	target         SqlExpr
-	joinCondition  SqlCondition
+	joinCondition  SqlExpr
 	joinColumnList []Column
 }
 
@@ -49,7 +49,7 @@ func (j join) AdditionType() AdditionType {
 	return AdditionJoin
 }
 
-func (j join) On(joinCondition SqlCondition) JoinAddition {
+func (j join) On(joinCondition SqlExpr) JoinAddition {
 	j.joinCondition = joinCondition
 	return &j
 }

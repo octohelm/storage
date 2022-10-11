@@ -144,12 +144,13 @@ var @Type'T = &table@Type{
 
 		"FieldNames": func(sw gengo.SnippetWriter) {
 			cols.RangeCol(func(col sqlbuilder.Column, idx int) bool {
-				if col.Def().DeprecatedActions == nil {
+				if def := col.Def(); def.DeprecatedActions == nil {
 					sw.Render(gengo.Snippet{gengo.T: `
-@FieldName @sqlbuilderColumn
+@FieldName @sqlbuilderTypedColumn[@FieldType]
 `,
-						"FieldName":        gengo.ID(col.FieldName()),
-						"sqlbuilderColumn": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder.Column"),
+						"FieldName":             gengo.ID(col.FieldName()),
+						"FieldType":             gengo.ID(def.Type.String()),
+						"sqlbuilderTypedColumn": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder.TypedColumn"),
 					})
 				}
 				return true
@@ -158,14 +159,16 @@ var @Type'T = &table@Type{
 
 		"fieldNameValues": func(sw gengo.SnippetWriter) {
 			cols.RangeCol(func(col sqlbuilder.Column, idx int) bool {
-				if col.Def().DeprecatedActions == nil {
+				if def := col.Def(); def.DeprecatedActions == nil {
 					sw.Render(gengo.Snippet{gengo.T: `
-@FieldName: @sqlbuilderTableFromModel(&@Type{}).F(@FieldNameValue),
+@FieldName: @sqlbuilderCastCol[@FieldType](@sqlbuilderTableFromModel(&@Type{}).F(@FieldNameValue)),
 `,
 						"Type":           gengo.ID(named.Obj()),
 						"FieldName":      gengo.ID(col.FieldName()),
 						"FieldNameValue": col.FieldName(),
+						"FieldType":      gengo.ID(def.Type.String()),
 
+						"sqlbuilderCastCol":        gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder.CastCol"),
 						"sqlbuilderTableFromModel": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder.TableFromModel"),
 					})
 				}
@@ -370,6 +373,7 @@ func (g *tableGen) scanTable(c gengo.Context, named *types.Named) (sqlbuilder.Ta
 				tags, doc = c.Package(named.Obj().Pkg().Path()).Doc(tsf.Pos())
 			}
 
+			def.Type = p.Type
 			def.Comment, def.Description = commentAndDesc(doc)
 
 			if values, ok := tags["rel"]; ok {

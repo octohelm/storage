@@ -4,9 +4,9 @@ import (
 	"context"
 )
 
-func Where(c SqlCondition) Addition {
+func Where(c SqlExpr) Addition {
 	return &where{
-		condition: c,
+		condition: AsCond(c),
 	}
 }
 

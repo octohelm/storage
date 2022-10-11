@@ -12,6 +12,7 @@ require (
 	github.com/octohelm/gengo v0.0.0-20220810095312-7254de8952c1
 	github.com/octohelm/x v0.0.0-20220721104447-6248adcd9f3f
 	github.com/pkg/errors v0.9.1
+	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
 	modernc.org/sqlite v1.18.1
 )
 

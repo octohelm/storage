@@ -16,7 +16,7 @@ func TestLimit(t *testing.T) {
 				From(
 					table,
 					Where(
-						Col("F_a").Eq(1),
+						TypedCol[int]("F_a").V(Eq(1)),
 					),
 					Limit(1),
 				), `
@@ -31,7 +31,7 @@ LIMIT 1
 				From(
 					table,
 					Where(
-						Col("F_a").Eq(1),
+						TypedCol[int]("F_a").V(Eq(1)),
 					),
 					Limit(-1),
 				), `
@@ -47,7 +47,7 @@ WHERE f_a = ?
 				From(
 					table,
 					Where(
-						Col("F_a").Eq(1),
+						TypedCol[int]("F_a").V(Eq(1)),
 					),
 					Limit(10).Offset(200),
 				),

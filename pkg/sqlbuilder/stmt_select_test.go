@@ -16,7 +16,7 @@ func TestSelect(t *testing.T) {
 				From(
 					table,
 					Where(
-						Col("F_a").Eq(1),
+						TypedCol[int]("F_a").V(Eq(1)),
 					),
 				),
 			`
@@ -29,7 +29,7 @@ WHERE f_a = ?`, 1)
 				From(
 					table,
 					Where(
-						Col("F_a").Eq(1),
+						TypedCol[int]("F_a").V(Eq(1)),
 					),
 					Comment("comment"),
 				),
@@ -45,7 +45,7 @@ WHERE f_a = ?
 			Select(Col("F_a")).
 				From(table,
 					Where(
-						Col("F_a").Eq(1),
+						TypedCol[int]("F_a").V(Eq(1)),
 					),
 				),
 			`
@@ -57,7 +57,7 @@ WHERE f_a = ?`, 1)
 		testutil.ShouldBeExpr(t,
 			Select(nil).From(
 				table,
-				Where(Col("F_a").Eq(1)),
+				Where(TypedCol[int]("F_a").V(Eq(1))),
 				ForUpdate(),
 			),
 			`

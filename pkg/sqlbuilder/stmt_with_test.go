@@ -15,20 +15,25 @@ func TestWithStmt(t *testing.T) {
 		testutil.ShouldBeExpr(t,
 			With((&GroupWithParent{}).T(), func(tmpTableGroupWithParent Table) SqlExpr {
 				s := Select(MultiMayAutoAlias(
-					g.T().F("f_group_id"),
-					gr.T().F("f_group_id"),
+					TypedColOf[int](g.T(), "f_group_id"),
+					TypedColOf[int](gr.T(), "f_group_id"),
 				)).
 					From(gr.T(),
-						RightJoin(g.T()).On(g.T().F("f_group_id").Eq(gr.T().F("f_group_id"))),
+						RightJoin(g.T()).On(
+							TypedColOf[int](g.T(), "f_group_id").V(EqCol(TypedColOf[int](gr.T(), "f_group_id")))),
 					)
 				return s
 			}).With((&GroupWithParent{}).T(), func(tmpTableGroupWithParent Table) SqlExpr {
 				s := Select(MultiMayAutoAlias(
-					g.T().F("f_group_id"),
-					gr.T().F("f_group_id"),
+					TypedColOf[int](g.T(), "f_group_id"),
+					TypedColOf[int](gr.T(), "f_group_id"),
 				)).
 					From(gr.T(),
-						RightJoin(g.T()).On(g.T().F("f_group_id").Eq(gr.T().F("f_group_id"))),
+						RightJoin(g.T()).On(
+							TypedColOf[int](g.T(), "f_group_id").V(
+								EqCol(TypedColOf[int](gr.T(), "f_group_id")),
+							),
+						),
 					)
 				return s
 			}).
@@ -51,10 +56,13 @@ SELECT * FROM t_group_with_parent
 			WithRecursive((&GroupWithParentAndChildren{}).T(), func(tmpTableGroupWithParentAndChildren Table) SqlExpr {
 				return With((&GroupWithParent{}).T(), func(tmpTableGroupWithParent Table) SqlExpr {
 					s := Select(MultiMayAutoAlias(
-						g.T().F("f_group_id"),
-						gr.T().F("f_parent_group_id"),
+						TypedColOf[int](g.T(), "f_group_id"),
+						TypedColOf[int](gr.T(), "f_parent_group_id"),
 					)).
-						From(gr.T(), RightJoin(g.T()).On(g.T().F("f_group_id").Eq(gr.T().F("f_group_id"))))
+						From(gr.T(), RightJoin(g.T()).On(
+							TypedColOf[int](g.T(), "f_group_id").V(
+								EqCol(TypedColOf[int](gr.T(), "f_group_id"))),
+						))
 					return s
 				}).Exec(func(tables ...Table) SqlExpr {
 					tmpTableGroupWithParent := tables[0]
@@ -66,7 +74,9 @@ SELECT * FROM t_group_with_parent
 						),
 					).From(
 						tmpTableGroupWithParent,
-						Where(tmpTableGroupWithParent.F("f_group_id").Eq(1201375536060956676)),
+						Where(
+							TypedColOf[int](tmpTableGroupWithParent, "f_group_id").V(Eq(1201375536060956676)),
+						),
 						Union().All(
 							Select(MultiMayAutoAlias(
 								tmpTableGroupWithParent.F("f_group_id"),
@@ -77,9 +87,10 @@ SELECT * FROM t_group_with_parent
 								CrossJoin(tmpTableGroupWithParentAndChildren),
 								Where(
 									And(
-										tmpTableGroupWithParent.F("f_group_id").Neq(tmpTableGroupWithParentAndChildren.F("f_group_id")),
-										tmpTableGroupWithParent.F("f_parent_group_id").Eq(tmpTableGroupWithParentAndChildren.F("f_group_id")),
-									)),
+										TypedColOf[int](tmpTableGroupWithParent, "f_group_id").V(NeqCol(TypedColOf[int](tmpTableGroupWithParentAndChildren, "f_group_id"))),
+										TypedColOf[int](tmpTableGroupWithParent, "f_parent_group_id").V(EqCol(TypedColOf[int](tmpTableGroupWithParentAndChildren, "f_group_id"))),
+									),
+								),
 							),
 						),
 					)

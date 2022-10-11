@@ -29,7 +29,7 @@ func catalog(ctx context.Context, a adapter.Adapter, dbName string) (*sqlbuilder
 	stmt := sqlbuilder.Select(tableColumnSchema.Cols()).From(tableColumnSchema,
 		sqlbuilder.Where(
 			sqlbuilder.And(
-				tableColumnSchema.F("TABLE_SCHEMA").Eq(tableSchema),
+				sqlbuilder.TypedColOf[string](tableColumnSchema, "TABLE_SCHEMA").V(sqlbuilder.Eq(tableSchema)),
 			),
 		),
 	)
@@ -69,7 +69,7 @@ func catalog(ctx context.Context, a adapter.Adapter, dbName string) (*sqlbuilder
 					tableIndexSchema,
 					sqlbuilder.Where(
 						sqlbuilder.And(
-							tableIndexSchema.F("TABLE_SCHEMA").Eq(tableSchema),
+							sqlbuilder.TypedColOf[string](tableIndexSchema, "TABLE_SCHEMA").V(sqlbuilder.Eq(tableSchema)),
 						),
 					),
 				),

@@ -42,7 +42,9 @@ INSERT INTO T (f_a,f_b) VALUES (?,?)
 		testutil.ShouldBeExpr(t,
 			Insert().
 				Into(table).
-				Values(Cols("f_a", "f_b"), Select(Cols("f_a", "f_b")).From(table, Where(table.F("f_a").Eq(1)))),
+				Values(Cols("f_a", "f_b"),
+					Select(Cols("f_a", "f_b")).
+						From(table, Where(TypedColOf[int](table, "f_a").V(Eq(1))))),
 			`
 INSERT INTO T (f_a,f_b) SELECT f_a,f_b FROM T
 WHERE f_a = ?

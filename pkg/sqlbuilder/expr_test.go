@@ -61,12 +61,15 @@ func TestEx(t *testing.T) {
 	})
 
 	t.Run("flatten slice for slice with named byte", func(t *testing.T) {
+		fID := TypedCol[int]("f_id")
+		fValue := TypedCol[Byte]("f_value")
+
 		testutil.ShouldBeExpr(t,
 			And(
-				And(nil, Col("f_id").In([]int{28})),
-				Col("f_id").In([]Byte{28}),
+				And(nil, fID.V(In(28))),
+				fValue.V(In(Byte(28))),
 			),
-			"((f_id IN (?))) AND (f_id IN (?))", 28, Byte(28),
+			"((f_id IN (?))) AND (f_value IN (?))", 28, Byte(28),
 		)
 	})
 
@@ -139,26 +142,20 @@ func BenchmarkEx(b *testing.B) {
 			}
 		})
 
-		b.Run("by chain", func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				e := AsCond(Expr(`#ID > ?`, 1)).And(AsCond(Expr(`#ID < ?`, 10)))
-				e.Ex(context.Background())
-			}
-		})
-
 		b.Run("by expr", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				e := And(
-					Col("f_id").Lt(0),
-					Col("f_id").In([]int{1, 2, 3}),
+					TypedCol[int]("f_id").V(Lt(1)),
+					TypedCol[int]("f_id").V(In(1, 2, 3)),
 				)
 				e.Ex(context.Background())
 			}
 		})
 
 		b.Run("by expr without re created", func(b *testing.B) {
-			left := Col("f_id").Lt(0)
-			right := Col("f_id").In([]int{1, 2, 3})
+			fid := TypedCol[int]("f_id")
+			left := fid.V(Lt(0))
+			right := fid.V(In(1, 2, 3))
 
 			b.Run("single", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
