@@ -17,4 +17,4 @@ gen:
 	go run ./internal/cmd/gen
 
 serve.dbs:
-	cd hack && docker compose up -d
+	cd hack && nerdctl compose up -d
