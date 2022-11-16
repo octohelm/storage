@@ -5,14 +5,13 @@ go 1.19
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-courier/logr v0.0.2
+	github.com/go-courier/logr v0.1.0
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/octohelm/gengo v0.0.0-20221010061850-f63d97b13fe9
 	github.com/octohelm/x v0.0.0-20220811034253-019992077a5d
 	github.com/pkg/errors v0.9.1
-	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
 	modernc.org/sqlite v1.19.2
 )
 
