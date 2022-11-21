@@ -42,10 +42,10 @@ func TestWithStmt(t *testing.T) {
 				}),
 			`
 WITH t_group_with_parent(f_group_id,f_parent_group_id) AS (
-SELECT t_group.f_group_id AS f_group_id, t_group_relation.f_group_id AS f_group_id FROM t_group_relation
+SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_group_id AS t_group_relation__f_group_id FROM t_group_relation
 RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id
 ), t_group_with_parent(f_group_id,f_parent_group_id) AS (
-SELECT t_group.f_group_id AS f_group_id, t_group_relation.f_group_id AS f_group_id FROM t_group_relation
+SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_group_id AS t_group_relation__f_group_id FROM t_group_relation
 RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id
 )
 SELECT * FROM t_group_with_parent
@@ -101,12 +101,12 @@ SELECT * FROM t_group_with_parent
 			`
 WITH RECURSIVE t_group_with_parent_and_children(f_group_id,f_parent_group_id,f_depth) AS (
 WITH t_group_with_parent(f_group_id,f_parent_group_id) AS (
-SELECT t_group.f_group_id AS f_group_id, t_group_relation.f_parent_group_id AS f_parent_group_id FROM t_group_relation
+SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_parent_group_id AS t_group_relation__f_parent_group_id FROM t_group_relation
 RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id
 )
 SELECT f_group_id, f_parent_group_id, 0 AS f_depth FROM t_group_with_parent
 WHERE f_group_id = ?
-UNION ALL SELECT t_group_with_parent.f_group_id AS f_group_id, t_group_with_parent.f_parent_group_id AS f_parent_group_id, t_group_with_parent_and_children.f_depth + 1 AS f_depth FROM t_group_with_parent
+UNION ALL SELECT t_group_with_parent.f_group_id AS t_group_with_parent__f_group_id, t_group_with_parent.f_parent_group_id AS t_group_with_parent__f_parent_group_id, t_group_with_parent_and_children.f_depth + 1 AS f_depth FROM t_group_with_parent
 CROSS JOIN t_group_with_parent_and_children
 WHERE (t_group_with_parent.f_group_id <> t_group_with_parent_and_children.f_group_id) AND (t_group_with_parent.f_parent_group_id = t_group_with_parent_and_children.f_group_id)
 )

@@ -140,7 +140,7 @@ func (c *column[T]) Ex(ctx context.Context) *Ex {
 			panic(fmt.Errorf("table of %s is not defined", c.name))
 		}
 		if toggles.Is(ToggleNeedAutoAlias) {
-			return Expr("?.? AS ?", c.table, Expr(c.name), Expr(c.name)).Ex(ctx)
+			return Expr("?.? AS ?", c.table, Expr(c.name), Expr(fmt.Sprintf("%s__%s", c.table.TableName(), c.name))).Ex(ctx)
 		}
 		return Expr("?.?", c.table, Expr(c.name)).Ex(ctx)
 	}
