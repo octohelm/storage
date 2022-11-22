@@ -35,6 +35,8 @@ func NotInSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.Col
 type Querier interface {
 	sqlbuilder.SqlExpr
 
+	With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifiers ...string) Querier
+
 	Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
 	CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
 	LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
@@ -77,7 +79,8 @@ func From(from sqlbuilder.Table, fns ...OptionFunc) Querier {
 }
 
 type querier struct {
-	from sqlbuilder.Table
+	from     sqlbuilder.Table
+	withStmt *sqlbuilder.WithStmt
 
 	orders []*sqlbuilder.Order
 
@@ -97,6 +100,15 @@ type querier struct {
 	feature
 
 	recv any
+}
+
+func (q querier) With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifiers ...string) Querier {
+	if q.withStmt == nil {
+		q.withStmt = sqlbuilder.With(t, build, modifiers...)
+		return &q
+	}
+	q.withStmt = q.withStmt.With(t, build)
+	return &q
 }
 
 func (q querier) CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
@@ -247,11 +259,19 @@ func (q *querier) build() sqlbuilder.SqlExpr {
 		additions = append(additions, sqlbuilder.Limit(q.limit).Offset(q.offset))
 	}
 
-	if q.projects == nil {
-		return sqlbuilder.Select(nil).From(from, additions...)
+	var projects sqlbuilder.SqlExpr
+
+	if q.projects != nil {
+		projects = sqlbuilder.MultiMayAutoAlias(q.projects...)
 	}
 
-	return sqlbuilder.Select(sqlbuilder.MultiMayAutoAlias(q.projects...)).From(from, additions...)
+	if q.withStmt != nil {
+		return q.withStmt.Exec(func(tables ...sqlbuilder.Table) sqlbuilder.SqlExpr {
+			return sqlbuilder.Select(projects, modifies...).From(from, additions...)
+		})
+	}
+
+	return sqlbuilder.Select(projects, modifies...).From(from, additions...)
 }
 
 func (q *querier) Count(ctx context.Context) (int, error) {
