@@ -174,6 +174,7 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 
 	for t := s.Scan(); t != textscanner.EOF; t = s.Scan() {
 		part := s.TokenText()
+
 		switch part {
 		case "(":
 			continue
@@ -183,6 +184,8 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 				colNameAndOption += "/" + parts[1]
 			}
 			colNameAndOptions = append(colNameAndOptions, colNameAndOption)
+			// reset
+			parts = make([]string, 0)
 			continue
 		}
 		parts = append(parts, part)

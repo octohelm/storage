@@ -123,7 +123,7 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 		}
 
 		key.Columns().RangeCol(func(col sqlbuilder.Column, idx int) bool {
-			if tpe, ok := colChanges[col.Name()]; ok && tpe == modifyTableColumn {
+			if tpe, ok := colChanges[col.Name()]; ok && tpe != modifyTableColumn {
 				// always re index when col type modified
 				migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
 				migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
