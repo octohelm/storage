@@ -12,11 +12,11 @@ require (
 	github.com/octohelm/gengo v0.0.0-20221010061850-f63d97b13fe9
 	github.com/octohelm/x v0.0.0-20220811034253-019992077a5d
 	github.com/pkg/errors v0.9.1
-	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75
-	modernc.org/sqlite v1.19.2
+	modernc.org/sqlite v1.20.1
 )
 
 require (
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -34,8 +34,8 @@ require (
 	golang.org/x/tools v0.2.0 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
-	modernc.org/ccgo/v3 v3.16.13-0.20221017192402-261537637ce8 // indirect
-	modernc.org/libc v1.21.4 // indirect
+	modernc.org/ccgo/v3 v3.16.13 // indirect
+	modernc.org/libc v1.22.2 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.4.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
