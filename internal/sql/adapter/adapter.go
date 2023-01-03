@@ -54,8 +54,11 @@ type DBSetting interface {
 
 var adapters = sync.Map{}
 
-func Register(a Adapter) {
+func Register(a Adapter, aliases ...string) {
 	adapters.Store(a.DriverName(), a)
+	for i := range aliases {
+		adapters.Store(aliases[i], a)
+	}
 }
 
 func Open(ctx context.Context, dsn string) (a Adapter, err error) {

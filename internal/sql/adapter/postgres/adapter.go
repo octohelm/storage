@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	adapter.Register(&pgAdapter{})
+	adapter.Register(&pgAdapter{}, "postgresql")
 }
 
 func Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
