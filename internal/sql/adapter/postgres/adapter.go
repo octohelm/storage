@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
 	"github.com/octohelm/storage/pkg/dberr"
@@ -91,15 +91,19 @@ func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, er
 }
 
 func isErrorConflict(err error) bool {
-	if e, ok := dberr.UnwrapAll(err).(*pgconn.PgError); ok && e.Code == "23505" {
-		return true
+	if e, ok := dberr.UnwrapAll(err).(*pgconn.PgError); ok {
+		if e.Code == "23505" {
+			return true
+		}
 	}
 	return false
 }
 
 func isErrorUnknownDatabase(err error) bool {
-	if e, ok := dberr.UnwrapAll(err).(*pgconn.PgError); ok && e.Code == "3D000" {
-		return true
+	if e, ok := dberr.UnwrapAll(err).(*pgconn.PgError); ok {
+		if e.Code == "3D000" {
+			return true
+		}
 	}
 	return false
 }

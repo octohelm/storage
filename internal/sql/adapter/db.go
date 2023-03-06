@@ -32,7 +32,7 @@ func (d *db) Exec(ctx context.Context, expr sqlbuilder.SqlExpr) (sql.Result, err
 		return nil, nil
 	}
 	if err := e.Err(); err != nil {
-		return nil, err
+		return nil, d.convertErr(err)
 	}
 
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {
