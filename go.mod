@@ -11,7 +11,7 @@ require (
 	github.com/octohelm/gengo v0.0.0-20221010061850-f63d97b13fe9
 	github.com/octohelm/x v0.0.0-20220811034253-019992077a5d
 	github.com/pkg/errors v0.9.1
-	modernc.org/sqlite v1.21.0
+	modernc.org/sqlite v1.21.1
 )
 
 require (
