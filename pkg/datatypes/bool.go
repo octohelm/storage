@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 )
 
-// openapi:type boolean
 type Bool int
 
 const (
@@ -17,6 +16,18 @@ var _ interface {
 	json.Unmarshaler
 	json.Marshaler
 } = (*Bool)(nil)
+
+func (Bool) OpenAPISchemaType() []string {
+	return []string{"boolean"}
+}
+
+func (v Bool) MarshalJSON() ([]byte, error) {
+	return v.MarshalText()
+}
+
+func (v *Bool) UnmarshalJSON(data []byte) (err error) {
+	return v.UnmarshalText(data)
+}
 
 func (v Bool) MarshalText() ([]byte, error) {
 	switch v {
@@ -37,12 +48,4 @@ func (v *Bool) UnmarshalText(data []byte) (err error) {
 		*v = BOOL_TRUE
 	}
 	return
-}
-
-func (v Bool) MarshalJSON() ([]byte, error) {
-	return v.MarshalText()
-}
-
-func (v *Bool) UnmarshalJSON(data []byte) (err error) {
-	return v.UnmarshalText(data)
 }
