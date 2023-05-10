@@ -126,7 +126,6 @@ func ForEachStructFieldValue(ctx context.Context, v interface{}, fn func(*Struct
 
 		sf.Field = *f
 		sf.Value = f.FieldValue(rv)
-
 		sf.TableName = TableNameFromContext(ctx)
 
 		if tableAlias := TableAliasFromContext(ctx); tableAlias != "" {

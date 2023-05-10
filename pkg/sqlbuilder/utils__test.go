@@ -86,10 +86,18 @@ func TestParseDef(t *testing.T) {
 	})
 }
 
-type User struct {
+type UserBase struct {
 	ID       uint64 `db:"f_id"`
 	Name     string `db:"f_name"`
 	Username string `db:"f_username"`
+}
+
+func (UserBase) TableName() string {
+	return "t_user_base"
+}
+
+type User struct {
+	UserBase
 }
 
 func (User) TableName() string {
@@ -128,11 +136,9 @@ func TestColumnsByStruct(t *testing.T) {
 
 	t.Run("joined", func(t *testing.T) {
 		q := ColumnsByStruct(&OrgUserAll{}).Ex(context.Background()).Query()
-
 		for _, g := range strings.Split(q, ", ") {
 			t.Log(g)
 		}
-
 		testutil.Expect(t, q, testutil.Equal("t_org_user.f_org_id AS t_org_user__f_org_id, t_org_user.f_user_id AS t_org_user__f_user_id, t_user.f_id AS t_user__f_id, t_user.f_name AS t_user__f_name, t_user.f_username AS t_user__f_username, t_org.f_id AS t_org__f_id, t_org.f_name AS t_org__f_name"))
 	})
 }

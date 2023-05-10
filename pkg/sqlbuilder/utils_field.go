@@ -54,76 +54,91 @@ func EachStructField(ctx context.Context, tpe typesx.Type, each func(p *StructFi
 	if tpe.Kind() != reflect.Struct {
 		panic(fmt.Errorf("model %s must be a struct", tpe.Name()))
 	}
+	(&fieldWalker{}).walk(ctx, tpe, each)
+}
 
-	var walk func(tpe typesx.Type, modelLoc []int, parents ...int)
+type fieldWalker struct {
+	loc       []int
+	modelLoc  []int
+	modelType typesx.Type
+}
 
-	walk = func(tpe typesx.Type, modelLoc []int, parents ...int) {
-		if ok := tpe.Implements(typesx.FromRType(typeModel)); ok {
-			modelLoc = parents
-		}
+func (w *fieldWalker) walk(ctx context.Context, tpe typesx.Type, each func(p *StructField) bool) {
+	modelLoc := w.modelLoc[:]
+	modelType := w.modelType
 
-		for i := 0; i < tpe.NumField(); i++ {
-			f := tpe.Field(i)
+	if ok := tpe.Implements(typesx.FromRType(typeModel)); ok {
+		if modelType != nil && modelType.NumField() == 1 && modelType.Field(0).Anonymous() {
+			// extendable
 
-			if !ast.IsExported(f.Name()) {
-				continue
-			}
-
-			loc := append(parents, i)
-
-			tags := reflectx.ParseStructTags(string(f.Tag()))
-
-			displayName := f.Name()
-
-			tagDB, hasDB := tags["db"]
-			if hasDB {
-				if name := tagDB.Name(); name == "-" {
-					// skip name:"-"
-					continue
-				} else {
-					if name != "" {
-						displayName = name
-					}
-				}
-			}
-
-			if (f.Anonymous() || f.Type().Name() == f.Name()) && (!hasDB) {
-				fieldType := f.Type()
-
-				if !fieldType.Implements(typesx.FromRType(driverValuer)) {
-					for fieldType.Kind() == reflect.Ptr {
-						fieldType = fieldType.Elem()
-					}
-
-					if fieldType.Kind() == reflect.Struct {
-						walk(fieldType, modelLoc, loc...)
-						continue
-					}
-				}
-			}
-
-			p := &StructField{}
-			p.FieldName = f.Name()
-			p.Type = f.Type()
-			p.Field = f
-			p.Tags = tags
-			p.Name = strings.ToLower(displayName)
-
-			p.Loc = make([]int, len(loc))
-			copy(p.Loc, loc)
-
-			p.ModelLoc = make([]int, len(modelLoc))
-			copy(p.ModelLoc, modelLoc)
-
-			p.ColumnType = *ColumnDefFromTypeAndTag(p.Type, string(tagDB))
-
-			if !each(p) {
-				break
-			}
+		} else {
+			modelType = tpe
+			modelLoc = w.loc[:]
 		}
 	}
 
-	walk(tpe, []int{})
+	for i := 0; i < tpe.NumField(); i++ {
+		f := tpe.Field(i)
+
+		if !ast.IsExported(f.Name()) {
+			continue
+		}
+
+		loc := append(w.loc, i)
+
+		tags := reflectx.ParseStructTags(string(f.Tag()))
+		displayName := f.Name()
+
+		tagDB, hasDB := tags["db"]
+		if hasDB {
+			if name := tagDB.Name(); name == "-" {
+				// skip name:"-"
+				continue
+			} else {
+				if name != "" {
+					displayName = name
+				}
+			}
+		}
+
+		if (f.Anonymous() || f.Type().Name() == f.Name()) && (!hasDB) {
+			fieldType := f.Type()
+
+			if !fieldType.Implements(typesx.FromRType(driverValuer)) {
+				for fieldType.Kind() == reflect.Ptr {
+					fieldType = fieldType.Elem()
+				}
+
+				if fieldType.Kind() == reflect.Struct {
+					(&fieldWalker{
+						loc:       loc,
+						modelType: modelType,
+						modelLoc:  modelLoc,
+					}).walk(ctx, fieldType, each)
+					continue
+				}
+			}
+		}
+
+		p := &StructField{}
+		p.FieldName = f.Name()
+		p.Type = f.Type()
+		p.Field = f
+		p.Tags = tags
+		p.Name = strings.ToLower(displayName)
+
+		p.Loc = make([]int, len(loc))
+		copy(p.Loc, loc)
+
+		p.ModelLoc = make([]int, len(modelLoc))
+		copy(p.ModelLoc, modelLoc)
+
+		p.ColumnType = *ColumnDefFromTypeAndTag(p.Type, string(tagDB))
+
+		if !each(p) {
+			break
+		}
+	}
 }
 
 type StructField struct {
