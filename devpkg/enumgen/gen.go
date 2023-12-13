@@ -40,6 +40,7 @@ func (g *enumGen) GenerateType(c gengo.Context, named *types.Named) error {
 
 func (g *enumGen) genEnums(c gengo.Context, named *types.Named, enum *EnumType) {
 	options := make([]Option, len(enum.Constants))
+	tpeObj := named.Obj()
 
 	for i := range enum.Constants {
 		options[i].Name = enum.Constants[i].Name()
@@ -48,6 +49,8 @@ func (g *enumGen) genEnums(c gengo.Context, named *types.Named, enum *EnumType) 
 	}
 
 	c.Render(gengo.Snippet{gengo.T: `
+var Invalid@Type = @errorsNew("invalid @Type")
+
 func (@Type) EnumValues() []any {
 	return []any{
 		@constValues
@@ -55,7 +58,8 @@ func (@Type) EnumValues() []any {
 }
 `,
 
-		"Type": gengo.ID(named.Obj()),
+		"Type":      gengo.ID(tpeObj),
+		"errorsNew": gengo.ID("github.com/pkg/errors.New"),
 		"constValues": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
 			return gengo.Snippet{
 				gengo.T:     "@ConstName,",
@@ -63,6 +67,8 @@ func (@Type) EnumValues() []any {
 			}
 		}),
 	})
+
+	g.genLabel(c, tpeObj, enum, options)
 }
 
 type Option struct {
@@ -71,9 +77,58 @@ type Option struct {
 	Value any
 }
 
+func (g *enumGen) genLabel(c gengo.Context, typ *types.TypeName, enum *EnumType, options []Option) {
+	c.Render(gengo.Snippet{gengo.T: `
+func Parse@Type'LabelString(label string) (@Type, error) {
+	switch label {
+		@labelToConstCases
+		default:
+			return @ConstUnknown, Invalid@Type
+	}
+}
+
+func (v @Type) Label() string {
+	switch v {
+		@constToLabelCases
+		default:
+			return "UNKNOWN"
+	}
+}
+
+`,
+
+		"Type": gengo.ID(typ.Name()),
+		"ConstUnknown": func() gengo.Name {
+			if enum.ConstUnknown != nil {
+				return gengo.ID(enum.ConstUnknown)
+			}
+			return gengo.ID(`""`)
+		}(),
+		"labelToConstCases": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
+			return gengo.Snippet{
+				gengo.T: `
+case @labelValue:
+	return @ConstName, nil
+`,
+				"labelValue": o.Label,
+				"ConstName":  gengo.ID(o.Name),
+			}
+		}),
+		"constToLabelCases": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
+			return gengo.Snippet{
+				gengo.T: `
+case @ConstName:
+	return @labelValue
+`,
+				"labelValue": o.Label,
+				"ConstName":  gengo.ID(o.Name),
+			}
+		}),
+	})
+}
+
 func (g *enumGen) genIntStringerEnums(c gengo.Context, tpe types.Type, enum *EnumType) {
 	options := make([]Option, len(enum.Constants))
-
 	tpeObj := tpe.(*types.Named).Obj()
 
 	for i := range enum.Constants {
@@ -123,15 +178,17 @@ func (v *@Type) UnmarshalText(data []byte) (error) {
 func Parse@Type'FromString(s string) (@Type, error) {
 	switch s {
 		@strValueToConstCases
+		default:
+			return @ConstUnknown, Invalid@Type
 	}
-	return @ConstUnknown, Invalid@Type
 }
 
 func (v @Type) String() string {
 	switch v {
 		@constToStrValueCases
+		default:
+			return "UNKNOWN"
 	}
-	return "UNKNOWN"
 }
 
 `,
@@ -161,46 +218,7 @@ case @ConstName:
 		}),
 	})
 
-	c.Render(gengo.Snippet{gengo.T: `
-func Parse@Type'LabelString(label string) (@Type, error) {
-	switch label {
-		@labelToConstCases
-	}
-	return @ConstUnknown, Invalid@Type
-}
-
-func (v @Type) Label() string {
-	switch v {
-		@constToLabelCases
-	}
-	return "UNKNOWN"
-}
-
-`,
-
-		"Type":         gengo.ID(tpeObj.Name()),
-		"ConstUnknown": gengo.ID(enum.ConstUnknown),
-		"labelToConstCases": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
-			return gengo.Snippet{
-				gengo.T: `
-case @labelValue:
-	return @ConstName, nil
-`,
-				"labelValue": o.Label,
-				"ConstName":  gengo.ID(o.Name),
-			}
-		}),
-		"constToLabelCases": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
-			return gengo.Snippet{
-				gengo.T: `
-case @ConstName:
-	return @labelValue
-`,
-				"labelValue": o.Label,
-				"ConstName":  gengo.ID(o.Name),
-			}
-		}),
-	})
+	g.genLabel(c, tpeObj, enum, options)
 
 	c.Render(gengo.Snippet{gengo.T: `
 func (v @Type) Value() (@driverValue, error) {

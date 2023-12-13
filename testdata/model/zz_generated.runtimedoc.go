@@ -17,6 +17,9 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 func (Gender) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+func (GenderExt) RuntimeDoc(names ...string) ([]string, bool) {
+	return []string{}, true
+}
 func (v OperateTime) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {

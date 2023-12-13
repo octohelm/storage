@@ -17,13 +17,3 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 func (ErrorLevel) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
-func (v SqlPrinter) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}

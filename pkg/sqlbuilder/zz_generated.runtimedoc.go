@@ -109,31 +109,9 @@ func (v DeprecatedActions) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v Ex) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
 func (FieldValues) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
-func (v Function) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
 func (v IndexDefine) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
@@ -162,17 +140,6 @@ func (Indexes) RuntimeDoc(names ...string) ([]string, bool) {
 func (NamedArgSet) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
-func (v Order) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
 func (v OtherAddition) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
@@ -189,30 +156,6 @@ func (v OtherAddition) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v StmtDelete) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
-func (v StmtInsert) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{
-		"https://dev.mysql.com/doc/refman/5.6/en/insert.html",
-	}, true
-}
-
 func (v StmtSelect) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
@@ -222,17 +165,6 @@ func (v StmtSelect) RuntimeDoc(names ...string) ([]string, bool) {
 		}
 		if doc, ok := runtimeDoc(v.SelectStatement, names...); ok {
 			return doc, ok
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
-func (v StmtUpdate) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
 		}
 
 		return nil, false
@@ -282,38 +214,6 @@ func (v StructFieldValue) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v StructFieldsFactory) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
-func (v Tables) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
 func (Toggles) RuntimeDoc(names ...string) ([]string, bool) {
-	return []string{}, true
-}
-func (v WithStmt) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-
-		}
-
-		return nil, false
-	}
 	return []string{}, true
 }

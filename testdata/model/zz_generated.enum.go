@@ -43,8 +43,9 @@ func ParseGenderFromString(s string) (Gender, error) {
 	case "FEMALE":
 		return GENDER__FEMALE, nil
 
+	default:
+		return GENDER_UNKNOWN, InvalidGender
 	}
-	return GENDER_UNKNOWN, InvalidGender
 }
 
 func (v Gender) String() string {
@@ -54,8 +55,9 @@ func (v Gender) String() string {
 	case GENDER__FEMALE:
 		return "FEMALE"
 
+	default:
+		return "UNKNOWN"
 	}
-	return "UNKNOWN"
 }
 
 func ParseGenderLabelString(label string) (Gender, error) {
@@ -65,8 +67,9 @@ func ParseGenderLabelString(label string) (Gender, error) {
 	case "女":
 		return GENDER__FEMALE, nil
 
+	default:
+		return GENDER_UNKNOWN, InvalidGender
 	}
-	return GENDER_UNKNOWN, InvalidGender
 }
 
 func (v Gender) Label() string {
@@ -76,8 +79,9 @@ func (v Gender) Label() string {
 	case GENDER__FEMALE:
 		return "女"
 
+	default:
+		return "UNKNOWN"
 	}
-	return "UNKNOWN"
 }
 
 func (v Gender) Value() (database_sql_driver.Value, error) {
@@ -100,4 +104,35 @@ func (v *Gender) Scan(src any) error {
 	}
 	*v = Gender(i)
 	return nil
+}
+
+var InvalidGenderExt = github_com_pkg_errors.New("invalid GenderExt")
+
+func (GenderExt) EnumValues() []any {
+	return []any{
+		GENDER_EXT__FEMALE, GENDER_EXT__MALE,
+	}
+}
+func ParseGenderExtLabelString(label string) (GenderExt, error) {
+	switch label {
+	case "女":
+		return GENDER_EXT__FEMALE, nil
+	case "男":
+		return GENDER_EXT__MALE, nil
+
+	default:
+		return "", InvalidGenderExt
+	}
+}
+
+func (v GenderExt) Label() string {
+	switch v {
+	case GENDER_EXT__FEMALE:
+		return "女"
+	case GENDER_EXT__MALE:
+		return "男"
+
+	default:
+		return "UNKNOWN"
+	}
 }
