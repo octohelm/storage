@@ -32,8 +32,15 @@ func NotInSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.Col
 	}
 }
 
+type QuerierPatcher interface {
+	Apply(q Querier) Querier
+}
+
 type Querier interface {
 	sqlbuilder.SqlExpr
+
+	ExistsTable(table sqlbuilder.Table) bool
+	Apply(patchers ...QuerierPatcher) Querier
 
 	With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifiers ...string) Querier
 
@@ -44,6 +51,8 @@ type Querier interface {
 	FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
 
 	Where(where sqlbuilder.SqlExpr) Querier
+	WhereAnd(where sqlbuilder.SqlExpr) Querier
+	WhereOr(where sqlbuilder.SqlExpr) Querier
 
 	OrderBy(orders ...*sqlbuilder.Order) Querier
 
@@ -64,8 +73,9 @@ type Querier interface {
 
 func From(from sqlbuilder.Table, fns ...OptionFunc) Querier {
 	q := &querier{
-		from:  from,
-		limit: -1,
+		from:   from,
+		tables: []sqlbuilder.Table{from},
+		limit:  -1,
 		feature: feature{
 			softDelete: true,
 		},
@@ -79,7 +89,9 @@ func From(from sqlbuilder.Table, fns ...OptionFunc) Querier {
 }
 
 type querier struct {
-	from     sqlbuilder.Table
+	from   sqlbuilder.Table
+	tables []sqlbuilder.Table
+
 	withStmt *sqlbuilder.WithStmt
 
 	orders []*sqlbuilder.Order
@@ -102,7 +114,29 @@ type querier struct {
 	recv any
 }
 
+func (q *querier) ExistsTable(table sqlbuilder.Table) bool {
+	for _, t := range q.tables {
+		if t == table || t.TableName() == table.TableName() {
+			return true
+		}
+	}
+	return false
+}
+
+func (q *querier) Apply(patchers ...QuerierPatcher) Querier {
+	var applied Querier = q
+
+	for _, p := range patchers {
+		if p != nil {
+			applied = p.Apply(applied)
+		}
+	}
+
+	return applied
+}
+
 func (q querier) With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifiers ...string) Querier {
+	q.tables = append(q.tables, t)
 	if q.withStmt == nil {
 		q.withStmt = sqlbuilder.With(t, build, modifiers...)
 		return &q
@@ -112,26 +146,31 @@ func (q querier) With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifi
 }
 
 func (q querier) CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.CrossJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
 func (q querier) LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.LeftJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
 func (q querier) RightJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.RightJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
 func (q querier) FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.FullJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
 func (q querier) Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.Join(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
@@ -179,6 +218,16 @@ func (q querier) Select(projects ...sqlbuilder.SqlExpr) Querier {
 
 func (q querier) Where(where sqlbuilder.SqlExpr) Querier {
 	q.where = where
+	return &q
+}
+
+func (q querier) WhereAnd(where sqlbuilder.SqlExpr) Querier {
+	q.where = sqlbuilder.And(q.where, where)
+	return &q
+}
+
+func (q querier) WhereOr(where sqlbuilder.SqlExpr) Querier {
+	q.where = sqlbuilder.Or(q.where, where)
 	return &q
 }
 

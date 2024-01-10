@@ -11,6 +11,20 @@ import (
 	"github.com/octohelm/storage/testdata/model"
 )
 
+type UserParam struct {
+	Age []int64 `name:"age" in:"query" `
+}
+
+func (i UserParam) Apply(q Querier) Querier {
+	if q.ExistsTable(model.UserT) {
+		if len(i.Age) > 0 {
+			q = q.WhereAnd(model.UserT.Age.V(sqlbuilder.In(i.Age...)))
+		}
+	}
+
+	return q
+}
+
 func TestCRUD(t *testing.T) {
 	ctxs := []context.Context{
 		ContextWithDatabase(t, "dal_sql_crud", ""),
@@ -74,8 +88,7 @@ func TestCRUD(t *testing.T) {
 				usr2 := &model.User{
 					Nickname: "test test",
 				}
-				update := Prepare(usr2).
-					Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
+				update := Prepare(usr2).Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
 
 				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -225,7 +238,9 @@ func TestCRUD(t *testing.T) {
 					users := make([]model.User, 0)
 
 					err := From(model.UserT).
-						Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))).
+						Apply(UserParam{
+							Age: []int64{10},
+						}).
 						Scan(&users).
 						Find(ctx)
 
