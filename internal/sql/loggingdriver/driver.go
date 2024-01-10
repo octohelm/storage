@@ -95,15 +95,16 @@ func (c *loggerConn) QueryContext(ctx context.Context, query string, args []driv
 
 	defer func() {
 		q := interpolateParams(query, args)
-		logger = logger.WithValues("driver", c.opt.name, "sql", q)
+
+		l := logger.WithValues("driver", c.opt.name, "sql", q)
 		if err != nil {
 			if c.opt.ErrorLevel(err) > 0 {
-				logger.Error(errors.Wrapf(err, "query failed"))
+				l.Error(errors.Wrapf(err, "query failed"))
 			} else {
-				logger.Warn(errors.Wrapf(err, "query failed"))
+				l.Warn(errors.Wrapf(err, "query failed"))
 			}
 		} else {
-			logger.WithValues("cost", cost().String()).Debug("")
+			l.WithValues("cost", cost().String()).Debug("")
 		}
 
 		logger.End()
@@ -119,16 +120,17 @@ func (c *loggerConn) ExecContext(ctx context.Context, query string, args []drive
 
 	defer func() {
 		q := interpolateParams(query, args)
-		logger = logger.WithValues("driver", c.opt.name, "sql", q)
+		l := logger.WithValues("driver", c.opt.name, "sql", q)
 		if err != nil {
 			if c.opt.ErrorLevel(err) > 0 {
-				logger.Error(errors.Wrap(err, "exec failed"))
+				l.Error(errors.Wrap(err, "exec failed"))
 			} else {
-				logger.Warn(errors.Wrapf(err, "exec failed"))
+				l.Warn(errors.Wrapf(err, "exec failed"))
 			}
 		} else {
-			logger.WithValues("cost", cost().String()).Debug("")
+			l.WithValues("cost", cost().String()).Debug("")
 		}
+
 		logger.End()
 	}()
 
