@@ -14,8 +14,8 @@ const (
 	dropTableIndex actionType = iota
 	dropTableColumn
 	renameTableColumn
-	addTableColumn
 	modifyTableColumn
+	addTableColumn
 	addTableIndex
 	createTable
 )

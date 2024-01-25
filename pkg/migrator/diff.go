@@ -35,7 +35,7 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 		if len(exprs) > 0 {
 
 			switch typ {
-			case addTableIndex:
+			case dropTableIndex, addTableIndex:
 				if _, ok := indexes[name]; ok {
 					return
 				} else {
@@ -85,7 +85,7 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 				prevColType := dialect.DataType(currentCol.Def()).Ex(context.Background()).Query()
 				currentColType := dialect.DataType(nextCol.Def()).Ex(context.Background()).Query()
 
-				if currentColType != prevColType {
+				if !strings.EqualFold(prevColType, currentColType) {
 					colChanges[nextCol.Name()] = modifyTableColumn
 					migrate(modifyTableColumn, nextCol.Name(), dialect.ModifyColumn(nextCol, currentCol))
 				}
@@ -123,7 +123,7 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 		}
 
 		key.Columns().RangeCol(func(col sqlbuilder.Column, idx int) bool {
-			if tpe, ok := colChanges[col.Name()]; ok && tpe != modifyTableColumn {
+			if tpe, ok := colChanges[col.Name()]; ok && tpe == modifyTableColumn {
 				// always re index when col type modified
 				migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
 				migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
