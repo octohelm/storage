@@ -43,6 +43,7 @@ type Querier interface {
 	Apply(patchers ...QuerierPatcher) Querier
 
 	With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifiers ...string) Querier
+	AsTemporaryTable(tableName string) TemporaryTable
 
 	Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
 	CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
@@ -83,6 +84,10 @@ func From(from sqlbuilder.Table, fns ...OptionFunc) Querier {
 
 	for i := range fns {
 		fns[i](q)
+	}
+
+	if tmpT, ok := from.(QuerierPatcher); ok {
+		return q.Apply(tmpT)
 	}
 
 	return q
@@ -363,4 +368,46 @@ func (*typedScanner[T]) New() any {
 
 func (t *typedScanner[T]) Next(v any) error {
 	return t.next(v.(*T))
+}
+
+type TemporaryTable interface {
+	sqlbuilder.Table
+	TableWrapper
+	QuerierPatcher
+}
+
+func (q *querier) AsTemporaryTable(tableName string) TemporaryTable {
+	projects := q.projects
+
+	cols := make([]sqlbuilder.TableDefinition, 0, len(projects))
+
+	for _, p := range projects {
+		if col, ok := p.(sqlbuilder.Column); ok {
+			cols = append(cols, col)
+		}
+	}
+
+	tmpT := sqlbuilder.T(tableName, cols...)
+
+	return &tmpTable{
+		Table:  tmpT,
+		origin: q.from,
+		build: func(table sqlbuilder.Table) sqlbuilder.SqlExpr {
+			return q
+		},
+	}
+}
+
+type tmpTable struct {
+	sqlbuilder.Table
+	origin sqlbuilder.Table
+	build  func(table sqlbuilder.Table) sqlbuilder.SqlExpr
+}
+
+func (t *tmpTable) Unwrap() sqlbuilder.Model {
+	return t.origin
+}
+
+func (t *tmpTable) Apply(q Querier) Querier {
+	return q.With(t.Table, t.build)
 }

@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"sync"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
@@ -23,7 +24,15 @@ func registerSessionCatalog(name string, tables *sqlbuilder.Tables) {
 	})
 }
 
+type TableWrapper interface {
+	Unwrap() sqlbuilder.Model
+}
+
 func SessionFor(ctx context.Context, nameOrTable any) Session {
+	if u, ok := nameOrTable.(TableWrapper); ok {
+		return SessionFor(ctx, u.Unwrap())
+	}
+
 	switch x := nameOrTable.(type) {
 	case string:
 		return FromContext(ctx, x)
@@ -32,7 +41,8 @@ func SessionFor(ctx context.Context, nameOrTable any) Session {
 			return FromContext(ctx, t.(string))
 		}
 	}
-	return nil
+
+	panic(errors.Errorf("invalid section target %#v", nameOrTable))
 }
 
 type contextSession struct {
