@@ -2,9 +2,11 @@ package dal
 
 import (
 	"context"
-
+	"database/sql/driver"
 	"github.com/octohelm/storage/internal/sql/scanner"
+	"github.com/octohelm/storage/pkg/datatypes"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"time"
 )
 
 func Prepare[T any](v *T) Mutation[T] {
@@ -125,10 +127,10 @@ func (c *mutation[T]) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlCondition {
 	where := c.where
 	if c.feature.softDelete {
 		if soft, ok := any(c.target).(ModelWithSoftDelete); ok {
-			f, v := soft.SoftDeleteFieldAndZeroValue()
+			f, notDeletedValue := soft.SoftDeleteFieldAndZeroValue()
 			return sqlbuilder.And(
 				where,
-				t.F(f).Expr("# = ?", v),
+				t.F(f).Expr("# = ?", notDeletedValue),
 			)
 		}
 	}
@@ -149,10 +151,19 @@ func (c *mutation[T]) del(ctx context.Context, t sqlbuilder.Table, s Session) er
 	if c.feature.softDelete {
 		if soft, ok := any(c.target).(ModelWithSoftDelete); ok {
 			soft.MarkDeletedAt()
-			f, v := soft.SoftDeleteFieldAndZeroValue()
+
+			f, _ := soft.SoftDeleteFieldAndZeroValue()
+
+			var softDeleteValue driver.Value
+			if v, ok := ctx.(SoftDeleteValueGetter); ok {
+				softDeleteValue = v.GetDeletedAt()
+			} else {
+				softDeleteValue = datatypes.Timestamp(time.Now())
+			}
+
 			col := t.F(f)
 			stmt = sqlbuilder.Update(t).Where(where, additions...).Set(
-				sqlbuilder.ColumnsAndValues(col, v),
+				sqlbuilder.ColumnsAndValues(col, softDeleteValue),
 			)
 		}
 	}

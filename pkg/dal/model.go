@@ -20,3 +20,7 @@ type ModelWithSoftDelete interface {
 	MarkDeletedAt()
 	SoftDeleteFieldAndZeroValue() (string, driver.Value)
 }
+
+type SoftDeleteValueGetter interface {
+	GetDeletedAt() driver.Value
+}
