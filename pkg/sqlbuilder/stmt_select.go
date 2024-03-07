@@ -9,7 +9,7 @@ type SelectStatement interface {
 	selectStatement()
 }
 
-func Select(sqlExpr SqlExpr, modifiers ...string) *StmtSelect {
+func Select(sqlExpr SqlExpr, modifiers ...SqlExpr) *StmtSelect {
 	return &StmtSelect{
 		sqlExpr:   sqlExpr,
 		modifiers: modifiers,
@@ -20,7 +20,7 @@ type StmtSelect struct {
 	SelectStatement
 	sqlExpr   SqlExpr
 	table     Table
-	modifiers []string
+	modifiers []SqlExpr
 	additions []Addition
 }
 
@@ -60,7 +60,7 @@ func (s *StmtSelect) Ex(ctx context.Context) *Ex {
 	if len(s.modifiers) > 0 {
 		for i := range s.modifiers {
 			e.WriteQueryByte(' ')
-			e.WriteQuery(s.modifiers[i])
+			e.WriteExpr(s.modifiers[i])
 		}
 	}
 

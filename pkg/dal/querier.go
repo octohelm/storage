@@ -63,7 +63,7 @@ type Querier interface {
 	Limit(v int64) Querier
 	Offset(v int64) Querier
 
-	Distinct() Querier
+	Distinct(extras ...sqlbuilder.SqlExpr) Querier
 	Select(projects ...sqlbuilder.SqlExpr) Querier
 
 	Scan(v any) Querier
@@ -101,13 +101,12 @@ type querier struct {
 
 	orders []*sqlbuilder.Order
 
-	groupBy []sqlbuilder.SqlExpr
-	having  sqlbuilder.SqlExpr
+	distinct []sqlbuilder.SqlExpr
+	groupBy  []sqlbuilder.SqlExpr
+	having   sqlbuilder.SqlExpr
 
 	limit  int64
 	offset int64
-
-	distinct bool
 
 	where    sqlbuilder.SqlExpr
 	projects []sqlbuilder.SqlExpr
@@ -261,8 +260,8 @@ func (q querier) Offset(v int64) Querier {
 	return &q
 }
 
-func (q querier) Distinct() Querier {
-	q.distinct = true
+func (q querier) Distinct(extras ...sqlbuilder.SqlExpr) Querier {
+	q.distinct = extras
 	return &q
 }
 
@@ -285,10 +284,14 @@ func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlExpr {
 func (q *querier) build() sqlbuilder.SqlExpr {
 	from := q.from
 
-	modifies := make([]string, 0)
+	modifies := make([]sqlbuilder.SqlExpr, 0)
 
-	if q.distinct {
-		modifies = append(modifies, "DISTINCT")
+	if q.distinct != nil {
+		modifies = append(modifies, sqlbuilder.Expr("DISTINCT"))
+
+		if len(q.distinct) > 0 {
+			modifies = append(modifies, q.distinct...)
+		}
 	}
 
 	additions := make([]sqlbuilder.Addition, 0, 10)

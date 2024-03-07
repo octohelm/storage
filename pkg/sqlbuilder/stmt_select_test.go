@@ -12,7 +12,7 @@ func TestSelect(t *testing.T) {
 
 	t.Run("select with modifier", func(t *testing.T) {
 		testutil.ShouldBeExpr(t,
-			Select(nil, "DISTINCT").
+			Select(nil, Expr("DISTINCT")).
 				From(
 					table,
 					Where(
