@@ -2,6 +2,7 @@ package dal
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -283,6 +284,48 @@ func TestCRUD(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestMultipleTxLockedWithSqlite(t *testing.T) {
+	ctx := ContextWithDatabase(t, "sql_test", "")
+
+	t.Run("concurrent insert && query", func(t *testing.T) {
+		usr2 := &model.User{
+			Name:     "test",
+			Nickname: "test",
+		}
+
+		wg := &sync.WaitGroup{}
+
+		for i := 0; i < 2; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				err := Prepare(usr2).
+					OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
+					Save(ctx)
+
+				testutil.Expect(t, err, testutil.Be[error](nil))
+			}()
+		}
+
+		for i := 0; i < 4; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				err := From(model.UserT).
+					Scan(Recv(func(v *model.User) error {
+						return nil
+					})).
+					Find(ctx)
+				testutil.Expect(t, err, testutil.Be[error](nil))
+			}()
+		}
+
+		wg.Wait()
+	})
 }
 
 func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Context {

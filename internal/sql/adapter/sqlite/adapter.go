@@ -6,14 +6,15 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"net/url"
+	"sync"
 
-	"github.com/octohelm/storage/pkg/dberr"
+	"github.com/pkg/errors"
+	"modernc.org/sqlite"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
+	"github.com/octohelm/storage/pkg/dberr"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-	"github.com/pkg/errors"
-	"modernc.org/sqlite"
 )
 
 func init() {
@@ -27,6 +28,8 @@ func Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 type sqliteAdapter struct {
 	dialect
 	adapter.DB
+
+	mutexSet
 }
 
 func (sqliteAdapter) DriverName() string {
@@ -53,12 +56,18 @@ func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter
 		return nil, errors.Errorf("invalid schema %s", dsn)
 	}
 
-	c, err := a.Connector().OpenConnector(dsn.Path)
+	dbUri := dsn.Path + "?" + dsn.Query().Encode()
+
+	c, err := a.Connector().OpenConnector(dbUri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "connect failed with %s", dsn.Path)
 	}
 
-	db := sql.OpenDB(c)
+	db := &dbConnectWithMutex{
+		// one db file one global lock
+		Mutex:     a.mutexSet.of(dsn.Path),
+		DBConnect: sql.OpenDB(c),
+	}
 
 	return &sqliteAdapter{
 		DB: adapter.Wrap(db, func(err error) error {
@@ -88,4 +97,33 @@ func (a *sqliteAdapter) createDatabase(ctx context.Context, dbName string, dsn u
 
 	_, err = adaptor.Exec(context.Background(), sqlbuilder.Expr(fmt.Sprintf("CREATE DATABASE %s", dbName)))
 	return err
+}
+
+type dbConnectWithMutex struct {
+	*sync.Mutex
+
+	adapter.DBConnect
+}
+
+func (c *dbConnectWithMutex) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	return c.DBConnect.ExecContext(ctx, query, args...)
+}
+
+func (c *dbConnectWithMutex) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	return c.DBConnect.QueryContext(ctx, query, args...)
+}
+
+type mutexSet struct {
+	m sync.Map
+}
+
+func (s *mutexSet) of(path string) *sync.Mutex {
+	got, _ := s.m.LoadOrStore(path, &sync.Mutex{})
+	return got.(*sync.Mutex)
 }
