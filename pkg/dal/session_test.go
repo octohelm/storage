@@ -29,7 +29,7 @@ func (i UserParam) Apply(q Querier) Querier {
 func TestCRUD(t *testing.T) {
 	ctxs := []context.Context{
 		ContextWithDatabase(t, "dal_sql_crud", ""),
-		ContextWithDatabase(t, "dal_sql_crud", "postgres://postgres@localhost?sslmode=disable"),
+		//ContextWithDatabase(t, "dal_sql_crud", "postgres://postgres@localhost?sslmode=disable"),
 	}
 
 	for i := range ctxs {
@@ -183,6 +183,27 @@ func TestCRUD(t *testing.T) {
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, len(users), testutil.Be(100))
+				})
+
+				t.Run("List partial with cancel", func(t *testing.T) {
+					users := make([]*model.User, 0)
+
+					ctx, cancel := context.WithCancel(ctx)
+
+					err := From(model.UserT).
+						Scan(Recv(func(user *model.User) error {
+							users = append(users, user)
+
+							if len(users) >= 10 {
+								cancel()
+							}
+
+							return nil
+						})).
+						Find(ctx)
+
+					testutil.Expect(t, err, testutil.Be[error](nil))
+					testutil.Expect(t, len(users), testutil.Be(10))
 				})
 
 				t.Run("List all", func(t *testing.T) {

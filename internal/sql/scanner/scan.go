@@ -3,6 +3,7 @@ package scanner
 import (
 	"context"
 	"database/sql"
+	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/pkg/dberr"
 )
@@ -23,7 +24,10 @@ func Scan(ctx context.Context, rows *sql.Rows, v interface{}) error {
 	for rows.Next() {
 		item := si.New()
 
-		if scanErr := scanTo(context.Background(), rows, item); scanErr != nil {
+		if scanErr := tryScan(ctx, rows, item); scanErr != nil {
+			if errors.Is(err, context.Canceled) {
+				return nil
+			}
 			return scanErr
 		}
 
@@ -48,4 +52,23 @@ func Scan(ctx context.Context, rows *sql.Rows, v interface{}) error {
 	}
 
 	return nil
+}
+
+func tryScan(ctx context.Context, rows *sql.Rows, item any) error {
+	done := make(chan error)
+	go func() {
+		defer close(done)
+
+		if err := scanTo(ctx, rows, item); err != nil {
+			done <- err
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return <-done
+	}
+
 }

@@ -349,13 +349,32 @@ func (q *querier) Find(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := scanner.Scan(ctx, rows, q.recv); err != nil {
-		return err
+
+	done := make(chan error)
+
+	go func() {
+		defer close(done)
+
+		if err := scanner.Scan(ctx, rows, q.recv); err != nil {
+			if errors.Is(err, ErrSkipScan) || errors.Is(err, context.Canceled) {
+				done <- nil
+				return
+			}
+			done <- err
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil
+	default:
+		return <-done
 	}
-	return err
 }
 
 type ScanIterator = scanner.ScanIterator
+
+var ErrSkipScan = errors.New("scan skip")
 
 func Recv[T any](next func(v *T) error) ScanIterator {
 	return &typedScanner[T]{next: next}
