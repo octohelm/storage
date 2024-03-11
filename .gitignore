@@ -3,3 +3,5 @@
 
 coverage.txt
 *.out
+
+.DS_Store

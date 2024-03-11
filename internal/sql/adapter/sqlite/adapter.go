@@ -6,7 +6,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"net/url"
-	"sync"
 
 	"github.com/pkg/errors"
 	"modernc.org/sqlite"
@@ -28,7 +27,6 @@ func Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 type sqliteAdapter struct {
 	dialect
 	adapter.DB
-
 	mutexSet
 }
 
@@ -41,14 +39,18 @@ func (a *sqliteAdapter) Dialect() adapter.Dialect {
 }
 
 func (a *sqliteAdapter) Connector() driver.DriverContext {
-	return loggingdriver.Wrap(&sqlite.Driver{}, a.DriverName(), func(err error) int {
-		if e, ok := dberr.UnwrapAll(err).(*sqlite.Error); ok {
-			if e.Code() == 2067 {
-				return 0
+	return loggingdriver.Wrap(
+		&sqlite.Driver{},
+		a.DriverName(),
+		func(err error) int {
+			if e, ok := dberr.UnwrapAll(err).(*sqlite.Error); ok {
+				if e.Code() == 2067 {
+					return 0
+				}
 			}
-		}
-		return 1
-	})
+			return 1
+		},
+	)
 }
 
 func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
@@ -58,16 +60,17 @@ func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter
 
 	dbUri := dsn.Path + "?" + dsn.Query().Encode()
 
-	c, err := a.Connector().OpenConnector(dbUri)
+	connector := &driverContextWithMutex{
+		DriverContext: a.Connector(),
+		Mutex:         a.of(dbUri),
+	}
+
+	conn, err := connector.OpenConnector(dbUri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "connect failed with %s", dsn.Path)
 	}
 
-	db := &dbConnectWithMutex{
-		// one db file one global lock
-		Mutex:     a.mutexSet.of(dsn.Path),
-		DBConnect: sql.OpenDB(c),
-	}
+	db := sql.OpenDB(conn)
 
 	return &sqliteAdapter{
 		DB: adapter.Wrap(db, func(err error) error {
@@ -97,33 +100,4 @@ func (a *sqliteAdapter) createDatabase(ctx context.Context, dbName string, dsn u
 
 	_, err = adaptor.Exec(context.Background(), sqlbuilder.Expr(fmt.Sprintf("CREATE DATABASE %s", dbName)))
 	return err
-}
-
-type dbConnectWithMutex struct {
-	*sync.Mutex
-
-	adapter.DBConnect
-}
-
-func (c *dbConnectWithMutex) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	c.Lock()
-	defer c.Unlock()
-
-	return c.DBConnect.ExecContext(ctx, query, args...)
-}
-
-func (c *dbConnectWithMutex) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
-	c.Lock()
-	defer c.Unlock()
-
-	return c.DBConnect.QueryContext(ctx, query, args...)
-}
-
-type mutexSet struct {
-	m sync.Map
-}
-
-func (s *mutexSet) of(path string) *sync.Mutex {
-	got, _ := s.m.LoadOrStore(path, &sync.Mutex{})
-	return got.(*sync.Mutex)
 }

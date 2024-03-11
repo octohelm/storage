@@ -106,7 +106,6 @@ type SqlExpr interface {
 //
 // examples:
 // ? => ST_GeomFromText(?)
-//
 type ValuerExpr interface {
 	ValueEx() string
 }

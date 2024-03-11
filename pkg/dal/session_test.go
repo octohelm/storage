@@ -29,7 +29,7 @@ func (i UserParam) Apply(q Querier) Querier {
 func TestCRUD(t *testing.T) {
 	ctxs := []context.Context{
 		ContextWithDatabase(t, "dal_sql_crud", ""),
-		//ContextWithDatabase(t, "dal_sql_crud", "postgres://postgres@localhost?sslmode=disable"),
+		ContextWithDatabase(t, "dal_sql_crud", "postgres://postgres@localhost?sslmode=disable"),
 	}
 
 	for i := range ctxs {
@@ -328,6 +328,21 @@ func TestMultipleTxLockedWithSqlite(t *testing.T) {
 					Save(ctx)
 
 				testutil.Expect(t, err, testutil.Be[error](nil))
+			}()
+		}
+
+		for i := 0; i < 2; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
+				//err := Tx(ctx, usr2, func(ctx context.Context) error {
+				//	return Prepare(usr2).
+				//		OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
+				//		Save(ctx)
+				//})
+				//
+				//testutil.Expect(t, err, testutil.Be[error](nil))
 			}()
 		}
 

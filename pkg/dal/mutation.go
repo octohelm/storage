@@ -3,10 +3,11 @@ package dal
 import (
 	"context"
 	"database/sql/driver"
+	"time"
+
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/datatypes"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-	"time"
 )
 
 func Prepare[T any](v *T) Mutation[T] {

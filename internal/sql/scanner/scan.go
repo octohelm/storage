@@ -3,6 +3,7 @@ package scanner
 import (
 	"context"
 	"database/sql"
+
 	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/pkg/dberr"

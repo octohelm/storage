@@ -8,16 +8,9 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
-type DBConnect interface {
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
-	Close() error
-}
-
-func Wrap(d DBConnect, convertErr func(err error) error) DB {
+func Wrap(d *sql.DB, convertErr func(err error) error) DB {
 	return &db{
-		DBConnect: d,
+		DB: d,
 		option: option{
 			convertErr: convertErr,
 		},
@@ -30,7 +23,7 @@ type option struct {
 
 type db struct {
 	option
-	DBConnect
+	*sql.DB
 }
 
 func (d *db) Exec(ctx context.Context, expr sqlbuilder.SqlExpr) (sql.Result, error) {
@@ -82,7 +75,7 @@ func (d *db) Transaction(ctx context.Context, action func(ctx context.Context) e
 	}
 
 	if txn == nil {
-		tx, err := d.DBConnect.BeginTx(ctx, nil)
+		tx, err := d.BeginTx(ctx, nil)
 		if err != nil {
 			return err
 		}

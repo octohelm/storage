@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"testing"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
 func TestIndexSchema_ToKey(t *testing.T) {
