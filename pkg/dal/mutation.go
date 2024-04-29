@@ -34,6 +34,7 @@ type Mutation[T any] interface {
 	OnConflict(cols sqlbuilder.ColumnCollection) Mutation[T]
 	DoNothing() Mutation[T]
 	DoUpdateSet(cols ...sqlbuilder.Column) Mutation[T]
+	DoWith(func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.Addition) Mutation[T]
 
 	Returning(cols ...sqlbuilder.SqlExpr) Mutation[T]
 	Scan(recv any) Mutation[T]
@@ -50,6 +51,7 @@ type mutation[T any] struct {
 	where                sqlbuilder.SqlExpr
 
 	conflict              sqlbuilder.ColumnCollection
+	onConflictDoWith      func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.Addition
 	onConflictDoUpdateSet []sqlbuilder.Column
 
 	returning []sqlbuilder.SqlExpr
@@ -91,6 +93,11 @@ func (c mutation[T]) OnConflict(cols sqlbuilder.ColumnCollection) Mutation[T] {
 
 func (c mutation[T]) DoNothing() Mutation[T] {
 	c.onConflictDoUpdateSet = nil
+	return &c
+}
+
+func (c mutation[T]) DoWith(fn func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.Addition) Mutation[T] {
+	c.onConflictDoWith = fn
 	return &c
 }
 
@@ -182,26 +189,30 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 	if c.conflict != nil && c.conflict.Len() > 0 {
 		onConflict := sqlbuilder.OnConflict(c.conflict)
 
-		cols := c.onConflictDoUpdateSet
-		if cols == nil {
-			// FIXME ugly hack
-			// sqlite will not RETURNING when ON CONFLICT DO NOTHING
-			c.conflict.RangeCol(func(col sqlbuilder.Column, idx int) bool {
-				cols = append(cols, col)
-				return true
-			})
+		if onConflictDoWith := c.onConflictDoWith; onConflictDoWith != nil {
+			additions = append(additions, onConflictDoWith(onConflict))
+		} else {
+			cols := c.onConflictDoUpdateSet
+			if cols == nil {
+				// FIXME ugly hack
+				// sqlite will not RETURNING when ON CONFLICT DO NOTHING
+				c.conflict.RangeCol(func(col sqlbuilder.Column, idx int) bool {
+					cols = append(cols, col)
+					return true
+				})
+			}
+
+			assignments := make([]sqlbuilder.Assignment, len(cols))
+
+			for idx, col := range cols {
+				assignments[idx] = sqlbuilder.ColumnsAndValues(
+					col, col.Expr("EXCLUDED.?", sqlbuilder.Expr(col.Name())),
+				)
+			}
+
+			onConflict = onConflict.DoUpdateSet(assignments...)
+			additions = append(additions, onConflict)
 		}
-
-		assignments := make([]sqlbuilder.Assignment, len(cols))
-
-		for idx, col := range cols {
-			assignments[idx] = sqlbuilder.ColumnsAndValues(
-				col, col.Expr("EXCLUDED.?", sqlbuilder.Expr(col.Name())),
-			)
-		}
-
-		onConflict = onConflict.DoUpdateSet(assignments...)
-		additions = append(additions, onConflict)
 	}
 
 	additions, hasReturning := c.withReturning(t, additions)
