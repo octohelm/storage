@@ -18,6 +18,7 @@ func Select(sqlExpr SqlExpr, modifiers ...SqlExpr) *StmtSelect {
 
 type StmtSelect struct {
 	SelectStatement
+
 	sqlExpr   SqlExpr
 	table     Table
 	modifiers []SqlExpr

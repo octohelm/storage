@@ -19,6 +19,7 @@ func Update(table Table, modifiers ...string) *StmtUpdate {
 
 type StmtUpdate struct {
 	table       Table
+	from        Table
 	modifiers   []string
 	assignments []Assignment
 	additions   []Addition
@@ -30,6 +31,15 @@ func (s *StmtUpdate) IsNil() bool {
 
 func (s StmtUpdate) Set(assignments ...Assignment) *StmtUpdate {
 	s.assignments = assignments
+	return &s
+}
+
+func (s StmtUpdate) From(table Table, additions ...Addition) *StmtUpdate {
+	s.from = table
+
+	if len(additions) > 0 {
+		s.additions = append(s.additions, additions...)
+	}
 	return &s
 }
 
@@ -53,9 +63,19 @@ func (s *StmtUpdate) Ex(ctx context.Context) *Ex {
 
 	e.WriteQueryByte(' ')
 	e.WriteExpr(s.table)
-	e.WriteQuery(" SET ")
 
+	e.WriteQuery(" SET ")
 	WriteAssignments(e, s.assignments...)
+
+	if s.from != nil {
+		e.WriteQuery(" FROM ")
+		e.WriteExpr(s.from)
+
+		ctx = ContextWithToggles(ctx, Toggles{
+			ToggleMultiTable: true,
+		})
+	}
+
 	WriteAdditions(e, s.additions...)
 
 	return e.Ex(ctx)

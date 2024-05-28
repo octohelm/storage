@@ -38,6 +38,12 @@ type TypedColumn[T any] interface {
 // +gengo:runtimedoc=false
 type ColumnValueExpr[T any] func(v Column) SqlExpr
 
+func AsValue[T any](v TypedColumn[T]) ColumnValueExpr[T] {
+	return func(c Column) SqlExpr {
+		return Expr("?", v)
+	}
+}
+
 func Value[T any](v T) ColumnValueExpr[T] {
 	return func(c Column) SqlExpr {
 		return Expr("?", v)
