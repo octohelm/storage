@@ -3,9 +3,8 @@ package dal
 import (
 	"context"
 	"fmt"
-	"sync"
-
 	"github.com/pkg/errors"
+	"sync"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -43,7 +42,15 @@ func SessionFor(ctx context.Context, nameOrTable any) Session {
 		}
 	}
 
-	panic(errors.Errorf("invalid section target %#v", nameOrTable))
+	return nil
+}
+
+func MustSessionFor(ctx context.Context, nameOrTable any) Session {
+	s := SessionFor(ctx, nameOrTable)
+	if s == nil {
+		panic(errors.Errorf("invalid section target %#v", nameOrTable))
+	}
+	return s
 }
 
 type contextSession struct {
