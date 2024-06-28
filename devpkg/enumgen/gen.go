@@ -91,7 +91,7 @@ func (v @Type) Label() string {
 	switch v {
 		@constToLabelCases
 		default:
-			return "UNKNOWN"
+			return @fmtSprint(v)
 	}
 }
 
@@ -104,6 +104,7 @@ func (v @Type) Label() string {
 			}
 			return gengo.ID(`""`)
 		}(),
+		"fmtSprint": gengo.ID("fmt.Sprint"),
 		"labelToConstCases": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
 			return gengo.Snippet{
 				gengo.T: `
@@ -159,11 +160,7 @@ func (@Type) EnumValues() []any {
 
 	c.Render(gengo.Snippet{gengo.T: `
 func (v @Type) MarshalText() ([]byte, error) {
-	str := v.String()
-	if str == "UNKNOWN" {
-		return nil, Invalid@Type
-	}
-	return []byte(str), nil
+	return []byte(v.String()), nil
 }
 
 func (v *@Type) UnmarshalText(data []byte) (error) {
@@ -179,6 +176,11 @@ func Parse@Type'FromString(s string) (@Type, error) {
 	switch s {
 		@strValueToConstCases
 		default:
+			var i @Type
+			_, err := @fmtSscanf(s, "UNKNOWN_%d", &i)
+			if err == nil {
+				return i, nil
+			}
 			return @ConstUnknown, Invalid@Type
 	}
 }
@@ -186,16 +188,26 @@ func Parse@Type'FromString(s string) (@Type, error) {
 func (v @Type) String() string {
 	switch v {
 		@constToStrValueCases
+		case @ConstUnknown:
+            return "UNKNOWN"
 		default:
-			return "UNKNOWN"
+			return @fmtSprintf("UNKNOWN_%d", v)
 	}
 }
 
 `,
 
-		"Type":         gengo.ID(tpeObj.Name()),
-		"ConstUnknown": gengo.ID(enum.ConstUnknown),
-		"bytesToUpper": gengo.ID("bytes.ToUpper"),
+		"Type": gengo.ID(tpeObj.Name()),
+		"ConstUnknown": func() gengo.Name {
+			if enum.ConstUnknown != nil {
+				return gengo.ID(enum.ConstUnknown)
+			}
+			return gengo.ID(`""`)
+		}(),
+		"stringsHasPrefix": gengo.ID("strings.HasPrefix"),
+		"fmtSscanf":        gengo.ID("fmt.Sscanf"),
+		"fmtSprintf":       gengo.ID("fmt.Sprintf"),
+		"bytesToUpper":     gengo.ID("bytes.ToUpper"),
 		"strValueToConstCases": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
 			return gengo.Snippet{
 				gengo.T: `

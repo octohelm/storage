@@ -8,8 +8,8 @@ require (
 	github.com/go-courier/logr v0.3.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.6.0
-	github.com/octohelm/gengo v0.0.0-20240510051519-974fb897453b
-	github.com/octohelm/x v0.0.0-20240610081226-97f7761af74c
+	github.com/octohelm/gengo v0.0.0-20240622092313-cc61f99ecd84
+	github.com/octohelm/x v0.0.0-20240622073357-3fcb5294a9e0
 	github.com/pkg/errors v0.9.1
 	modernc.org/sqlite v1.30.1
 )
@@ -31,7 +31,7 @@ require (
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
-	modernc.org/libc v1.53.2 // indirect
+	modernc.org/libc v1.53.4 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
