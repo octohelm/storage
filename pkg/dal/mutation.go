@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 	"database/sql/driver"
+	"github.com/octohelm/x/slices"
 	"time"
 
 	"github.com/octohelm/storage/internal/sql/scanner"
@@ -25,6 +26,8 @@ func Prepare[T any](v *T) Mutation[T] {
 
 type Mutation[T any] interface {
 	IncludesZero(zeroFields ...sqlbuilder.Column) Mutation[T]
+
+	FromSelect(q Querier, cols ...sqlbuilder.Column) Mutation[T]
 
 	ForDelete(opts ...OptionFunc) Mutation[T]
 	ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation[T]
@@ -54,6 +57,8 @@ type mutation[T any] struct {
 	onConflictDoWith      func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.Addition
 	onConflictDoUpdateSet []sqlbuilder.Column
 
+	fromSelect *fromSelect
+
 	returning []sqlbuilder.SqlExpr
 
 	forDelete bool
@@ -61,10 +66,23 @@ type mutation[T any] struct {
 	feature
 }
 
+type fromSelect struct {
+	columns []sqlbuilder.Column
+	values  sqlbuilder.SelectStatement
+}
+
 type DeleteFunc func()
 
 func (c mutation[T]) IncludesZero(zeroFields ...sqlbuilder.Column) Mutation[T] {
 	c.zeroFieldsIncludes = zeroFields
+	return &c
+}
+
+func (c mutation[T]) FromSelect(q Querier, cols ...sqlbuilder.Column) Mutation[T] {
+	c.fromSelect = &fromSelect{
+		columns: cols,
+		values:  q.AsSelect(),
+	}
 	return &c
 }
 
@@ -235,6 +253,14 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 		stmt = sqlbuilder.Update(t).
 			Where(where, additions...).
 			Set(assignmentsForUpdate...)
+	} else if c.fromSelect != nil {
+		stmt = sqlbuilder.Insert().Into(t, additions...).
+			Values(
+				t.Cols(slices.Map(c.fromSelect.columns, func(e sqlbuilder.Column) string {
+					return e.Name()
+				})...),
+				c.fromSelect.values,
+			)
 	} else {
 		cols, vals := sqlbuilder.ColumnsAndValuesByFieldValues(t, fieldValues)
 		stmt = sqlbuilder.Insert().Into(t, additions...).

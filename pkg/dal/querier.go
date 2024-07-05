@@ -42,6 +42,8 @@ type Querier interface {
 	ExistsTable(table sqlbuilder.Table) bool
 	Apply(patchers ...QuerierPatcher) Querier
 
+	AsSelect() sqlbuilder.SelectStatement
+
 	With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifiers ...string) Querier
 	AsTemporaryTable(tableName string) TemporaryTable
 
@@ -281,7 +283,7 @@ func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlExpr {
 	return q.where
 }
 
-func (q *querier) build() sqlbuilder.SqlExpr {
+func (q *querier) AsSelect() sqlbuilder.SelectStatement {
 	from := q.from
 
 	modifies := make([]sqlbuilder.SqlExpr, 0)
@@ -322,13 +324,16 @@ func (q *querier) build() sqlbuilder.SqlExpr {
 		projects = sqlbuilder.MultiMayAutoAlias(q.projects...)
 	}
 
+	return sqlbuilder.Select(projects, modifies...).From(from, additions...)
+}
+
+func (q *querier) build() sqlbuilder.SqlExpr {
 	if q.withStmt != nil {
 		return q.withStmt.Exec(func(tables ...sqlbuilder.Table) sqlbuilder.SqlExpr {
-			return sqlbuilder.Select(projects, modifies...).From(from, additions...)
+			return q.AsSelect()
 		})
 	}
-
-	return sqlbuilder.Select(projects, modifies...).From(from, additions...)
+	return q.AsSelect()
 }
 
 func (q *querier) Count(ctx context.Context) (int, error) {
