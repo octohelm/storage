@@ -1,6 +1,6 @@
 module github.com/octohelm/storage
 
-go 1.22
+go 1.22.5
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -11,6 +11,7 @@ require (
 	github.com/octohelm/gengo v0.0.0-20240622092313-cc61f99ecd84
 	github.com/octohelm/x v0.0.0-20240622073357-3fcb5294a9e0
 	github.com/pkg/errors v0.9.1
+	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 	modernc.org/sqlite v1.30.1
 )
 

@@ -1,29 +1,27 @@
-package dal
+package dal_test
 
 import (
 	"context"
+
 	"sync"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/octohelm/storage/internal/testutil"
+	"github.com/octohelm/storage/pkg/dal"
+	"github.com/octohelm/storage/pkg/dal/compose"
 	"github.com/octohelm/storage/pkg/dberr"
+	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/testdata/model"
 )
 
-type UserParam struct {
-	Age []int64 `name:"age" in:"query" `
+type FilterUserByAge struct {
+	Age *filter.Filter[int64] `name:"age" in:"query" `
 }
 
-func (i UserParam) Apply(q Querier) Querier {
-	if q.ExistsTable(model.UserT) {
-		if len(i.Age) > 0 {
-			q = q.WhereAnd(model.UserT.Age.V(sqlbuilder.In(i.Age...)))
-		}
-	}
-
-	return q
+func (i FilterUserByAge) Apply(q dal.Querier) dal.Querier {
+	return compose.ApplyQuerierFromFilter(q, model.UserT.Age, i.Age)
 }
 
 func TestCRUD(t *testing.T) {
@@ -40,7 +38,7 @@ func TestCRUD(t *testing.T) {
 				Name: uuid.New().String(),
 				Age:  100,
 			}
-			err := Prepare(usr).IncludesZero(model.UserT.Nickname).
+			err := dal.Prepare(usr).IncludesZero(model.UserT.Nickname).
 				Returning(model.UserT.ID).Scan(usr).
 				Save(ctx)
 
@@ -51,7 +49,7 @@ func TestCRUD(t *testing.T) {
 				usr2 := &model.User{
 					Name: usr.Name,
 				}
-				err := Prepare(usr2).Save(ctx)
+				err := dal.Prepare(usr2).Save(ctx)
 				testutil.Expect(t, dberr.IsErrConflict(err), testutil.Be(true))
 			})
 
@@ -61,7 +59,7 @@ func TestCRUD(t *testing.T) {
 					Nickname: "test",
 				}
 
-				err := Prepare(usr2).
+				err := dal.Prepare(usr2).
 					OnConflict(model.UserT.I.IName).DoNothing().
 					Returning(model.UserT.ID, model.UserT.Age).Scan(usr2).
 					Save(ctx)
@@ -75,7 +73,7 @@ func TestCRUD(t *testing.T) {
 					Nickname: "test",
 				}
 
-				err := Prepare(usr2).
+				err := dal.Prepare(usr2).
 					OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
 					Returning(model.UserT.ID, model.UserT.Age, model.UserT.Username).Scan(usr2).
 					Save(ctx)
@@ -89,7 +87,7 @@ func TestCRUD(t *testing.T) {
 				usr2 := &model.User{
 					Nickname: "test test",
 				}
-				update := Prepare(usr2).Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
+				update := dal.Prepare(usr2).Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
 
 				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -97,7 +95,7 @@ func TestCRUD(t *testing.T) {
 
 			t.Run("SoftDelete", func(t *testing.T) {
 				deletedUser := &model.User{}
-				update := Prepare(&model.User{}).ForDelete().
+				update := dal.Prepare(&model.User{}).ForDelete().
 					Returning().Scan(deletedUser).
 					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
 
@@ -110,7 +108,7 @@ func TestCRUD(t *testing.T) {
 			t.Run("Delete", func(t *testing.T) {
 				deletedUser := &model.User{}
 
-				update := Prepare(&model.User{}).ForDelete(HardDelete()).
+				update := dal.Prepare(&model.User{}).ForDelete(dal.HardDelete()).
 					Returning().Scan(deletedUser).
 					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
 
@@ -121,12 +119,12 @@ func TestCRUD(t *testing.T) {
 		})
 
 		t.Run("Insert multi Users and Orgs", func(t *testing.T) {
-			err := Tx(ctx, &model.Org{}, func(ctx context.Context) error {
+			err := dal.Tx(ctx, &model.Org{}, func(ctx context.Context) error {
 				for i := 0; i < 2; i++ {
 					org := &model.Org{
 						Name: uuid.New().String(),
 					}
-					if err := Prepare(org).Returning(model.OrgT.ID).Scan(org).Save(ctx); err != nil {
+					if err := dal.Prepare(org).Returning(model.OrgT.ID).Scan(org).Save(ctx); err != nil {
 						return err
 					}
 				}
@@ -137,7 +135,7 @@ func TestCRUD(t *testing.T) {
 						Age:  int64(i),
 					}
 
-					err := Prepare(usr).IncludesZero(model.UserT.Nickname).
+					err := dal.Prepare(usr).IncludesZero(model.UserT.Nickname).
 						Returning(model.UserT.ID).Scan(usr).
 						Save(ctx)
 					if err != nil {
@@ -145,7 +143,7 @@ func TestCRUD(t *testing.T) {
 					}
 
 					if i >= 100 {
-						if err := Prepare(usr).ForDelete().Where(
+						if err := dal.Prepare(usr).ForDelete().Where(
 							model.UserT.Age.V(sqlbuilder.Eq[int64](usr.Age)),
 						).Save(ctx); err != nil {
 							return err
@@ -156,7 +154,7 @@ func TestCRUD(t *testing.T) {
 						UserID: usr.ID,
 						OrgID:  usr.ID%2 + 1,
 					}
-					if err := Prepare(orgUsr).Save(ctx); err != nil {
+					if err := dal.Prepare(orgUsr).Save(ctx); err != nil {
 						return err
 					}
 				}
@@ -168,7 +166,7 @@ func TestCRUD(t *testing.T) {
 
 			t.Run("Then Queries", func(t *testing.T) {
 				t.Run("Count", func(t *testing.T) {
-					c, err := From(model.UserT).Count(ctx)
+					c, err := dal.From(model.UserT).Count(ctx)
 
 					testutil.Expect(t, err, testutil.Be[error](nil))
 					testutil.Expect(t, c, testutil.Be(100))
@@ -177,7 +175,7 @@ func TestCRUD(t *testing.T) {
 				t.Run("List all", func(t *testing.T) {
 					users := make([]model.User, 0)
 
-					err := From(model.UserT).
+					err := dal.From(model.UserT).
 						Scan(&users).
 						Find(ctx)
 
@@ -190,8 +188,8 @@ func TestCRUD(t *testing.T) {
 
 					ctx, cancel := context.WithCancel(ctx)
 
-					err := From(model.UserT).
-						Scan(Recv(func(user *model.User) error {
+					err := dal.From(model.UserT).
+						Scan(dal.Recv(func(user *model.User) error {
 							users = append(users, user)
 
 							if len(users) >= 10 {
@@ -209,7 +207,7 @@ func TestCRUD(t *testing.T) {
 				t.Run("List all", func(t *testing.T) {
 					users := make([]model.User, 0)
 
-					err := From(model.UserT, IncludeAllRecord()).
+					err := dal.From(model.UserT, dal.IncludeAllRecord()).
 						Scan(&users).
 						Find(ctx)
 
@@ -220,7 +218,7 @@ func TestCRUD(t *testing.T) {
 				t.Run("List all limit 10", func(t *testing.T) {
 					users := make([]model.User, 0)
 
-					err := From(model.UserT).
+					err := dal.From(model.UserT).
 						Limit(10).
 						Scan(&users).
 						Find(ctx)
@@ -232,7 +230,7 @@ func TestCRUD(t *testing.T) {
 				t.Run("List all offset limit 10", func(t *testing.T) {
 					users := make([]model.User, 0)
 
-					err := From(model.UserT).
+					err := dal.From(model.UserT).
 						Offset(10).Limit(10).
 						Scan(&users).
 						Find(ctx)
@@ -245,7 +243,7 @@ func TestCRUD(t *testing.T) {
 				t.Run("List desc order by", func(t *testing.T) {
 					users := make([]model.User, 0)
 
-					err := From(model.UserT).
+					err := dal.From(model.UserT).
 						OrderBy(sqlbuilder.DescOrder(model.UserT.ID)).
 						Offset(10).Limit(10).
 						Scan(&users).
@@ -259,9 +257,9 @@ func TestCRUD(t *testing.T) {
 				t.Run("List where", func(t *testing.T) {
 					users := make([]model.User, 0)
 
-					err := From(model.UserT).
-						Apply(UserParam{
-							Age: []int64{10},
+					err := dal.From(model.UserT).
+						Apply(FilterUserByAge{
+							Age: filter.Eq(int64(10)),
 						}).
 						Scan(&users).
 						Find(ctx)
@@ -273,10 +271,10 @@ func TestCRUD(t *testing.T) {
 				t.Run("List where with in", func(t *testing.T) {
 					orgUsers := make([]model.OrgUser, 0)
 
-					err := From(model.OrgUserT).
-						Where(model.OrgUserT.UserID.V(InSelect(
+					err := dal.From(model.OrgUserT).
+						Where(model.OrgUserT.UserID.V(dal.InSelect(
 							model.UserT.ID,
-							From(model.UserT).Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))),
+							dal.From(model.UserT).Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))),
 						))).
 						Scan(&orgUsers).
 						Find(ctx)
@@ -291,7 +289,7 @@ func TestCRUD(t *testing.T) {
 						Org model.Org
 					}, 0)
 
-					err := From(model.UserT).
+					err := dal.From(model.UserT).
 						Join(model.OrgUserT, model.OrgUserT.UserID.V(sqlbuilder.EqCol(model.UserT.ID))).
 						Join(model.OrgT, model.OrgT.ID.V(sqlbuilder.EqCol(model.OrgUserT.OrgID))).
 						Where(model.UserT.Age.V(sqlbuilder.Eq(int64(10)))).
@@ -323,7 +321,7 @@ func TestMultipleTxLockedWithSqlite(t *testing.T) {
 			go func() {
 				defer wg.Done()
 
-				err := Prepare(usr2).
+				err := dal.Prepare(usr2).
 					OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
 					Save(ctx)
 
@@ -337,7 +335,7 @@ func TestMultipleTxLockedWithSqlite(t *testing.T) {
 				defer wg.Done()
 
 				//err := Tx(ctx, usr2, func(ctx context.Context) error {
-				//	return Prepare(usr2).
+				//	return dal.Prepare(usr2).
 				//		OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
 				//		Save(ctx)
 				//})
@@ -351,8 +349,8 @@ func TestMultipleTxLockedWithSqlite(t *testing.T) {
 			go func() {
 				defer wg.Done()
 
-				err := From(model.UserT).
-					Scan(Recv(func(v *model.User) error {
+				err := dal.From(model.UserT).
+					Scan(dal.Recv(func(v *model.User) error {
 						return nil
 					})).
 					Find(ctx)
@@ -373,7 +371,7 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	cat.Add(model.OrgT)
 	cat.Add(model.OrgUserT)
 
-	db := &Database{
+	db := &dal.Database{
 		Endpoint:      endpoint,
 		EnableMigrate: true,
 	}
@@ -389,7 +387,7 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	testutil.Expect(t, err, testutil.Be[error](nil))
 
 	t.Cleanup(func() {
-		a := SessionFor(ctx, name).Adapter()
+		a := dal.SessionFor(ctx, name).Adapter()
 
 		cat.Range(func(table sqlbuilder.Table, idx int) bool {
 			_, e := a.Exec(ctx, a.Dialect().DropTable(table))

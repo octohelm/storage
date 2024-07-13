@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/octohelm/gengo/devpkg/runtimedocgen"
 	_ "github.com/octohelm/storage/devpkg/enumgen"
+	_ "github.com/octohelm/storage/devpkg/filtergen"
 	_ "github.com/octohelm/storage/devpkg/tablegen"
 )
 
@@ -18,6 +19,7 @@ func main() {
 	c, err := gengo.NewContext(&gengo.GeneratorArgs{
 		Entrypoint: []string{
 			"github.com/octohelm/storage/testdata/model",
+			"github.com/octohelm/storage/testdata/model/filter",
 			"github.com/octohelm/storage/internal/testutil",
 			"github.com/octohelm/storage/pkg/dal",
 		},
