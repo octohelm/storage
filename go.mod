@@ -3,7 +3,7 @@ module github.com/octohelm/storage
 go 1.22.5
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-courier/logr v0.3.0
 	github.com/google/uuid v1.6.0
