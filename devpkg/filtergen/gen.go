@@ -1,6 +1,7 @@
 package filtergen
 
 import (
+	"cmp"
 	"fmt"
 	"github.com/octohelm/gengo/pkg/camelcase"
 	"github.com/octohelm/gengo/pkg/gengo"
@@ -42,8 +43,8 @@ func (g *filterGen) GenerateType(c gengo.Context, srcNamed *types.Named) error {
 
 				tables[named] = t
 
-				if by, ok := tag.Lookup("by"); ok {
-					g.generateSubFilter(c, tables, by, named, tag.Get("select"))
+				if s, ok := tag.Lookup("select"); ok {
+					g.generateSubFilter(c, tables, cmp.Or(tag.Get("as"), tag.Get("by")), named, s)
 				} else {
 					g.generateIndexedFilter(c, t, named, tag.Get("domain"))
 				}
@@ -54,8 +55,8 @@ func (g *filterGen) GenerateType(c gengo.Context, srcNamed *types.Named) error {
 	return gengo.ErrSkip
 }
 
-func (g *filterGen) generateSubFilter(c gengo.Context, tables map[*types.Named]sqlbuilder.Table, by string, fromModeType *types.Named, fromModelFieldName string) {
-	values := strings.Split(by, ".")
+func (g *filterGen) generateSubFilter(c gengo.Context, tables map[*types.Named]sqlbuilder.Table, as string, fromModeType *types.Named, fromModelFieldName string) {
+	values := strings.Split(as, ".")
 
 	modelTypeName := values[0]
 	modelTypeFieldName := values[1]
