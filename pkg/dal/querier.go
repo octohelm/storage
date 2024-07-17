@@ -269,10 +269,12 @@ func (q querier) Distinct(extras ...sqlbuilder.SqlExpr) Querier {
 
 func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlExpr {
 	if q.feature.softDelete {
-		if newModel, ok := q.from.(interface{ New() sqlbuilder.Model }); ok {
+		if newModel, ok := q.from.(ModelNewer); ok {
 			m := newModel.New()
+
 			if soft, ok := m.(ModelWithSoftDelete); ok {
 				f, _ := soft.SoftDeleteFieldAndZeroValue()
+
 				return sqlbuilder.And(
 					q.where,
 					sqlbuilder.CastCol[int](t.F(f)).V(sqlbuilder.Eq(0)),

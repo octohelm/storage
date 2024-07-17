@@ -10,41 +10,57 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
-type Querier[M sqlbuilder.Model] struct{}
+type Action[M sqlbuilder.Model] struct{}
 
-func (q *Querier[M]) QueryAs(ctx context.Context, patchers ...querierpatcher.Typed[M]) dal.Querier {
-	m := new(M)
+func resolveTable[T sqlbuilder.Model](ctx context.Context) sqlbuilder.Table {
+	m := new(T)
 	s := dal.SessionFor(ctx, m)
-	return querierpatcher.ApplyTo(dal.From(s.T(m)), patchers...)
+	return &modelTable[T]{
+		Table: s.T(m),
+	}
 }
 
-func (q *Querier[M]) Query(patchers ...querierpatcher.Typed[M]) Result[M] {
-	m := new(M)
+type modelTable[T sqlbuilder.Model] struct {
+	sqlbuilder.Table
+}
 
+func (m *modelTable[T]) New() sqlbuilder.Model {
+	return *new(T)
+}
+
+func (a *Action[M]) Query(patchers ...querierpatcher.Typed[M]) Result[M] {
 	return newResult(func(ctx context.Context, recv Receiver[M]) error {
-		s := dal.SessionFor(ctx, m)
-
-		return querierpatcher.ApplyTo(dal.From(s.T(m)), patchers...).Scan(dal.Recv(recv.Send)).Find(ctx)
+		return querierpatcher.ApplyTo(dal.From(resolveTable[M](ctx)), patchers...).Scan(dal.Recv(recv.Send)).Find(ctx)
 	})
 }
 
-func (q *Querier[M]) FindOne(ctx context.Context, patchers ...querierpatcher.Typed[M]) *M {
-	i := q.Query(append(patchers, querierpatcher.Limit[M](1))...)
+func (a *Action[M]) FindOne(ctx context.Context, patchers ...querierpatcher.Typed[M]) *M {
+	i := a.Query(append(patchers, querierpatcher.Limit[M](1))...)
 	for x := range i.Item(ctx) {
 		return x
 	}
 	return nil
 }
-func (q *Querier[M]) Count(ctx context.Context, patchers ...querierpatcher.Typed[M]) (int, error) {
-	return q.QueryAs(ctx, patchers...).Count(ctx)
+
+func (a *Action[M]) QueryAs(ctx context.Context, patchers ...querierpatcher.Typed[M]) dal.Querier {
+	return querierpatcher.ApplyTo(dal.From(resolveTable[M](ctx)), patchers...)
 }
 
-func (q *Querier[M]) List(ctx context.Context, patchers ...querierpatcher.Typed[M]) (*List[M], error) {
+func (a *Action[M]) CountTo(ctx context.Context, target *int64, patchers ...querierpatcher.Typed[M]) error {
+	i, err := a.QueryAs(ctx, patchers...).Count(ctx)
+	if err != nil {
+		return err
+	}
+	*target = int64(i)
+	return nil
+}
+
+func (a *Action[M]) List(ctx context.Context, patchers ...querierpatcher.Typed[M]) (*List[M], error) {
 	list := &List[M]{
 		Items: make([]*M, 0),
 	}
 
-	if err := Range(ctx, q.Query(patchers...), func(x *M) {
+	if err := Range(ctx, a.Query(patchers...), func(x *M) {
 		list.Items = append(list.Items, x)
 	}); err != nil {
 		return nil, err

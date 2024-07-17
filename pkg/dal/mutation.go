@@ -176,7 +176,9 @@ func (c *mutation[T]) del(ctx context.Context, t sqlbuilder.Table, s Session) er
 
 	if c.feature.softDelete {
 		if soft, ok := any(c.target).(ModelWithSoftDelete); ok {
-			soft.MarkDeletedAt()
+			if x, ok := any(c.target).(DeletedAtMarker); ok {
+				x.MarkDeletedAt()
+			}
 
 			f, _ := soft.SoftDeleteFieldAndZeroValue()
 
