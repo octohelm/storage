@@ -2,6 +2,7 @@ package compose
 
 import (
 	"context"
+	dalcomposetarget "github.com/octohelm/storage/pkg/dal/compose/target"
 	"iter"
 	"sync/atomic"
 
@@ -12,25 +13,9 @@ import (
 
 type Action[M sqlbuilder.Model] struct{}
 
-func resolveTable[T sqlbuilder.Model](ctx context.Context) sqlbuilder.Table {
-	m := new(T)
-	s := dal.SessionFor(ctx, m)
-	return &modelTable[T]{
-		Table: s.T(m),
-	}
-}
-
-type modelTable[T sqlbuilder.Model] struct {
-	sqlbuilder.Table
-}
-
-func (m *modelTable[T]) New() sqlbuilder.Model {
-	return *new(T)
-}
-
 func (a *Action[M]) Query(patchers ...querierpatcher.Typed[M]) Result[M] {
 	return newResult(func(ctx context.Context, recv Receiver[M]) error {
-		return querierpatcher.ApplyTo(dal.From(resolveTable[M](ctx)), patchers...).Scan(dal.Recv(recv.Send)).Find(ctx)
+		return querierpatcher.ApplyTo(dal.From(dalcomposetarget.Table[M](ctx)), patchers...).Scan(dal.Recv(recv.Send)).Find(ctx)
 	})
 }
 
@@ -43,7 +28,7 @@ func (a *Action[M]) FindOne(ctx context.Context, patchers ...querierpatcher.Type
 }
 
 func (a *Action[M]) QueryAs(ctx context.Context, patchers ...querierpatcher.Typed[M]) dal.Querier {
-	return querierpatcher.ApplyTo(dal.From(resolveTable[M](ctx)), patchers...)
+	return querierpatcher.ApplyTo(dal.From(dalcomposetarget.Table[M](ctx)), patchers...)
 }
 
 func (a *Action[M]) CountTo(ctx context.Context, target *int64, patchers ...querierpatcher.Typed[M]) error {

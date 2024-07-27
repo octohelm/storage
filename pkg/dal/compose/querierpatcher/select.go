@@ -3,6 +3,7 @@ package querierpatcher
 import (
 	"context"
 	"github.com/octohelm/storage/pkg/dal"
+	dalcomposetarget "github.com/octohelm/storage/pkg/dal/compose/target"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
@@ -11,10 +12,7 @@ func InSelectIfExists[T any, M sqlbuilder.Model](
 	col sqlbuilder.TypedColumn[T],
 	patchers ...Typed[M],
 ) sqlbuilder.ColumnValueExpr[T] {
-	t := col.T()
-	s := dal.SessionFor(ctx, t)
-
-	return dal.InSelect(col, ApplyTo(dal.From(s.T(t), dal.WhereStmtNotEmpty()).Select(col), patchers...))
+	return dal.InSelect(col, ApplyTo(dal.From(dalcomposetarget.Table[M](ctx), dal.WhereStmtNotEmpty()).Select(col), patchers...))
 }
 
 func DistinctSelect[M sqlbuilder.Model](projects ...sqlbuilder.SqlExpr) Typed[M] {
