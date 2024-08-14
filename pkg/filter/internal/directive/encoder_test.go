@@ -1,9 +1,10 @@
 package directive
 
 import (
+	"testing"
+
 	"github.com/davecgh/go-spew/spew"
 	testingx "github.com/octohelm/x/testing"
-	"testing"
 )
 
 func Eq[T comparable](v T) Directive {

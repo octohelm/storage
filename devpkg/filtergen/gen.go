@@ -3,13 +3,14 @@ package filtergen
 import (
 	"cmp"
 	"fmt"
+	"go/types"
+	"reflect"
+	"strings"
+
 	"github.com/octohelm/gengo/pkg/camelcase"
 	"github.com/octohelm/gengo/pkg/gengo"
 	tablegenutil "github.com/octohelm/storage/devpkg/tablegen/util"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-	"go/types"
-	"reflect"
-	"strings"
 )
 
 func init() {

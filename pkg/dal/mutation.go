@@ -3,8 +3,9 @@ package dal
 import (
 	"context"
 	"database/sql/driver"
-	"github.com/octohelm/x/slices"
 	"time"
+
+	"github.com/octohelm/x/slices"
 
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/datatypes"

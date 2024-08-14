@@ -2,9 +2,10 @@ package compose
 
 import (
 	"context"
-	dalcomposetarget "github.com/octohelm/storage/pkg/dal/compose/target"
 	"iter"
 	"sync/atomic"
+
+	dalcomposetarget "github.com/octohelm/storage/pkg/dal/compose/target"
 
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/dal/compose/querierpatcher"

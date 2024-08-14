@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
@@ -29,6 +31,10 @@ type pgAdapter struct {
 	dialect
 	adapter.DB
 	dbName string
+
+	p    *pgxpool.Pool
+	perr error
+	once sync.Once
 }
 
 func (a *pgAdapter) Dialect() adapter.Dialect {
@@ -40,7 +46,7 @@ func (pgAdapter) DriverName() string {
 }
 
 func (a *pgAdapter) Connector() driver.DriverContext {
-	return loggingdriver.Wrap(&stdlib.Driver{}, a.DriverName(), func(err error) int {
+	return loggingdriver.Wrap(stdlib.GetPoolConnector(a.p).Driver(), a.DriverName(), func(err error) int {
 		if pqerr, ok := dberr.UnwrapAll(err).(*pgconn.PgError); ok {
 			// unique_violation
 			if pqerr.Code == "23505" {
@@ -60,7 +66,30 @@ func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, er
 		return nil, errors.Errorf("invalid schema %s", dsn)
 	}
 
+	a.once.Do(func() {
+		p, err := pgxpool.New(ctx, dsn.String())
+		if err != nil {
+			a.perr = err
+			return
+		}
+		a.p = p
+	})
+	if a.perr != nil {
+		return nil, a.perr
+	}
+
 	dbName := dbNameFromDSN(dsn)
+
+	q := url.Values{}
+
+	for k, vv := range dsn.Query() {
+		switch k {
+		case "sslmode":
+			q[k] = vv
+		}
+	}
+
+	dsn.RawQuery = q.Encode()
 
 	c, err := a.Connector().OpenConnector(dsn.String())
 	if err != nil {

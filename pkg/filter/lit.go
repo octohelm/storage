@@ -2,8 +2,9 @@ package filter
 
 import (
 	"encoding/json"
-	encodingx "github.com/octohelm/x/encoding"
 	"strconv"
+
+	encodingx "github.com/octohelm/x/encoding"
 )
 
 func Lit[T comparable](v T) Value[T] {

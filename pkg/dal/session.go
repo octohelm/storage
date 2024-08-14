@@ -3,8 +3,9 @@ package dal
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"

@@ -2,8 +2,9 @@ package directive
 
 import (
 	"bytes"
-	testingx "github.com/octohelm/x/testing"
 	"testing"
+
+	testingx "github.com/octohelm/x/testing"
 )
 
 func TestNewDecoder(t *testing.T) {
