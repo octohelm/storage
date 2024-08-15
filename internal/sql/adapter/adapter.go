@@ -3,11 +3,9 @@ package adapter
 import (
 	"context"
 	"database/sql"
+	"github.com/pkg/errors"
 	"net/url"
 	"sync"
-	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
@@ -44,12 +42,6 @@ type Dialect interface {
 	DropIndex(key sqlbuilder.Key) sqlbuilder.SqlExpr
 
 	DataType(columnDef sqlbuilder.ColumnDef) sqlbuilder.SqlExpr
-}
-
-type DBSetting interface {
-	SetMaxOpenConns(n int)
-	SetMaxIdleConns(n int)
-	SetConnMaxLifetime(t time.Duration)
 }
 
 var adapters = sync.Map{}

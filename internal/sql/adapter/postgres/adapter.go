@@ -41,7 +41,7 @@ func (a *pgAdapter) Dialect() adapter.Dialect {
 	return &a.dialect
 }
 
-func (pgAdapter) DriverName() string {
+func (a *pgAdapter) DriverName() string {
 	return "postgres"
 }
 
@@ -61,12 +61,54 @@ func dbNameFromDSN(dsn *url.URL) string {
 	return strings.TrimLeft(dsn.Path, "/")
 }
 
+var notRuntimeParams = map[string]struct{}{
+	"host":                 {},
+	"port":                 {},
+	"database":             {},
+	"user":                 {},
+	"password":             {},
+	"passfile":             {},
+	"connect_timeout":      {},
+	"sslmode":              {},
+	"sslkey":               {},
+	"sslcert":              {},
+	"sslrootcert":          {},
+	"sslpassword":          {},
+	"sslsni":               {},
+	"krbspn":               {},
+	"krbsrvname":           {},
+	"target_session_attrs": {},
+	"service":              {},
+	"servicefile":          {},
+}
+
 func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 	if a.DriverName() != dsn.Scheme {
 		return nil, errors.Errorf("invalid schema %s", dsn)
 	}
 
+	connParams := url.Values{}
+	poolParams := url.Values{}
+
+	for k, vv := range dsn.Query() {
+		// only allow not runtime params as conn params
+		if _, ok := notRuntimeParams[k]; ok {
+			connParams[k] = vv
+		}
+		poolParams[k] = vv
+	}
+
 	a.once.Do(func() {
+		if !poolParams.Has("pool_max_conns") {
+			poolParams.Set("pool_max_conns", "10")
+		}
+
+		if !poolParams.Has("pool_max_conn_lifetime") {
+			poolParams.Set("pool_max_conn_lifetime", "1h")
+		}
+
+		dsn.RawQuery = poolParams.Encode()
+
 		p, err := pgxpool.New(ctx, dsn.String())
 		if err != nil {
 			a.perr = err
@@ -80,16 +122,7 @@ func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, er
 
 	dbName := dbNameFromDSN(dsn)
 
-	q := url.Values{}
-
-	for k, vv := range dsn.Query() {
-		switch k {
-		case "sslmode":
-			q[k] = vv
-		}
-	}
-
-	dsn.RawQuery = q.Encode()
+	dsn.RawQuery = connParams.Encode()
 
 	c, err := a.Connector().OpenConnector(dsn.String())
 	if err != nil {

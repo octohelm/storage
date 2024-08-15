@@ -3,10 +3,7 @@ package dal
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/migrator"
@@ -15,14 +12,6 @@ import (
 	_ "github.com/octohelm/storage/internal/sql/adapter/postgres"
 	_ "github.com/octohelm/storage/internal/sql/adapter/sqlite"
 )
-
-func ConfigureAdapter(a adapter.Adapter, poolSize int, maxConnDur time.Duration) {
-	if setting, ok := a.(adapter.DBSetting); ok {
-		setting.SetMaxOpenConns(poolSize)
-		setting.SetMaxIdleConns(poolSize / 2)
-		setting.SetConnMaxLifetime(maxConnDur)
-	}
-}
 
 type Database struct {
 	// Endpoint of database
@@ -59,46 +48,13 @@ func (d *Database) Init(ctx context.Context) error {
 		return nil
 	}
 
-	u, err := url.Parse(d.Endpoint)
+	db, err := adapter.Open(ctx, d.Endpoint)
 	if err != nil {
 		return err
 	}
 
-	poolSize := 10
-	maxConnDuration := 1 * time.Hour
-
-	if v := u.Query().Get("pool_max_conns"); v != "" {
-		i, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return err
-		}
-		poolSize = int(i)
-	} else {
-		u.Query().Set("pool_max_conns", strconv.FormatInt(int64(poolSize), 10))
-	}
-
-	if v := u.Query().Get("pool_max_conn_lifetime"); v != "" {
-		dur, err := time.ParseDuration(v)
-		if err != nil {
-			return err
-		}
-		maxConnDuration = dur
-	} else {
-		u.Query().Set("pool_max_conn_lifetime", maxConnDuration.String())
-	}
-
-	u.RawQuery = u.String()
-
-	db, err := adapter.Open(ctx, u.String())
-	if err != nil {
-		return err
-	}
 	d.db = db
-
-	ConfigureAdapter(d.db, poolSize, maxConnDuration)
-
 	registerSessionCatalog(d.name, d.tables)
-
 	return nil
 }
 
