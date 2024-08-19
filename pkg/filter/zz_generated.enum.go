@@ -17,7 +17,7 @@ var InvalidOp = github_com_pkg_errors.New("invalid Op")
 
 func (Op) EnumValues() []any {
 	return []any{
-		OP__EQ, OP__AND, OP__OR, OP__NEQ, OP__IN, OP__NOTIN, OP__GTE, OP__GT, OP__LTE, OP__LT, OP__WHERE,
+		OP__EQ, OP__CONTAINS, OP__PREFIX, OP__SUFFIX, OP__WHERE, OP__AND, OP__OR, OP__NEQ, OP__IN, OP__NOTIN, OP__GTE, OP__GT, OP__LTE, OP__LT, OP__NOTCONTAINS,
 	}
 }
 func (v Op) MarshalText() ([]byte, error) {
@@ -37,6 +37,14 @@ func ParseOpFromString(s string) (Op, error) {
 	switch s {
 	case "EQ":
 		return OP__EQ, nil
+	case "CONTAINS":
+		return OP__CONTAINS, nil
+	case "PREFIX":
+		return OP__PREFIX, nil
+	case "SUFFIX":
+		return OP__SUFFIX, nil
+	case "WHERE":
+		return OP__WHERE, nil
 	case "AND":
 		return OP__AND, nil
 	case "OR":
@@ -55,8 +63,8 @@ func ParseOpFromString(s string) (Op, error) {
 		return OP__LTE, nil
 	case "LT":
 		return OP__LT, nil
-	case "WHERE":
-		return OP__WHERE, nil
+	case "NOTCONTAINS":
+		return OP__NOTCONTAINS, nil
 
 	default:
 		var i Op
@@ -72,6 +80,14 @@ func (v Op) String() string {
 	switch v {
 	case OP__EQ:
 		return "EQ"
+	case OP__CONTAINS:
+		return "CONTAINS"
+	case OP__PREFIX:
+		return "PREFIX"
+	case OP__SUFFIX:
+		return "SUFFIX"
+	case OP__WHERE:
+		return "WHERE"
 	case OP__AND:
 		return "AND"
 	case OP__OR:
@@ -90,8 +106,8 @@ func (v Op) String() string {
 		return "LTE"
 	case OP__LT:
 		return "LT"
-	case OP__WHERE:
-		return "WHERE"
+	case OP__NOTCONTAINS:
+		return "NOTCONTAINS"
 
 	case OP_UNKNOWN:
 		return "UNKNOWN"
@@ -104,6 +120,14 @@ func ParseOpLabelString(label string) (Op, error) {
 	switch label {
 	case "EQ":
 		return OP__EQ, nil
+	case "CONTAINS":
+		return OP__CONTAINS, nil
+	case "PREFIX":
+		return OP__PREFIX, nil
+	case "SUFFIX":
+		return OP__SUFFIX, nil
+	case "WHERE":
+		return OP__WHERE, nil
 	case "AND":
 		return OP__AND, nil
 	case "OR":
@@ -122,8 +146,8 @@ func ParseOpLabelString(label string) (Op, error) {
 		return OP__LTE, nil
 	case "LT":
 		return OP__LT, nil
-	case "WHERE":
-		return OP__WHERE, nil
+	case "NOTCONTAINS":
+		return OP__NOTCONTAINS, nil
 
 	default:
 		return OP_UNKNOWN, InvalidOp
@@ -134,6 +158,14 @@ func (v Op) Label() string {
 	switch v {
 	case OP__EQ:
 		return "EQ"
+	case OP__CONTAINS:
+		return "CONTAINS"
+	case OP__PREFIX:
+		return "PREFIX"
+	case OP__SUFFIX:
+		return "SUFFIX"
+	case OP__WHERE:
+		return "WHERE"
 	case OP__AND:
 		return "AND"
 	case OP__OR:
@@ -152,8 +184,8 @@ func (v Op) Label() string {
 		return "LTE"
 	case OP__LT:
 		return "LT"
-	case OP__WHERE:
-		return "WHERE"
+	case OP__NOTCONTAINS:
+		return "NOTCONTAINS"
 
 	default:
 		return fmt.Sprint(v)

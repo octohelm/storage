@@ -18,11 +18,11 @@ func TestFilterMarshalAndUnmarshal(t *testing.T) {
 			"eq(1)",
 		},
 		{
-			And(Gte(1), Lte(10)),
+			And[int](Gte(1), Lte(10)),
 			"and(gte(1),lte(10))",
 		},
 		{
-			And(Gte(1), Lte(10)).WhereOf("item.id"),
+			And[int](Gte(1), Lte(10)).WhereOf("item.id"),
 			`where("item.id",and(gte(1),lte(10)))`,
 		},
 		{

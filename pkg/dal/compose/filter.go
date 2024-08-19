@@ -1,6 +1,8 @@
 package compose
 
 import (
+	"fmt"
+
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -128,6 +130,71 @@ func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filt
 			return nil, false
 		}
 		return col.V(sqlbuilder.Lte(v)), true
+	case filter.OP__PREFIX:
+		v, ok := filter.First(f.Args(), func(arg filter.Arg) (T, bool) {
+			if r, ok := arg.(filter.Value[T]); ok {
+				return r.Value(), true
+			}
+			return *new(T), false
+		})
+		if !ok {
+			return nil, false
+		}
+
+		s := fmt.Sprintf("%v", v)
+
+		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
+			return col.Expr("# LIKE ?", s+"%")
+		}), true
+	case filter.OP__SUFFIX:
+		v, ok := filter.First(f.Args(), func(arg filter.Arg) (T, bool) {
+			if r, ok := arg.(filter.Value[T]); ok {
+				return r.Value(), true
+			}
+			return *new(T), false
+		})
+		if !ok {
+			return nil, false
+		}
+
+		s := fmt.Sprintf("%v", v)
+
+		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
+			return col.Expr("# LIKE ?", "%"+s)
+		}), true
+
+	case filter.OP__CONTAINS:
+		v, ok := filter.First(f.Args(), func(arg filter.Arg) (T, bool) {
+			if r, ok := arg.(filter.Value[T]); ok {
+				return r.Value(), true
+			}
+			return *new(T), false
+		})
+		if !ok {
+			return nil, false
+		}
+
+		s := fmt.Sprintf("%v", v)
+
+		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
+			return col.Expr("# LIKE ?", "%"+s+"%")
+		}), true
+	case filter.OP__NOTCONTAINS:
+		v, ok := filter.First(f.Args(), func(arg filter.Arg) (T, bool) {
+			if r, ok := arg.(filter.Value[T]); ok {
+				return r.Value(), true
+			}
+			return *new(T), false
+		})
+		if !ok {
+			return nil, false
+		}
+
+		s := fmt.Sprintf("%v", v)
+
+		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
+			return col.Expr("# NOT LIKE ?", "%"+s+"%")
+		}), true
 	default:
 
 	}

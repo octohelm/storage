@@ -17,9 +17,13 @@ const (
 
 	OP__GTE
 	OP__GT
-
 	OP__LTE
 	OP__LT
+
+	OP__NOTCONTAINS
+	OP__CONTAINS
+	OP__PREFIX
+	OP__SUFFIX
 
 	OP__WHERE
 	OP__AND
@@ -60,6 +64,36 @@ func Lt[T comparable](v T) *Filter[T] {
 func Lte[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__LTE,
+		args: []Arg{
+			Lit(v),
+		},
+	}
+}
+
+// Contains str
+func Contains[T comparable](v T) *Filter[T] {
+	return &Filter[T]{
+		op: OP__CONTAINS,
+		args: []Arg{
+			Lit(v),
+		},
+	}
+}
+
+// Prefix str
+func Prefix[T comparable](v T) *Filter[T] {
+	return &Filter[T]{
+		op: OP__PREFIX,
+		args: []Arg{
+			Lit(v),
+		},
+	}
+}
+
+// Suffix str
+func Suffix[T comparable](v T) *Filter[T] {
+	return &Filter[T]{
+		op: OP__SUFFIX,
 		args: []Arg{
 			Lit(v),
 		},

@@ -3,9 +3,10 @@ package adapter
 import (
 	"context"
 	"database/sql"
-	"github.com/pkg/errors"
 	"net/url"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
