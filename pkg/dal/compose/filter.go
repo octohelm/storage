@@ -24,31 +24,19 @@ func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filt
 
 	switch f.Op() {
 	case filter.OP__AND:
-		rules := filter.MapFilter(f.Args(), func(arg filter.Arg) (sqlbuilder.SqlExpr, bool) {
-			switch x := arg.(type) {
-			case *filter.Filter[T]:
-				return WhereFromFilter(col, x)
-			case filter.Filter[T]:
-				return WhereFromFilter(col, &x)
-			}
-			return nil, false
+		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlbuilder.SqlExpr, bool) {
+			return WhereFromFilter(col, f)
 		})
 		return sqlbuilder.And(rules...), true
 	case filter.OP__OR:
 		return sqlbuilder.Or(
-			filter.MapFilter(f.Args(), func(arg filter.Arg) (sqlbuilder.SqlExpr, bool) {
-				switch x := arg.(type) {
-				case *filter.Filter[T]:
-					return WhereFromFilter(col, x)
-				case filter.Filter[T]:
-					return WhereFromFilter(col, &x)
-				}
-				return nil, false
+			filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlbuilder.SqlExpr, bool) {
+				return WhereFromFilter(col, f)
 			})...,
 		), true
 	case filter.OP__NOTIN:
 		return col.V(sqlbuilder.NotIn(
-			filter.MapFilter(f.Args(), func(arg filter.Arg) (T, bool) {
+			filter.MapWhere(f.Args(), func(arg filter.Arg) (T, bool) {
 				if r, ok := arg.(filter.Value[T]); ok {
 					return r.Value(), true
 				}
@@ -57,7 +45,7 @@ func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filt
 		)), true
 	case filter.OP__IN:
 		return col.V(sqlbuilder.In(
-			filter.MapFilter(f.Args(), func(arg filter.Arg) (T, bool) {
+			filter.MapWhere(f.Args(), func(arg filter.Arg) (T, bool) {
 				if r, ok := arg.(filter.Value[T]); ok {
 					return r.Value(), true
 				}

@@ -2,8 +2,6 @@ module github.com/octohelm/storage
 
 go 1.23
 
-toolchain go1.23.0
-
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/davecgh/go-spew v1.1.1

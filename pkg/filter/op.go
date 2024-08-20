@@ -28,6 +28,8 @@ const (
 	OP__WHERE
 	OP__AND
 	OP__OR
+
+	OP__INTERSECTION
 )
 
 // Eq == v
@@ -152,6 +154,15 @@ func And[T comparable](filters ...TypedRule[T]) *Filter[T] {
 func Or[T comparable](filters ...TypedRule[T]) *Filter[T] {
 	return &Filter[T]{
 		op: OP__OR,
+		args: slicesx.Map(filters, func(f TypedRule[T]) Arg {
+			return f
+		}),
+	}
+}
+
+func Intersection[T comparable](filters ...TypedRule[T]) *Filter[T] {
+	return &Filter[T]{
+		op: OP__INTERSECTION,
 		args: slicesx.Map(filters, func(f TypedRule[T]) Arg {
 			return f
 		}),
