@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 	"fmt"
+	"github.com/octohelm/storage/pkg/datatypes"
 	"os"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
@@ -15,7 +16,7 @@ import (
 
 type Database struct {
 	// Endpoint of database
-	Endpoint string `flag:""`
+	Endpoint datatypes.Endpoint `flag:""`
 	// auto migrate before run
 	EnableMigrate bool `flag:",omitempty"`
 
@@ -25,9 +26,12 @@ type Database struct {
 }
 
 func (d *Database) SetDefaults() {
-	if d.Endpoint == "" {
+	if d.Endpoint.IsZero() {
 		cwd, _ := os.Getwd()
-		d.Endpoint = fmt.Sprintf("sqlite://%s/%s.sqlite", cwd, d.name)
+		end, _ := datatypes.ParseEndpoint(fmt.Sprintf("sqlite://%s/%s.sqlite", cwd, d.name))
+		if end != nil {
+			d.Endpoint = *end
+		}
 	}
 }
 
@@ -48,7 +52,7 @@ func (d *Database) Init(ctx context.Context) error {
 		return nil
 	}
 
-	db, err := adapter.Open(ctx, d.Endpoint)
+	db, err := adapter.Open(ctx, d.Endpoint.String())
 	if err != nil {
 		return err
 	}

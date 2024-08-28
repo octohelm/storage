@@ -2,6 +2,7 @@ package dal_test
 
 import (
 	"context"
+	"github.com/octohelm/storage/pkg/datatypes"
 
 	"sync"
 	"testing"
@@ -372,8 +373,11 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	cat.Add(model.OrgUserT)
 
 	db := &dal.Database{
-		Endpoint:      endpoint,
 		EnableMigrate: true,
+	}
+
+	if endpoint != "" {
+		db.Endpoint = *must(datatypes.ParseEndpoint(endpoint))
 	}
 
 	db.ApplyCatalog(name, cat)
@@ -400,4 +404,11 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	})
 
 	return ctx
+}
+
+func must[T any](x T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return x
 }
