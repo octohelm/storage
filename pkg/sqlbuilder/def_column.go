@@ -3,6 +3,7 @@ package sqlbuilder
 import (
 	"context"
 	"fmt"
+	"github.com/octohelm/storage/pkg/sqlbuilder/internal/columndef"
 	"reflect"
 	"strings"
 
@@ -42,7 +43,7 @@ func ColDef(def ColumnDef) ColOptionFunc {
 
 func ColTypeOf(v any, tagValue string) ColOptionFunc {
 	return func(c ColumnSetter) {
-		c.SetColumnDef(*ColumnDefFromTypeAndTag(types.FromRType(reflect.TypeOf(v)), tagValue))
+		c.SetColumnDef(*columndef.FromTypeAndTag(types.FromRType(reflect.TypeOf(v)), tagValue))
 	}
 }
 

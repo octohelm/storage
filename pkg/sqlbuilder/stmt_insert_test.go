@@ -1,6 +1,7 @@
 package sqlbuilder_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/octohelm/storage/internal/testutil"
@@ -35,6 +36,14 @@ INSERT INTO T (f_a,f_b) VALUES (?,?)
 			Insert().
 				Into(table).
 				Values(Cols("f_a", "f_b"), 1, 2, 1, 2, 1, 2),
+			"INSERT INTO T (f_a,f_b) VALUES (?,?),(?,?),(?,?)", 1, 2, 1, 2, 1, 2)
+	})
+
+	t.Run("multiple insert by iter", func(t *testing.T) {
+		testutil.ShouldBeExpr(t,
+			Insert().
+				Into(table).
+				ValuesCollect(Cols("f_a", "f_b"), slices.Values([]any{1, 2, 1, 2, 1, 2})),
 			"INSERT INTO T (f_a,f_b) VALUES (?,?),(?,?),(?,?)", 1, 2, 1, 2, 1, 2)
 	})
 

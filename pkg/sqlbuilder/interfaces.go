@@ -1,12 +1,12 @@
 package sqlbuilder
 
+import "github.com/octohelm/storage/pkg/sqlbuilder/internal"
+
 type DataTypeDescriber interface {
 	DataType(driverName string) string
 }
 
-type Model interface {
-	TableName() string
-}
+type Model = internal.Model
 
 type WithTableDescription interface {
 	TableDescription() []string

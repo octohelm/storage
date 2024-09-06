@@ -2,6 +2,7 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
 )
 
 func Insert(modifiers ...string) *StmtInsert {
@@ -24,8 +25,13 @@ func (s StmtInsert) Into(table Table, additions ...Addition) *StmtInsert {
 	return &s
 }
 
-func (s StmtInsert) Values(cols ColumnCollection, values ...interface{}) *StmtInsert {
+func (s StmtInsert) Values(cols ColumnCollection, values ...any) *StmtInsert {
 	s.assignments = Assignments{ColumnsAndValues(cols, values...)}
+	return &s
+}
+
+func (s StmtInsert) ValuesCollect(cols ColumnCollection, seq iter.Seq[any]) *StmtInsert {
+	s.assignments = Assignments{ColumnsAndCollect(cols, seq)}
 	return &s
 }
 

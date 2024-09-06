@@ -9,35 +9,6 @@ import (
 	"text/scanner"
 )
 
-func ColumnsAndValuesByFieldValues(t Table, fieldValues FieldValues) (cols ColumnCollection, args []interface{}) {
-	fieldNames := make([]string, 0)
-	for fieldName := range fieldValues {
-		fieldNames = append(fieldNames, fieldName)
-	}
-
-	sort.Strings(fieldNames)
-
-	cols = Cols()
-
-	for _, fieldName := range fieldNames {
-		if col := t.F(fieldName); col != nil {
-			cols.(ColumnCollectionManger).AddCol(col)
-			args = append(args, fieldValues[fieldName])
-		}
-	}
-	return
-}
-
-func AssignmentsByFieldValues(t Table, fieldValues FieldValues) (assignments Assignments) {
-	for fieldName, value := range fieldValues {
-		col := t.F(fieldName)
-		if col != nil {
-			assignments = append(assignments, CastCol[any](col).By(Value(value)))
-		}
-	}
-	return
-}
-
 type TableDefinition interface {
 	T() Table
 }
@@ -143,7 +114,7 @@ func (t *table) Ex(ctx context.Context) *Ex {
 	return Expr(t.name).Ex(ctx)
 }
 
-func (t *table) Expr(query string, args ...interface{}) *Ex {
+func (t *table) Expr(query string, args ...any) *Ex {
 	if query == "" {
 		return nil
 	}

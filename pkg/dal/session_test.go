@@ -2,7 +2,6 @@ package dal_test
 
 import (
 	"context"
-	"github.com/octohelm/storage/pkg/datatypes"
 
 	"sync"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/octohelm/storage/internal/testutil"
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/dal/compose"
+	"github.com/octohelm/storage/pkg/datatypes"
 	"github.com/octohelm/storage/pkg/dberr"
 	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -18,7 +18,7 @@ import (
 )
 
 type FilterUserByAge struct {
-	Age *filter.Filter[int64] `name:"age" in:"query" `
+	Age *filter.Filter[int64] `name:"age" in:"query"`
 }
 
 func (i FilterUserByAge) Apply(q dal.Querier) dal.Querier {
@@ -33,6 +33,37 @@ func TestCRUD(t *testing.T) {
 
 	for i := range ctxs {
 		ctx := ctxs[i]
+
+		t.Run("batch insert", func(t *testing.T) {
+			err := dal.Prepare(&model.User{}).
+				Values(
+					func(yield func(*model.User) bool) {
+						for i := 0; i < 100; i++ {
+							usr := &model.User{
+								Name: uuid.New().String(),
+								Age:  int64(i),
+							}
+							if !yield(usr) {
+								return
+							}
+						}
+					},
+					model.UserT.Name,
+					model.UserT.Age,
+				).
+				OnConflict(model.UserT.I.IName).
+				DoNothing().
+				Save(ctx)
+			testutil.Expect(t, err, testutil.Be[error](nil))
+
+			c, err := dal.From(model.UserT).Count(ctx)
+			testutil.Expect(t, err, testutil.Be[error](nil))
+			testutil.Expect(t, c, testutil.Be(100))
+
+			err = dal.Prepare(&model.User{}).ForDelete(dal.HardDelete()).
+				Where(model.UserT.Age.V(sqlbuilder.Gte(int64(0)))).Save(ctx)
+			testutil.Expect(t, err, testutil.Be[error](nil))
+		})
 
 		t.Run("Save one user", func(t *testing.T) {
 			usr := &model.User{

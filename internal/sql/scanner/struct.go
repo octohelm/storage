@@ -4,10 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"reflect"
 	"strings"
-
-	"github.com/octohelm/storage/pkg/sqlbuilder"
 
 	"github.com/octohelm/storage/internal/sql/scanner/nullable"
 	reflectx "github.com/octohelm/x/reflect"
@@ -48,7 +47,7 @@ func scanTo(ctx context.Context, rows *sql.Rows, v interface{}) error {
 			dest[i] = holder
 		}
 
-		sqlbuilder.ForEachStructFieldValue(ctx, v, func(sf *sqlbuilder.StructFieldValue) {
+		for sf := range structs.AllFieldValue(ctx, v) {
 			if sf.TableName != "" {
 				if i, ok := columnIndexes[sf.TableName+"__"+sf.Field.Name]; ok && i > -1 {
 					dest[i] = nullable.NewNullIgnoreScanner(sf.Value.Addr().Interface())
@@ -58,7 +57,7 @@ func scanTo(ctx context.Context, rows *sql.Rows, v interface{}) error {
 			if i, ok := columnIndexes[sf.Field.Name]; ok && i > -1 {
 				dest[i] = nullable.NewNullIgnoreScanner(sf.Value.Addr().Interface())
 			}
-		})
+		}
 
 		return rows.Scan(dest...)
 	default:

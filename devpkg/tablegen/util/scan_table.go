@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"go/types"
 	"strings"
 
@@ -37,7 +38,7 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 
 	t := sqlbuilder.T(tableName)
 
-	sqlbuilder.EachStructField(context.Background(), typesx.FromTType(named), func(p *sqlbuilder.StructField) bool {
+	for p := range structs.AllStructField(context.Background(), typesx.FromTType(named)) {
 		def := sqlbuilder.ColumnDef{}
 
 		if tsf, ok := p.Field.(*typesx.TStructField); ok {
@@ -63,8 +64,7 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 
 		col := sqlbuilder.Col(p.Name, sqlbuilder.ColField(p.FieldName), sqlbuilder.ColDef(def))
 		t.(sqlbuilder.ColumnCollectionManger).AddCol(col)
-		return true
-	})
+	}
 
 	if indexes, ok := tags["def"]; ok {
 		for i := range indexes {

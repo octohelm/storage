@@ -1,14 +1,11 @@
-package sqlbuilder_test
+package columndef
 
 import (
+	"github.com/octohelm/x/ptr"
+	testingx "github.com/octohelm/x/testing"
+	"github.com/octohelm/x/types"
 	"reflect"
 	"testing"
-
-	testingx "github.com/octohelm/x/testing"
-
-	. "github.com/octohelm/storage/pkg/sqlbuilder"
-	"github.com/octohelm/x/ptr"
-	"github.com/octohelm/x/types"
 )
 
 func TestColumnTypeFromTypeAndTag(t *testing.T) {
@@ -41,7 +38,7 @@ func TestColumnTypeFromTypeAndTag(t *testing.T) {
 
 	for tagValue, ct := range cases {
 		t.Run(tagValue, func(t *testing.T) {
-			testingx.Expect(t, ColumnDefFromTypeAndTag(ct.Type, tagValue), testingx.Equal(ct))
+			testingx.Expect(t, FromTypeAndTag(ct.Type, tagValue), testingx.Equal(ct))
 		})
 	}
 }

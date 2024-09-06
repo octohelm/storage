@@ -2,7 +2,9 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
 	"math"
+	"slices"
 )
 
 func WriteAssignments(e *Ex, assignments ...Assignment) {
@@ -34,7 +36,25 @@ func ColumnsAndValues(columnOrColumns SqlExpr, values ...any) Assignment {
 	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
 		lenOfColumn = canLen.Len()
 	}
-	return &assignment{columnOrColumns: columnOrColumns, lenOfColumn: lenOfColumn, values: values}
+
+	return &assignment{
+		columnOrColumns: columnOrColumns,
+		lenOfColumn:     lenOfColumn,
+		values:          values,
+	}
+}
+
+func ColumnsAndCollect(columnOrColumns SqlExpr, seq iter.Seq[any]) Assignment {
+	lenOfColumn := 1
+	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
+		lenOfColumn = canLen.Len()
+	}
+
+	return &assignment{
+		columnOrColumns: columnOrColumns,
+		lenOfColumn:     lenOfColumn,
+		valueSeq:        seq,
+	}
 }
 
 type Assignments []Assignment
@@ -43,21 +63,21 @@ type assignment struct {
 	columnOrColumns SqlExpr
 	lenOfColumn     int
 	values          []any
+	valueSeq        iter.Seq[any]
 }
 
 func (assignment) SqlAssignment() {}
 
 func (a *assignment) IsNil() bool {
-	return a == nil || IsNilExpr(a.columnOrColumns) || len(a.values) == 0
+	return a == nil || IsNilExpr(a.columnOrColumns) || (a.valueSeq == nil && len(a.values) == 0)
 }
 
 func (a *assignment) Ex(ctx context.Context) *Ex {
 	e := Expr("")
-	e.Grow(len(a.values))
 
 	useValues := TogglesFromContext(ctx).Is(ToggleUseValues)
 
-	if useValues {
+	if useValues || a.valueSeq != nil {
 		e.WriteGroup(func(e *Ex) {
 			e.WriteExpr(ExprBy(func(ctx context.Context) *Ex {
 				return a.columnOrColumns.Ex(ContextWithToggles(ctx, Toggles{
@@ -66,8 +86,14 @@ func (a *assignment) Ex(ctx context.Context) *Ex {
 			}))
 		})
 
-		if len(a.values) == 1 {
-			if s, ok := a.values[0].(SelectStatement); ok {
+		values := a.values
+
+		if a.valueSeq != nil {
+			values = slices.Collect(a.valueSeq)
+		}
+
+		if len(values) == 1 {
+			if s, ok := values[0].(SelectStatement); ok {
 				e.WriteQueryByte(' ')
 				e.WriteExpr(s)
 				return e.Ex(ctx)
@@ -76,7 +102,7 @@ func (a *assignment) Ex(ctx context.Context) *Ex {
 
 		e.WriteQuery(" VALUES ")
 
-		groupCount := int(math.Round(float64(len(a.values)) / float64(a.lenOfColumn)))
+		groupCount := int(math.Round(float64(len(values)) / float64(a.lenOfColumn)))
 
 		for i := 0; i < groupCount; i++ {
 			if i > 0 {
@@ -90,7 +116,7 @@ func (a *assignment) Ex(ctx context.Context) *Ex {
 			})
 		}
 
-		e.AppendArgs(a.values...)
+		e.AppendArgs(values...)
 
 		return e.Ex(ctx)
 	}

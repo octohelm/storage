@@ -3,16 +3,22 @@ package dal
 import (
 	"context"
 	"database/sql/driver"
+	"github.com/pkg/errors"
+	"iter"
 	"time"
-
-	"github.com/octohelm/x/slices"
 
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/datatypes"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
+	"github.com/octohelm/x/slices"
 )
 
 func Prepare[T any](v *T) Mutation[T] {
+	if _, ok := any(v).(sqlbuilder.Table); ok {
+		panic(errors.Errorf("Prepare should be some data struct, but got %T", v))
+	}
+
 	if m, ok := any(v).(ModelWithCreationTime); ok {
 		m.MarkCreatedAt()
 	}
@@ -26,8 +32,8 @@ func Prepare[T any](v *T) Mutation[T] {
 }
 
 type Mutation[T any] interface {
-	IncludesZero(zeroFields ...sqlbuilder.Column) Mutation[T]
-
+	IncludesZero(columns ...sqlbuilder.Column) Mutation[T]
+	Values(valueSeq iter.Seq[*T], cols ...sqlbuilder.Column) Mutation[T]
 	FromSelect(q Querier, cols ...sqlbuilder.Column) Mutation[T]
 
 	ForDelete(opts ...OptionFunc) Mutation[T]
@@ -60,11 +66,18 @@ type mutation[T any] struct {
 
 	fromSelect *fromSelect
 
+	insertValues *insertValues[T]
+
 	returning []sqlbuilder.SqlExpr
 
 	forDelete bool
 
 	feature
+}
+
+type insertValues[T any] struct {
+	columns  []sqlbuilder.Column
+	valueSeq iter.Seq[*T]
 }
 
 type fromSelect struct {
@@ -76,6 +89,14 @@ type DeleteFunc func()
 
 func (c mutation[T]) IncludesZero(zeroFields ...sqlbuilder.Column) Mutation[T] {
 	c.zeroFieldsIncludes = zeroFields
+	return &c
+}
+
+func (c mutation[T]) Values(valueSeq iter.Seq[*T], cols ...sqlbuilder.Column) Mutation[T] {
+	c.insertValues = &insertValues[T]{
+		columns:  cols,
+		valueSeq: valueSeq,
+	}
 	return &c
 }
 
@@ -204,6 +225,14 @@ func (c *mutation[T]) del(ctx context.Context, t sqlbuilder.Table, s Session) er
 	return c.exec(ctx, s, stmt, hasReturning)
 }
 
+func (c *mutation[T]) includeFieldNames() []string {
+	zeroFieldsIncludes := make([]string, len(c.zeroFieldsIncludes))
+	for i := range zeroFieldsIncludes {
+		zeroFieldsIncludes[i] = c.zeroFieldsIncludes[i].FieldName()
+	}
+	return zeroFieldsIncludes
+}
+
 func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s Session) error {
 	additions := make([]sqlbuilder.Addition, 0)
 
@@ -238,21 +267,14 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 
 	additions, hasReturning := c.withReturning(t, additions)
 
-	zeroFieldsIncludes := make([]string, len(c.zeroFieldsIncludes))
-
-	for i := range zeroFieldsIncludes {
-		zeroFieldsIncludes[i] = c.zeroFieldsIncludes[i].FieldName()
-	}
-
-	fieldValues := sqlbuilder.FieldValuesFromStructByNonZero(c.target, zeroFieldsIncludes...)
-
 	var stmt sqlbuilder.SqlExpr
 
 	if where := c.buildWhere(t); where != nil {
 		assignmentsForUpdate := c.assignmentsForUpdate
 		if len(assignmentsForUpdate) == 0 {
-			assignmentsForUpdate = sqlbuilder.AssignmentsByFieldValues(t, fieldValues)
+			assignmentsForUpdate = toAssignments(t, c.target, c.includeFieldNames()...)
 		}
+
 		stmt = sqlbuilder.Update(t).
 			Where(where, additions...).
 			Set(assignmentsForUpdate...)
@@ -264,10 +286,43 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 				})...),
 				c.fromSelect.values,
 			)
+	} else if c.insertValues != nil {
+		cols := sqlbuilder.Cols()
+
+		if len(c.insertValues.columns) > 0 {
+			for _, c := range c.insertValues.columns {
+				if col := t.F(c.FieldName()); col != nil {
+					cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+				}
+			}
+		} else {
+			for col, _ := range t.Cols().RangeCol {
+				if !col.Def().AutoIncrement {
+					cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+				}
+			}
+		}
+
+		stmt = sqlbuilder.Insert().Into(t, additions...).ValuesCollect(cols, func(yield func(any) bool) {
+			for value := range c.insertValues.valueSeq {
+				for sfv := range structs.AllFieldValue(context.Background(), value) {
+					if col := cols.F(sfv.Field.FieldName); col != nil {
+						v := sfv.Value.Interface()
+
+						if m, ok := v.(ModelWithCreationTime); ok {
+							m.MarkCreatedAt()
+						}
+
+						if !yield(v) {
+							return
+						}
+					}
+				}
+			}
+		})
 	} else {
-		cols, vals := sqlbuilder.ColumnsAndValuesByFieldValues(t, fieldValues)
-		stmt = sqlbuilder.Insert().Into(t, additions...).
-			Values(cols, vals...)
+		cols, vals := toColumnsAndValues(t, c.target, c.includeFieldNames()...)
+		stmt = sqlbuilder.Insert().Into(t, additions...).Values(cols, vals...)
 	}
 
 	return c.exec(ctx, s, stmt, hasReturning)
@@ -299,4 +354,26 @@ func (c *mutation[T]) withReturning(t sqlbuilder.Table, additions []sqlbuilder.A
 	}
 
 	return additions, hasReturning
+}
+
+func toColumnsAndValues(t sqlbuilder.Table, m any, excludeFields ...string) (cols sqlbuilder.ColumnCollection, args []any) {
+	cols = sqlbuilder.Cols()
+
+	for sfv := range structs.AllNonZeroFieldValue(context.Background(), m, excludeFields...) {
+		if col := t.F(sfv.Field.FieldName); col != nil {
+			cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+			args = append(args, sfv.Value.Interface())
+		}
+	}
+
+	return
+}
+
+func toAssignments(t sqlbuilder.Table, m any, excludeFields ...string) (assignments sqlbuilder.Assignments) {
+	for sfv := range structs.AllNonZeroFieldValue(context.Background(), m, excludeFields...) {
+		if col := t.F(sfv.Field.FieldName); col != nil {
+			assignments = append(assignments, sqlbuilder.CastCol[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
+		}
+	}
+	return
 }
