@@ -12,7 +12,7 @@ require (
 	github.com/octohelm/x v0.0.0-20240904081416-42a1ee2d28a9
 	github.com/pkg/errors v0.9.1
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e
-	modernc.org/sqlite v1.32.0
+	modernc.org/sqlite v1.33.0
 )
 
 require (
@@ -32,7 +32,6 @@ require (
 	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	modernc.org/gc/v3 v3.0.0-20240801135723-a856999a2e4a // indirect
-	modernc.org/libc v1.60.1 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
