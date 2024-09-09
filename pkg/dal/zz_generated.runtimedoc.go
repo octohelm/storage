@@ -21,6 +21,18 @@ func (v Database) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"Endpoint of database",
 			}, true
+		case "NameOverwrites":
+			return []string{
+				"Overwrite dbname when not empty",
+			}, true
+		case "UsernameOverwrites":
+			return []string{
+				"Overwrite username when not empty",
+			}, true
+		case "PasswordOverwrites":
+			return []string{
+				"Overwrite password when not empty",
+			}, true
 		case "EnableMigrate":
 			return []string{
 				"auto migrate before run",

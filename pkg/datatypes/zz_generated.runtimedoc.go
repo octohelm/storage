@@ -17,6 +17,33 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 func (Bool) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+func (v Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
+	if len(names) > 0 {
+		switch names[0] {
+		case "Scheme":
+			return []string{}, true
+		case "Hostname":
+			return []string{}, true
+		case "Port":
+			return []string{}, true
+		case "Path":
+			return []string{}, true
+		case "Username":
+			return []string{}, true
+		case "Password":
+			return []string{}, true
+		case "Extra":
+			return []string{}, true
+
+		}
+
+		return nil, false
+	}
+	return []string{
+		"openapi:strfmt endpoint",
+	}, true
+}
+
 func (SFID) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{
 		"openapi:strfmt snowflake-id",

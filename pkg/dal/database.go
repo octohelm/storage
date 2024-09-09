@@ -1,6 +1,7 @@
 package dal
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"github.com/octohelm/storage/pkg/datatypes"
@@ -17,6 +18,13 @@ import (
 type Database struct {
 	// Endpoint of database
 	Endpoint datatypes.Endpoint `flag:""`
+	// Overwrite dbname when not empty
+	NameOverwrite string `flag:",omitempty"`
+	// Overwrite username when not empty
+	UsernameOverwrite string `flag:",omitempty"`
+	// Overwrite password when not empty
+	PasswordOverwrite string `flag:",omitempty,secret"`
+
 	// auto migrate before run
 	EnableMigrate bool `flag:",omitempty"`
 
@@ -28,7 +36,7 @@ type Database struct {
 func (d *Database) SetDefaults() {
 	if d.Endpoint.IsZero() {
 		cwd, _ := os.Getwd()
-		end, _ := datatypes.ParseEndpoint(fmt.Sprintf("sqlite://%s/%s.sqlite", cwd, d.name))
+		end, _ := datatypes.ParseEndpoint(fmt.Sprintf("sqlite://%s/%s.sqlite", cwd, d.DBName()))
 		if end != nil {
 			d.Endpoint = *end
 		}
@@ -52,7 +60,23 @@ func (d *Database) Init(ctx context.Context) error {
 		return nil
 	}
 
-	db, err := adapter.Open(ctx, d.Endpoint.String())
+	endpoint := d.Endpoint
+
+	if name := d.NameOverwrite; name != "" {
+		if endpoint.Scheme != "sqlite" {
+			endpoint.Path = "/" + name
+		}
+	}
+
+	if username := d.UsernameOverwrite; username != "" {
+		endpoint.Username = username
+	}
+
+	if password := d.PasswordOverwrite; password != "" {
+		endpoint.Password = password
+	}
+
+	db, err := adapter.Open(ctx, endpoint.String())
 	if err != nil {
 		return err
 	}
@@ -60,6 +84,10 @@ func (d *Database) Init(ctx context.Context) error {
 	d.db = db
 	registerSessionCatalog(d.name, d.tables)
 	return nil
+}
+
+func (d *Database) DBName() string {
+	return cmp.Or(d.name, d.NameOverwrite, d.Endpoint.Base())
 }
 
 func (d *Database) InjectContext(ctx context.Context) context.Context {

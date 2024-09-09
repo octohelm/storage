@@ -2,6 +2,7 @@ package datatypes
 
 import (
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -52,7 +53,10 @@ type Endpoint struct {
 
 func (e Endpoint) Base() string {
 	if e.Path != "" {
-		return strings.Split(e.Path[1:], "/")[0]
+		return strings.Split(
+			path.Base(e.Path),
+			".",
+		)[0]
 	}
 	return ""
 }
