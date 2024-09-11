@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/octohelm/storage/pkg/sqlfrag"
+
 	"github.com/pkg/errors"
 	"modernc.org/sqlite"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
 	"github.com/octohelm/storage/pkg/dberr"
-	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
 func init() {
@@ -98,6 +99,6 @@ func (a *sqliteAdapter) createDatabase(ctx context.Context, dbName string, dsn u
 	}
 	defer adaptor.Close()
 
-	_, err = adaptor.Exec(context.Background(), sqlbuilder.Expr(fmt.Sprintf("CREATE DATABASE %s", dbName)))
+	_, err = adaptor.Exec(context.Background(), sqlfrag.Pair(fmt.Sprintf("CREATE DATABASE %s", dbName)))
 	return err
 }

@@ -3,46 +3,13 @@ package sqlbuilder
 import (
 	"context"
 	"fmt"
-	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"reflect"
 	"strings"
 	"sync"
 
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	typesx "github.com/octohelm/x/types"
 )
-
-func ColumnsByStruct(v any) *Ex {
-	ctx := context.Background()
-
-	fields := structs.Fields(ctx, typesx.FromRType(reflect.TypeOf(v)))
-
-	e := Expr("")
-	e.Grow(len(fields))
-
-	i := 0
-
-	for fieldValue := range structs.AllFieldValue(context.Background(), reflect.ValueOf(v)) {
-		if i > 0 {
-			e.WriteQuery(", ")
-		}
-
-		if fieldValue.TableName != "" {
-			e.WriteQuery(fieldValue.TableName)
-			e.WriteQueryByte('.')
-			e.WriteQuery(fieldValue.Field.Name)
-			e.WriteQuery(" AS ")
-			e.WriteQuery(fieldValue.TableName)
-			e.WriteQuery("__")
-			e.WriteQuery(fieldValue.Field.Name)
-		} else {
-			e.WriteQuery(fieldValue.Field.Name)
-		}
-
-		i++
-	}
-
-	return e
-}
 
 func GetColumnName(fieldName, tagValue string) string {
 	i := strings.Index(tagValue, ",")

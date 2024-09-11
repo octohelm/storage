@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-
-	"github.com/octohelm/storage/internal/testutil"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
+	testingx "github.com/octohelm/x/testing"
 )
 
 func TestPostgresDialect(t *testing.T) {
@@ -28,32 +29,32 @@ func TestPostgresDialect(t *testing.T) {
 	)
 
 	cases := map[string]struct {
-		expr   sqlbuilder.SqlExpr
-		expect sqlbuilder.SqlExpr
+		expr   sqlfrag.Fragment
+		expect sqlfrag.Fragment
 	}{
 		"AddIndex": {
 			c.AddIndex(table.K("I_name")),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "CREATE UNIQUE INDEX t_i_name ON t USING BTREE (f_id,f_name);"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "CREATE UNIQUE INDEX t_i_name ON t USING BTREE (f_id,f_name);"),
 		},
 		"AddPrimaryKey": {
 			c.AddIndex(table.K("PRIMARY")),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "ALTER TABLE t ADD PRIMARY KEY (f_id);"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "ALTER TABLE t ADD PRIMARY KEY (f_id);"),
 		},
 		"AddSpatialIndex": {
 			c.AddIndex(table.K("i_geo")),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "CREATE INDEX t_i_geo ON t USING GIST (f_geo);"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "CREATE INDEX t_i_geo ON t USING GIST (f_geo);"),
 		},
 		"DropIndex": {
 			c.DropIndex(table.K("i_name")),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "DROP INDEX IF EXISTS t_i_name;"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "DROP INDEX IF EXISTS t_i_name;"),
 		},
 		"DropPrimaryKey": {
 			c.DropIndex(table.K("PRIMARY")),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "ALTER TABLE t DROP CONSTRAINT t_pkey;"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "ALTER TABLE t DROP CONSTRAINT t_pkey;"),
 		},
 		"CreateTableIsNotExists": {
 			c.CreateTableIsNotExists(table)[0],
-			sqlbuilder.Expr( /* language=PostgreSQL */ `CREATE TABLE IF NOT EXISTS t (
+			sqlfrag.Pair( /* language=PostgreSQL */ `CREATE TABLE IF NOT EXISTS t (
 	f_id bigserial NOT NULL,
 	f_name character varying(128) NOT NULL DEFAULT ''::character varying,
 	f_geo POINT NOT NULL,
@@ -64,25 +65,27 @@ func TestPostgresDialect(t *testing.T) {
 		},
 		"DropTable": {
 			c.DropTable(table),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "DROP TABLE IF EXISTS t;"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "DROP TABLE IF EXISTS t;"),
 		},
 		"TruncateTable": {
 			c.TruncateTable(table),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "TRUNCATE TABLE t;"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "TRUNCATE TABLE t;"),
 		},
 		"AddColumn": {
 			c.AddColumn(table.F("f_name")),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "ALTER TABLE t ADD COLUMN f_name character varying(128) NOT NULL DEFAULT ''::character varying;"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "ALTER TABLE t ADD COLUMN f_name character varying(128) NOT NULL DEFAULT ''::character varying;"),
 		},
 		"DropColumn": {
 			c.DropColumn(table.F("f_name")),
-			sqlbuilder.Expr( /* language=PostgreSQL */ "ALTER TABLE t DROP COLUMN f_name;"),
+			sqlfrag.Pair( /* language=PostgreSQL */ "ALTER TABLE t DROP COLUMN f_name;"),
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			testutil.ShouldBeExpr(t, c.expr, c.expect.Ex(context.Background()).Query())
+			q, args := sqlfrag.All(context.Background(), c.expect)
+
+			testingx.Expect(t, c.expr, testutil.BeFragment(q, args...))
 		})
 	}
 }

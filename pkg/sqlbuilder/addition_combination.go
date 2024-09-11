@@ -2,10 +2,14 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type CombinationAddition interface {
 	Addition
+
 	All(stmtSelect SelectStatement) CombinationAddition
 	Distinct(stmtSelect SelectStatement) CombinationAddition
 }
@@ -38,10 +42,6 @@ func (combination) AdditionType() AdditionType {
 	return AdditionCombination
 }
 
-func (c *combination) IsNil() bool {
-	return c == nil || IsNilExpr(c.stmtSelect)
-}
-
 func (c combination) All(stmtSelect SelectStatement) CombinationAddition {
 	c.method = "ALL"
 	c.stmtSelect = stmtSelect
@@ -54,19 +54,24 @@ func (c combination) Distinct(stmtSelect SelectStatement) CombinationAddition {
 	return &c
 }
 
-func (c *combination) Ex(ctx context.Context) *Ex {
-	e := Expr("")
-	e.Grow(1)
+func (c *combination) IsNil() bool {
+	return c == nil || sqlfrag.IsNil(c.stmtSelect)
+}
 
-	e.WriteQuery(c.operator)
-	e.WriteQueryByte(' ')
+func (c *combination) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield(c.operator+" ", nil) {
+			return
+		}
 
-	if c.method != "" {
-		e.WriteQuery(c.method)
-		e.WriteQueryByte(' ')
+		if c.method != "" {
+			if !yield(c.method+" ", nil) {
+				return
+			}
+		}
+
+		if !(yield(sqlfrag.All(ctx, c.stmtSelect))) {
+			return
+		}
 	}
-
-	e.WriteExpr(c.stmtSelect)
-
-	return e.Ex(ctx)
 }

@@ -2,13 +2,17 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
+	"slices"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func OrderBy(orders ...*Order) Addition {
-	finalOrders := make([]*Order, 0)
+func OrderBy(orders ...Order) Addition {
+	finalOrders := make([]Order, 0)
 
 	for i := range orders {
-		if IsNilExpr(orders[i]) {
+		if sqlfrag.IsNil(orders[i]) {
 			continue
 		}
 		finalOrders = append(finalOrders, orders[i])
@@ -20,7 +24,7 @@ func OrderBy(orders ...*Order) Addition {
 }
 
 type orderBy struct {
-	orders []*Order
+	orders []Order
 }
 
 func (orderBy) AdditionType() AdditionType {
@@ -31,48 +35,59 @@ func (o *orderBy) IsNil() bool {
 	return o == nil || len(o.orders) == 0
 }
 
-func (o *orderBy) Ex(ctx context.Context) *Ex {
-	e := Expr("ORDER BY ")
-	for i := range o.orders {
-		if i > 0 {
-			e.WriteQueryByte(',')
+func (o *orderBy) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield("ORDER BY ", nil) {
+			return
 		}
-		e.WriteExpr(o.orders[i])
+
+		for g, args := range sqlfrag.Join(",", sqlfrag.NonNil(slices.Values(o.orders))).Frag(ctx) {
+			if !yield(g, args) {
+				return
+			}
+		}
 	}
-	return e.Ex(ctx)
 }
 
-func AscOrder(target SqlExpr) *Order {
-	return &Order{target: target, typ: "ASC"}
+func AscOrder(target sqlfrag.Fragment) Order {
+	return &order{target: target, typ: "ASC"}
 }
 
-func DescOrder(target SqlExpr) *Order {
-	return &Order{target: target, typ: "DESC"}
+func DescOrder(target sqlfrag.Fragment) Order {
+	return &order{target: target, typ: "DESC"}
 }
 
-var _ SqlExpr = (*Order)(nil)
+type Order interface {
+	sqlfrag.Fragment
 
-type Order struct {
-	target SqlExpr
+	orderType() string
+}
+
+type order struct {
+	target sqlfrag.Fragment
 	typ    string
 }
 
-func (o *Order) IsNil() bool {
-	return o == nil || IsNilExpr(o.target)
+func (o *order) orderType() string {
+	return o.typ
 }
 
-func (o *Order) Ex(ctx context.Context) *Ex {
-	e := Expr("")
-	e.Grow(1)
+func (o *order) IsNil() bool {
+	return o == nil || sqlfrag.IsNil(o.target)
+}
 
-	e.WriteGroup(func(e *Ex) {
-		e.WriteExpr(o.target)
-	})
+func (o *order) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		for q, args := range sqlfrag.Group(o.target).Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
 
-	if o.typ != "" {
-		e.WriteQueryByte(' ')
-		e.WriteQuery(o.typ)
+		if o.typ != "" {
+			if !yield(" "+o.typ, nil) {
+				return
+			}
+		}
 	}
-
-	return e.Ex(ctx)
 }

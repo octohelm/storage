@@ -3,15 +3,17 @@ package dal
 import (
 	"context"
 	"database/sql/driver"
-	"github.com/pkg/errors"
 	"iter"
 	"slices"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/datatypes"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 	slicesx "github.com/octohelm/x/slices"
 )
 
@@ -49,7 +51,7 @@ type MutationDeprecated[T sqlbuilder.Model] interface {
 type MutationMustWithWhere[T any] interface {
 	Mutation[T]
 
-	Where(where sqlbuilder.SqlExpr) Mutation[T]
+	Where(where sqlfrag.Fragment) Mutation[T]
 }
 
 func InsertNonZero[T sqlbuilder.Model](value *T, zeroFieldsIncludes ...sqlbuilder.Column) Mutation[T] {
@@ -135,17 +137,17 @@ func Delete[T sqlbuilder.Model](opts ...OptionFunc) MutationMustWithWhere[T] {
 }
 
 type Mutation[T any] interface {
-	WhereAnd(where sqlbuilder.SqlExpr) Mutation[T]
-	WhereOr(where sqlbuilder.SqlExpr) Mutation[T]
+	WhereAnd(where sqlfrag.Fragment) Mutation[T]
+	WhereOr(where sqlfrag.Fragment) Mutation[T]
 
 	Apply(patchers ...MutationPatcher[T]) Mutation[T]
 
-	OnConflict(cols sqlbuilder.ColumnCollection) Mutation[T]
+	OnConflict(cols sqlbuilder.ColumnSeq) Mutation[T]
 	DoNothing() Mutation[T]
 	DoUpdateSet(cols ...sqlbuilder.Column) Mutation[T]
 	DoWith(func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.Addition) Mutation[T]
 
-	Returning(cols ...sqlbuilder.SqlExpr) Mutation[T]
+	Returning(cols ...sqlfrag.Fragment) Mutation[T]
 	Scan(recv any) Mutation[T]
 
 	Save(ctx context.Context) error
@@ -161,9 +163,9 @@ type mutation[T any] struct {
 	zeroFieldsIncludes   []sqlbuilder.Column
 	assignmentsForUpdate sqlbuilder.Assignments
 
-	where sqlbuilder.SqlExpr
+	where sqlfrag.Fragment
 
-	conflict              sqlbuilder.ColumnCollection
+	conflict              sqlbuilder.ColumnSeq
 	onConflictDoWith      func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.Addition
 	onConflictDoUpdateSet []sqlbuilder.Column
 
@@ -171,7 +173,7 @@ type mutation[T any] struct {
 	update       *updateAction
 	insertValues *insertValues[T]
 
-	returning []sqlbuilder.SqlExpr
+	returning []sqlfrag.Fragment
 
 	forDelete bool
 
@@ -211,7 +213,7 @@ func (cc columns) colsForMut(t sqlbuilder.Table) sqlbuilder.ColumnCollection {
 			}
 		}
 	} else {
-		for col, _ := range t.Cols().RangeCol {
+		for col := range t.Cols() {
 			if !col.Def().AutoIncrement {
 				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
 			}
@@ -262,22 +264,22 @@ func (c mutation[T]) ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation
 	return &c
 }
 
-func (c mutation[T]) Where(where sqlbuilder.SqlExpr) Mutation[T] {
+func (c mutation[T]) Where(where sqlfrag.Fragment) Mutation[T] {
 	c.where = where
 	return &c
 }
 
-func (c mutation[T]) WhereAnd(where sqlbuilder.SqlExpr) Mutation[T] {
+func (c mutation[T]) WhereAnd(where sqlfrag.Fragment) Mutation[T] {
 	c.where = sqlbuilder.And(c.where, where)
 	return &c
 }
 
-func (c mutation[T]) WhereOr(where sqlbuilder.SqlExpr) Mutation[T] {
+func (c mutation[T]) WhereOr(where sqlfrag.Fragment) Mutation[T] {
 	c.where = sqlbuilder.Or(c.where, where)
 	return &c
 }
 
-func (c mutation[T]) OnConflict(cols sqlbuilder.ColumnCollection) Mutation[T] {
+func (c mutation[T]) OnConflict(cols sqlbuilder.ColumnSeq) Mutation[T] {
 	c.conflict = cols
 	return &c
 }
@@ -297,11 +299,11 @@ func (c mutation[T]) DoUpdateSet(cols ...sqlbuilder.Column) Mutation[T] {
 	return &c
 }
 
-func (c mutation[T]) Returning(cols ...sqlbuilder.SqlExpr) Mutation[T] {
+func (c mutation[T]) Returning(cols ...sqlfrag.Fragment) Mutation[T] {
 	if len(cols) != 0 {
 		c.returning = cols
 	} else {
-		c.returning = make([]sqlbuilder.SqlExpr, 0)
+		c.returning = make([]sqlfrag.Fragment, 0)
 	}
 	return &c
 }
@@ -329,7 +331,7 @@ func (c *mutation[T]) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlCondition {
 			f, notDeletedValue := soft.SoftDeleteFieldAndZeroValue()
 			return sqlbuilder.And(
 				where,
-				t.F(f).Expr("# = ?", notDeletedValue),
+				t.F(f).Fragment("# = ?", notDeletedValue),
 			)
 		}
 	}
@@ -343,7 +345,7 @@ func (c *mutation[T]) del(ctx context.Context, t sqlbuilder.Table, s Session) er
 		return nil
 	}
 
-	var stmt sqlbuilder.SqlExpr
+	var stmt sqlfrag.Fragment
 
 	additions, hasReturning := c.withReturning(t, nil)
 
@@ -387,7 +389,7 @@ func (c *mutation[T]) includeFieldNames() []string {
 func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s Session) error {
 	additions := make([]sqlbuilder.Addition, 0)
 
-	if c.conflict != nil && c.conflict.Len() > 0 {
+	if c.conflict != nil {
 		onConflict := sqlbuilder.OnConflict(c.conflict)
 
 		if onConflictDoWith := c.onConflictDoWith; onConflictDoWith != nil {
@@ -397,17 +399,16 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 			if cols == nil {
 				// FIXME ugly hack
 				// sqlite will not RETURNING when ON CONFLICT DO NOTHING
-				c.conflict.RangeCol(func(col sqlbuilder.Column, idx int) bool {
+				for col := range c.conflict.Cols() {
 					cols = append(cols, col)
-					return true
-				})
+				}
 			}
 
 			assignments := make([]sqlbuilder.Assignment, len(cols))
 
 			for idx, col := range cols {
 				assignments[idx] = sqlbuilder.ColumnsAndValues(
-					col, col.Expr("EXCLUDED.?", sqlbuilder.Expr(col.Name())),
+					col, col.Fragment("EXCLUDED.?", sqlfrag.Const(col.Name())),
 				)
 			}
 
@@ -418,7 +419,7 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 
 	additions, hasReturning := c.withReturning(t, additions)
 
-	var stmt sqlbuilder.SqlExpr
+	var stmt sqlfrag.Fragment
 
 	if where := c.buildWhere(t); where != nil {
 		var assignmentsForUpdate []sqlbuilder.Assignment
@@ -436,7 +437,7 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 	} else if c.fromSelect != nil {
 		stmt = sqlbuilder.Insert().Into(t, additions...).
 			Values(
-				t.Cols(slicesx.Map(c.fromSelect.columns, func(e sqlbuilder.Column) string {
+				sqlbuilder.PickColsByFieldNames(t, slicesx.Map(c.fromSelect.columns, func(e sqlbuilder.Column) string {
 					return e.Name()
 				})...),
 				c.fromSelect.values,
@@ -469,7 +470,7 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 	return c.exec(ctx, s, stmt, hasReturning)
 }
 
-func (c *mutation[T]) exec(ctx context.Context, s Session, stmt sqlbuilder.SqlExpr, hasReturning bool) error {
+func (c *mutation[T]) exec(ctx context.Context, s Session, stmt sqlfrag.Fragment, hasReturning bool) error {
 	if hasReturning {
 		rows, err := s.Adapter().Query(ctx, stmt)
 		if err != nil {
@@ -488,7 +489,7 @@ func (c *mutation[T]) withReturning(t sqlbuilder.Table, additions []sqlbuilder.A
 		hasReturning = true
 
 		if len(c.returning) == 0 {
-			additions = append(additions, sqlbuilder.Returning(sqlbuilder.Expr("*")))
+			additions = append(additions, sqlbuilder.Returning(sqlfrag.Const("*")))
 		} else {
 			additions = append(additions, sqlbuilder.Returning(sqlbuilder.MultiMayAutoAlias(c.returning...)))
 		}
@@ -513,7 +514,7 @@ func toColumnsAndValues(t sqlbuilder.Table, m any, excludeFields ...string) (col
 func toAssignments(t sqlbuilder.Table, m any, excludeFields ...string) (assignments sqlbuilder.Assignments) {
 	for sfv := range structs.AllNonZeroFieldValue(context.Background(), m, excludeFields...) {
 		if col := t.F(sfv.Field.FieldName); col != nil {
-			assignments = append(assignments, sqlbuilder.CastCol[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
+			assignments = append(assignments, sqlbuilder.CastColumn[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
 		}
 	}
 	return
@@ -522,7 +523,7 @@ func toAssignments(t sqlbuilder.Table, m any, excludeFields ...string) (assignme
 func toAssignmentsOf(m any, cc sqlbuilder.ColumnCollection) (assignments sqlbuilder.Assignments) {
 	for sfv := range structs.AllFieldValue(context.Background(), m) {
 		if col := cc.F(sfv.Field.FieldName); col != nil {
-			assignments = append(assignments, sqlbuilder.CastCol[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
+			assignments = append(assignments, sqlbuilder.CastColumn[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
 		}
 	}
 	return

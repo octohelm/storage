@@ -26,7 +26,7 @@ func catalog(ctx context.Context, a adapter.Adapter, dbName string) (*sqlbuilder
 
 	tableSchema := "public"
 
-	stmt := sqlbuilder.Select(tableColumnSchema.Cols()).From(tableColumnSchema,
+	stmt := sqlbuilder.Select(sqlbuilder.ColumnCollect(tableColumnSchema.Cols())).From(tableColumnSchema,
 		sqlbuilder.Where(
 			sqlbuilder.And(
 				sqlbuilder.TypedColOf[string](tableColumnSchema, "TABLE_SCHEMA").V(sqlbuilder.Eq(tableSchema)),
@@ -57,14 +57,14 @@ func catalog(ctx context.Context, a adapter.Adapter, dbName string) (*sqlbuilder
 		table.(sqlbuilder.ColumnCollectionManger).AddCol(colSchema.ToColumn())
 	}
 
-	if cols := tableColumnSchema.Cols(); cols.Len() != 0 {
+	if cols := sqlbuilder.ColumnCollect(tableColumnSchema.Cols()); cols.Len() != 0 {
 		tableIndexSchema := sqlbuilder.TableFromModel(&indexSchema{})
 
 		indexList := make([]indexSchema, 0)
 
 		rows, err := a.Query(
 			ctx,
-			sqlbuilder.Select(tableIndexSchema.Cols()).
+			sqlbuilder.Select(sqlbuilder.ColumnCollect(tableIndexSchema.Cols())).
 				From(
 					tableIndexSchema,
 					sqlbuilder.Where(

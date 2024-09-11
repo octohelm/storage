@@ -1,13 +1,16 @@
 package sqlbuilder
 
 import (
+	"context"
+	"iter"
 	"sort"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-type Additions []Addition
-
 type Addition interface {
-	SqlExpr
+	sqlfrag.Fragment
+
 	AdditionType() AdditionType
 }
 
@@ -25,26 +28,7 @@ const (
 	AdditionComment
 )
 
-func WriteAdditions(e *Ex, additions ...Addition) {
-	finalAdditions := make(Additions, 0, len(additions))
-	for i := range additions {
-		if IsNilExpr(additions[i]) {
-			continue
-		}
-		finalAdditions = append(finalAdditions, additions[i])
-	}
-
-	if len(finalAdditions) == 0 {
-		return
-	}
-
-	sort.Sort(finalAdditions)
-
-	for i := range finalAdditions {
-		e.WriteQueryByte('\n')
-		e.WriteExpr(finalAdditions[i])
-	}
-}
+type Additions []Addition
 
 func (additions Additions) Len() int {
 	return len(additions)
@@ -58,20 +42,44 @@ func (additions Additions) Swap(i, j int) {
 	additions[i], additions[j] = additions[j], additions[i]
 }
 
-func AsAddition(expr SqlExpr) *OtherAddition {
+func (additions Additions) IsNil() bool {
+	return len(additions) == 0
+}
+
+func (additions Additions) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	sort.Sort(additions)
+
+	return func(yield func(string, []any) bool) {
+		for _, add := range additions {
+			if sqlfrag.IsNil(add) {
+				continue
+			}
+
+			if !yield("\n", nil) {
+				return
+			}
+
+			if !yield(sqlfrag.All(ctx, add)) {
+				return
+			}
+		}
+	}
+}
+
+func AsAddition(fragment sqlfrag.Fragment) *OtherAddition {
 	return &OtherAddition{
-		SqlExpr: expr,
+		Fragment: fragment,
 	}
 }
 
 type OtherAddition struct {
-	SqlExpr
+	sqlfrag.Fragment
+}
+
+func (a *OtherAddition) IsNil() bool {
+	return a == nil || sqlfrag.IsNil(a.Fragment)
 }
 
 func (OtherAddition) AdditionType() AdditionType {
 	return AdditionOther
-}
-
-func (a *OtherAddition) IsNil() bool {
-	return a == nil || IsNilExpr(a.SqlExpr)
 }

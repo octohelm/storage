@@ -3,11 +3,10 @@ package loggingdriver
 import (
 	"bytes"
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"strconv"
 	"time"
-
-	"database/sql/driver"
 
 	"github.com/go-courier/logr"
 	"github.com/pkg/errors"

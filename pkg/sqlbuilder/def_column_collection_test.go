@@ -32,16 +32,9 @@ func BenchmarkCols(b *testing.B) {
 
 	b.Run("multi pick", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = cols.Cols("ID", "Name")
+			_ = PickColsByFieldNames(cols, "ID", "Name")
 		}
 	})
-
-	b.Run("multi pick all", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = cols.Cols()
-		}
-	})
-
 }
 
 func TestColumns(t *testing.T) {
@@ -49,7 +42,6 @@ func TestColumns(t *testing.T) {
 
 	t.Run("empty columns", func(t *testing.T) {
 		testutil.Expect(t, cols.Len(), testutil.Equal(0))
-		//testutil.Expect(t, columns.AutoIncrement(), testutil.Be[*Column](nil))
 	})
 
 	t.Run("added cols", func(t *testing.T) {
@@ -57,21 +49,16 @@ func TestColumns(t *testing.T) {
 			Col("F_id", ColField("ID"), ColTypeOf(1, `,autoincrement`)),
 		)
 
-		//autoIncrementCol := cols.AutoIncrement()
-		//
-		//testutil.Expect(t, autoIncrementCol, testutil.Not(testutil.Be[*Column](nil)))
-		//testutil.Expect(t, autoIncrementCol.Name(), testutil.Equal("f_id"))
-
 		t.Run("get col by FieldName", func(t *testing.T) {
 			testutil.Expect(t, cols.F("ID2"), testutil.Be[Column](nil))
 
-			testutil.Expect(t, cols.Cols("ID").Len(), testutil.Equal(1))
-			testutil.Expect(t, cols.Cols().Len(), testutil.Equal(1))
+			testutil.Expect(t, PickColsByFieldNames(cols, "ID").Len(), testutil.Equal(1))
+			testutil.Expect(t, cols.Len(), testutil.Equal(1))
 		})
 
 		t.Run("get col by ColName", func(t *testing.T) {
-			testutil.Expect(t, cols.Cols("f_id").Len(), testutil.Equal(1))
-			testutil.Expect(t, cols.Cols().Len(), testutil.Be(1))
+			testutil.Expect(t, PickColsByFieldNames(cols, "f_id").Len(), testutil.Equal(1))
+			testutil.Expect(t, cols.Len(), testutil.Be(1))
 		})
 	})
 }

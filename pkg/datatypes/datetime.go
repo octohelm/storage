@@ -8,9 +8,7 @@ import (
 	"time"
 )
 
-var (
-	DatetimeZero = Datetime(time.Time{})
-)
+var DatetimeZero = Datetime(time.Time{})
 
 // openapi:strfmt date-time
 type Datetime time.Time

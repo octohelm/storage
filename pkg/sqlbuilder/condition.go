@@ -2,6 +2,9 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func EmptyCond() SqlCondition {
@@ -9,7 +12,8 @@ func EmptyCond() SqlCondition {
 }
 
 type SqlCondition interface {
-	SqlExpr
+	sqlfrag.Fragment
+
 	SqlConditionMarker
 }
 
@@ -17,7 +21,7 @@ type SqlConditionMarker interface {
 	asCondition()
 }
 
-func AsCond(ex SqlExpr) *Condition {
+func AsCond(ex sqlfrag.Fragment) *Condition {
 	if c, ok := ex.(*Condition); ok {
 		return c
 	}
@@ -25,39 +29,41 @@ func AsCond(ex SqlExpr) *Condition {
 }
 
 type Condition struct {
-	expr SqlExpr
+	expr sqlfrag.Fragment
+
 	SqlConditionMarker
 }
 
-func (c *Condition) Ex(ctx context.Context) *Ex {
-	if IsNilExpr(c.expr) {
+func (c *Condition) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	if sqlfrag.IsNil(c.expr) {
 		return nil
 	}
-	return c.expr.Ex(ctx)
+
+	return c.expr.Frag(ctx)
 }
 
 func (c *Condition) IsNil() bool {
-	return c == nil || IsNilExpr(c.expr)
+	return c == nil || sqlfrag.IsNil(c.expr)
 }
 
-func And(conditions ...SqlExpr) SqlCondition {
+func And(conditions ...sqlfrag.Fragment) SqlCondition {
 	return composedCondition("AND", filterNilCondition(conditions)...)
 }
 
-func Or(conditions ...SqlExpr) SqlCondition {
+func Or(conditions ...sqlfrag.Fragment) SqlCondition {
 	return composedCondition("OR", filterNilCondition(conditions)...)
 }
 
-func Xor(conditions ...SqlExpr) SqlCondition {
+func Xor(conditions ...sqlfrag.Fragment) SqlCondition {
 	return composedCondition("XOR", filterNilCondition(conditions)...)
 }
 
-func filterNilCondition(conditions []SqlExpr) []SqlCondition {
+func filterNilCondition(conditions []sqlfrag.Fragment) []SqlCondition {
 	finals := make([]SqlCondition, 0, len(conditions))
 
 	for i := range conditions {
 		condition := AsCond(conditions[i])
-		if IsNilExpr(condition) {
+		if sqlfrag.IsNil(condition) {
 			continue
 		}
 		finals = append(finals, condition)
@@ -100,7 +106,7 @@ func (c *ComposedCondition) IsNil() bool {
 	isNil := true
 
 	for i := range c.conditions {
-		if !IsNilExpr(c.conditions[i]) {
+		if !sqlfrag.IsNil(c.conditions[i]) {
 			isNil = false
 			continue
 		}
@@ -109,23 +115,20 @@ func (c *ComposedCondition) IsNil() bool {
 	return isNil
 }
 
-func (c *ComposedCondition) Ex(ctx context.Context) *Ex {
-	e := Expr("")
-	e.Grow(len(c.conditions))
+func (c *ComposedCondition) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		for i, cond := range c.conditions {
+			if i > 0 {
+				if !yield(" "+c.op+" ", nil) {
+					return
+				}
+			}
 
-	for i := range c.conditions {
-		condition := c.conditions[i]
-
-		if i > 0 {
-			e.WriteQueryByte(' ')
-			e.WriteQuery(c.op)
-			e.WriteQueryByte(' ')
+			for q, args := range sqlfrag.Group(cond).Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
 		}
-
-		e.WriteGroup(func(e *Ex) {
-			e.WriteExpr(condition)
-		})
 	}
-
-	return e.Ex(ctx)
 }

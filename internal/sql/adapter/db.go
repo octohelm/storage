@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"runtime"
 
-	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func Wrap(d *sql.DB, convertErr func(err error) error) DB {
@@ -26,46 +26,42 @@ type db struct {
 	*sql.DB
 }
 
-func (d *db) Exec(ctx context.Context, expr sqlbuilder.SqlExpr) (sql.Result, error) {
-	e := sqlbuilder.ResolveExprContext(ctx, expr)
-	if sqlbuilder.IsNilExpr(e) {
+func (d *db) Exec(ctx context.Context, frag sqlfrag.Fragment) (sql.Result, error) {
+	if sqlfrag.IsNil(frag) {
 		return nil, nil
 	}
-	if err := e.Err(); err != nil {
-		return nil, d.convertErr(err)
-	}
 
+	query, args := sqlfrag.All(ctx, frag)
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {
-		result, err := sqlDo.ExecContext(ctx, e.Query(), e.Args()...)
+		result, err := sqlDo.ExecContext(ctx, query, args...)
 		if err != nil {
 			return nil, d.convertErr(err)
 		}
 		return result, nil
 	}
 
-	result, err := d.ExecContext(ctx, e.Query(), e.Args()...)
+	result, err := d.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, d.convertErr(err)
 	}
 	return result, nil
 }
 
-func (d *db) Query(ctx context.Context, expr sqlbuilder.SqlExpr) (*sql.Rows, error) {
-	e := sqlbuilder.ResolveExprContext(ctx, expr)
-	if sqlbuilder.IsNilExpr(e) {
+func (d *db) Query(ctx context.Context, frag sqlfrag.Fragment) (*sql.Rows, error) {
+	if sqlfrag.IsNil(frag) {
 		return nil, nil
 	}
-	if err := e.Err(); err != nil {
-		return nil, err
-	}
+	query, args := sqlfrag.All(ctx, frag)
+
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {
-		return sqlDo.QueryContext(ctx, e.Query(), e.Args()...)
+		return sqlDo.QueryContext(ctx, query, args...)
 	}
-	return d.QueryContext(ctx, e.Query(), e.Args()...)
+
+	return d.QueryContext(ctx, query, args...)
 }
 
 func (d *db) Transaction(ctx context.Context, action func(ctx context.Context) error) (err error) {
-	var inScopeOfTxnCreated = false
+	inScopeOfTxnCreated := false
 	var txn *sql.Tx
 
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {

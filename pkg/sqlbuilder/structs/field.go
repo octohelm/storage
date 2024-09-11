@@ -65,8 +65,10 @@ type fieldWalker struct {
 	modelType typesx.Type
 }
 
-var typeModel = reflect.TypeOf((*internal.Model)(nil)).Elem()
-var driverValuer = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
+var (
+	typeModel    = reflect.TypeOf((*internal.Model)(nil)).Elem()
+	driverValuer = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
+)
 
 func (w *fieldWalker) allStructField(ctx context.Context, tpe typesx.Type) iter.Seq[*Field] {
 	modelLoc := w.modelLoc[:]
@@ -75,7 +77,6 @@ func (w *fieldWalker) allStructField(ctx context.Context, tpe typesx.Type) iter.
 	if ok := tpe.Implements(typesx.FromRType(typeModel)); ok {
 		if modelType != nil && modelType.NumField() == 1 && modelType.Field(0).Anonymous() {
 			// extendable
-
 		} else {
 			modelType = tpe
 			modelLoc = w.loc[:]

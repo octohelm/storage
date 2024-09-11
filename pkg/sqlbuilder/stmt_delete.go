@@ -2,6 +2,9 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func Delete() *StmtDelete {
@@ -10,11 +13,11 @@ func Delete() *StmtDelete {
 
 type StmtDelete struct {
 	table     Table
-	additions []Addition
+	additions Additions
 }
 
 func (s *StmtDelete) IsNil() bool {
-	return s == nil || IsNilExpr(s.table)
+	return s == nil || sqlfrag.IsNil(s.table)
 }
 
 func (s StmtDelete) From(table Table, additions ...Addition) *StmtDelete {
@@ -23,12 +26,22 @@ func (s StmtDelete) From(table Table, additions ...Addition) *StmtDelete {
 	return &s
 }
 
-func (s *StmtDelete) Ex(ctx context.Context) *Ex {
-	e := Expr("DELETE FROM ")
+func (s *StmtDelete) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield("DELETE FROM ", nil) {
+			return
+		}
 
-	e.WriteExpr(s.table)
+		for q, args := range s.table.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
 
-	WriteAdditions(e, s.additions...)
-
-	return e.Ex(ctx)
+		for q, args := range s.additions.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
+	}
 }

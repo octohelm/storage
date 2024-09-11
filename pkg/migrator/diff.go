@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/octohelm/storage/pkg/sqlfrag"
+
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
 type action struct {
 	typ   actionType
-	exprs []sqlbuilder.SqlExpr
+	exprs []sqlfrag.Fragment
 }
 
 type actions []action
@@ -31,7 +33,7 @@ func (a actions) Swap(i, j int) {
 func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlbuilder.Table) (migrations actions) {
 	indexes := map[string]bool{}
 
-	migrate := func(typ actionType, name string, exprs ...sqlbuilder.SqlExpr) {
+	migrate := func(typ actionType, name string, exprs ...sqlfrag.Fragment) {
 		if len(exprs) > 0 {
 
 			switch typ {
@@ -59,7 +61,7 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 	colChanges := map[string]actionType{}
 
 	// diff columns
-	nextTable.Cols().RangeCol(func(nextCol sqlbuilder.Column, idx int) bool {
+	for nextCol := range nextTable.Cols() {
 		if currentCol := currentTable.F(nextCol.Name()); currentCol != nil {
 			if nextCol != nil {
 				if deprecatedActions := nextCol.Def().DeprecatedActions; deprecatedActions != nil {
@@ -76,35 +78,32 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 						}
 						migrate(renameTableColumn, nextCol.Name(), dialect.RenameColumn(nextCol, targetCol))
 						currentTable.(sqlbuilder.ColumnCollectionManger).AddCol(targetCol)
-						return true
+						continue
 					}
 					migrate(dropTableColumn, nextCol.Name(), dialect.DropColumn(nextCol))
-					return true
+					continue
 				}
 
-				prevColType := dialect.DataType(currentCol.Def()).Ex(context.Background()).Query()
-				currentColType := dialect.DataType(nextCol.Def()).Ex(context.Background()).Query()
+				prevColType, _ := sqlfrag.All(context.Background(), dialect.DataType(currentCol.Def()))
+				currentColType, _ := sqlfrag.All(context.Background(), dialect.DataType(nextCol.Def()))
 
 				if !strings.EqualFold(prevColType, currentColType) {
 					colChanges[nextCol.Name()] = modifyTableColumn
 					migrate(modifyTableColumn, nextCol.Name(), dialect.ModifyColumn(nextCol, currentCol))
 				}
-				return true
+				continue
 			}
 
 			colChanges[nextCol.Name()] = dropTableColumn
 			migrate(dropTableColumn, nextCol.Name(), dialect.DropColumn(nextCol))
-			return true
 		}
 
 		if nextCol.Def().DeprecatedActions == nil {
 			migrate(addTableColumn, nextCol.Name(), dialect.AddColumn(nextCol))
 		}
+	}
 
-		return true
-	})
-
-	currentTable.Cols().RangeCol(func(col sqlbuilder.Column, idx int) bool {
+	for col := range currentTable.Cols() {
 		// only drop tmp col
 		// when need to drop real data col, must declare deprecated for migrate
 		if strings.HasPrefix(col.Name(), "__") && nextTable.F(col.Name()) == nil {
@@ -112,32 +111,30 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 			colChanges[col.Name()] = dropTableColumn
 			migrate(dropTableColumn, col.Name(), dialect.DropColumn(col))
 		}
-		return true
-	})
+	}
 
-	nextTable.Keys().RangeKey(func(key sqlbuilder.Key, idx int) bool {
+	for key := range nextTable.Keys() {
 		name := key.Name()
 		if key.IsPrimary() {
 			// pkey could not change
-			return true
+			continue
 		}
 
-		key.Columns().RangeCol(func(col sqlbuilder.Column, idx int) bool {
+		for col := range key.Cols() {
 			if tpe, ok := colChanges[col.Name()]; ok && tpe == modifyTableColumn {
 				// always re index when col type modified
 				migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
 				migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
 			}
-			return true
-		})
+		}
 
 		prevKey := currentTable.K(name)
 		if prevKey == nil {
 			migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
 		} else {
 			if !key.IsPrimary() {
-				indexDef := key.Columns().Ex(context.Background()).Query()
-				prevIndexDef := prevKey.Columns().Ex(context.Background()).Query()
+				indexDef, _ := sqlfrag.All(context.Background(), sqlbuilder.ColumnCollect(key.Cols()))
+				prevIndexDef, _ := sqlfrag.All(context.Background(), sqlbuilder.ColumnCollect(prevKey.Cols()))
 
 				if !strings.EqualFold(indexDef, prevIndexDef) {
 					migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
@@ -146,33 +143,30 @@ func diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 			}
 		}
 
-		return true
-	})
+	}
 
-	currentTable.Keys().RangeKey(func(key sqlbuilder.Key, idx int) bool {
+	for key := range currentTable.Keys() {
 		colDropped := false
 
-		key.Columns().RangeCol(func(col sqlbuilder.Column, idx int) bool {
+		for col := range key.Cols() {
 			if tpe, ok := colChanges[col.Name()]; ok && tpe == dropTableColumn {
 				colDropped = true
-				return false
+				break
 			}
-			return true
-		})
+		}
 
 		if colDropped {
 			// always drop related index when col drop
 			migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
-			return true
+
+			continue
 		}
 
 		if nextTable.K(key.Name()) == nil {
 			// drop index not exists
 			migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
 		}
-
-		return true
-	})
+	}
 
 	return
 }

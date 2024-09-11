@@ -86,17 +86,14 @@ func (IndexOptionFunc) RuntimeDoc(names ...string) ([]string, bool) {
 func (Indexes) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
-func (NamedArgSet) RuntimeDoc(names ...string) ([]string, bool) {
-	return []string{}, true
-}
 func (v OtherAddition) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
-		case "SqlExpr":
+		case "Fragment":
 			return []string{}, true
 
 		}
-		if doc, ok := runtimeDoc(v.SqlExpr, names...); ok {
+		if doc, ok := runtimeDoc(v.Fragment, names...); ok {
 			return doc, ok
 		}
 

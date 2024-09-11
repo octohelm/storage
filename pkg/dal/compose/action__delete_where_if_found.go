@@ -2,6 +2,7 @@ package compose
 
 import (
 	"context"
+
 	"github.com/octohelm/storage/pkg/dal/compose/patcher"
 
 	"github.com/octohelm/storage/pkg/dal"
@@ -9,7 +10,7 @@ import (
 )
 
 func DeleteWhereIfFound[M sqlbuilder.Model, T any](ctx context.Context, idCol sqlbuilder.TypedColumn[T], patchers ...patcher.TypedQuerierPatcher[M]) error {
-	return dal.Prepare(new(M)).ForDelete().
+	return dal.Delete[M]().
 		Where(idCol.V(
 			patcher.InSelectIfExists(ctx, idCol, patchers...),
 		)).

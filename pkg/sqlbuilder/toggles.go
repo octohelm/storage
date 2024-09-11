@@ -6,13 +6,17 @@ import (
 	contextx "github.com/octohelm/x/context"
 )
 
-var (
+const (
 	ToggleMultiTable    = "MultiTable"
 	ToggleNeedAutoAlias = "NeedAlias"
 	ToggleUseValues     = "UseValues"
 )
 
 type Toggles map[string]bool
+
+func (toggles Toggles) InjectContext(ctx context.Context) context.Context {
+	return ContextWithToggles(ctx, toggles)
+}
 
 func (toggles Toggles) Merge(next Toggles) Toggles {
 	final := Toggles{}
@@ -41,8 +45,7 @@ func (toggles Toggles) Is(key string) bool {
 	return false
 }
 
-type contextKeyForToggles struct {
-}
+type contextKeyForToggles struct{}
 
 func ContextWithToggles(ctx context.Context, toggles Toggles) context.Context {
 	return contextx.WithValue(ctx, contextKeyForToggles{}, TogglesFromContext(ctx).Merge(toggles))

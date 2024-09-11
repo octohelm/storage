@@ -9,13 +9,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/octohelm/storage/pkg/sqlfrag"
+
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
 	"github.com/octohelm/storage/pkg/dberr"
-	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/pkg/errors"
 )
 
@@ -179,6 +180,6 @@ func (a *pgAdapter) createDatabase(ctx context.Context, dbName string, dsn url.U
 	}
 	defer adaptor.Close()
 
-	_, err = adaptor.Exec(context.Background(), sqlbuilder.Expr(fmt.Sprintf("CREATE DATABASE %s", dbName)))
+	_, err = adaptor.Exec(context.Background(), sqlfrag.Pair(fmt.Sprintf("CREATE DATABASE %s", dbName)))
 	return err
 }

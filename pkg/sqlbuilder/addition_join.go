@@ -2,46 +2,50 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
+	"slices"
 	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type JoinAddition interface {
 	Addition
-	On(joinCondition SqlExpr) JoinAddition
+	On(joinCondition sqlfrag.Fragment) JoinAddition
 	Using(joinColumnList ...Column) JoinAddition
 }
 
-func Join(table SqlExpr, prefixes ...string) JoinAddition {
+func Join(table sqlfrag.Fragment, prefixes ...string) JoinAddition {
 	return &join{
 		prefix: strings.Join(prefixes, " "),
 		target: table,
 	}
 }
 
-func InnerJoin(table SqlExpr) JoinAddition {
+func InnerJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "INNER")
 }
 
-func LeftJoin(table SqlExpr) JoinAddition {
+func LeftJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "LEFT")
 }
 
-func RightJoin(table SqlExpr) JoinAddition {
+func RightJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "RIGHT")
 }
 
-func FullJoin(table SqlExpr) JoinAddition {
+func FullJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "FULL")
 }
 
-func CrossJoin(table SqlExpr) JoinAddition {
+func CrossJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "CROSS")
 }
 
 type join struct {
 	prefix         string
-	target         SqlExpr
-	joinCondition  SqlExpr
+	target         sqlfrag.Fragment
+	joinCondition  sqlfrag.Fragment
 	joinColumnList []Column
 }
 
@@ -49,7 +53,7 @@ func (j join) AdditionType() AdditionType {
 	return AdditionJoin
 }
 
-func (j join) On(joinCondition SqlExpr) JoinAddition {
+func (j join) On(joinCondition sqlfrag.Fragment) JoinAddition {
 	j.joinCondition = joinCondition
 	return &j
 }
@@ -60,45 +64,51 @@ func (j join) Using(joinColumnList ...Column) JoinAddition {
 }
 
 func (j *join) IsNil() bool {
-	return j == nil || IsNilExpr(j.target) || (j.prefix != "CROSS" && IsNilExpr(j.joinCondition) && len(j.joinColumnList) == 0)
+	return j == nil || sqlfrag.IsNil(j.target) || (j.prefix != "CROSS" && sqlfrag.IsNil(j.joinCondition) && len(j.joinColumnList) == 0)
 }
 
-func (j *join) Ex(ctx context.Context) *Ex {
-	t := "JOIN "
-	if j.prefix != "" {
-		t = j.prefix + " " + t
-	}
+func (j *join) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		t := "JOIN "
+		if j.prefix != "" {
+			t = j.prefix + " " + t
+		}
 
-	e := Expr(t)
+		if !yield(t, nil) {
+			return
+		}
 
-	e.WriteExpr(j.target)
+		if !yield(sqlfrag.All(ctx, j.target)) {
+			return
+		}
 
-	if !(IsNilExpr(j.joinCondition)) {
-		e.WriteExpr(ExprBy(func(ctx context.Context) *Ex {
-			ex := Expr(" ON ")
-			ex.WriteExpr(j.joinCondition)
-			return ex.Ex(ctx)
-		}))
-	}
+		if !(sqlfrag.IsNil(j.joinCondition)) {
+			if !yield(" ON ", nil) {
+				return
+			}
+			if !yield(sqlfrag.All(ctx, j.joinCondition)) {
+				return
+			}
+		}
 
-	if len(j.joinColumnList) > 0 {
-		e.WriteExpr(ExprBy(func(ctx context.Context) *Ex {
-			ex := Expr(" USING ")
+		if len(j.joinColumnList) > 0 {
+			if !yield(" USING (", nil) {
+				return
+			}
 
-			ex.WriteGroup(func(e *Ex) {
-				for i := range j.joinColumnList {
-					if i != 0 {
-						ex.WriteQuery(", ")
-					}
-					ex.WriteExpr(j.joinColumnList[i])
-				}
+			ctx = ContextWithToggles(ctx, Toggles{
+				ToggleMultiTable: false,
 			})
 
-			return ex.Ex(ContextWithToggles(ctx, Toggles{
-				ToggleMultiTable: false,
-			}))
-		}))
-	}
+			for q, args := range sqlfrag.Join(", ", sqlfrag.NonNil(slices.Values(j.joinColumnList))).Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
 
-	return e.Ex(ctx)
+			if !yield(")", nil) {
+				return
+			}
+		}
+	}
 }

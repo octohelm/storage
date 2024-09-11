@@ -8,7 +8,7 @@ test.race:
 	CGO_ENABLED=1 go test -v -race ./...
 
 fmt:
-	goimports -l -w .
+	gofumpt -l -w .
 
 dep:
 	go get -u ./...

@@ -17,8 +17,7 @@ func init() {
 	gengo.Register(&filterGen{})
 }
 
-type filterGen struct {
-}
+type filterGen struct{}
 
 func (*filterGen) Name() string {
 	return "filter"
@@ -74,7 +73,8 @@ func (g *filterGen) generateSubFilter(c gengo.Context, tables map[*types.Named]s
 		return
 	}
 
-	c.Render(gengo.Snippet{gengo.T: `
+	c.Render(gengo.Snippet{
+		gengo.T: `
 func @ModelTypeName'By@ModelFieldName'From@FromModelTypeName'(ctx @contextContext, patchers ...@patcherTyped[@FromModelType]) @patcherTyped[@ModelType] {
 	return @patcherWhere[@ModelType](
 		@ModelType'T.@ModelFieldName.V(
@@ -103,14 +103,13 @@ func (g *filterGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table, n
 
 	cols := map[string]bool{}
 
-	for k, _ := range t.Keys().RangeKey {
-		for col, _ := range k.Columns().RangeCol {
+	for k := range t.Keys() {
+		for col := range k.Cols() {
 			cols[col.FieldName()] = true
 		}
-
 	}
 
-	for col, _ := range t.Cols().RangeCol {
+	for col := range t.Cols() {
 		if cols[col.FieldName()] {
 			indexedFields = append(indexedFields, col.FieldName())
 		}
@@ -134,7 +133,8 @@ func (g *filterGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table, n
 			return ""
 		}())
 
-		c.Render(gengo.Snippet{gengo.T: `
+		c.Render(gengo.Snippet{
+			gengo.T: `
 type @ModelTypeName'By@FieldName struct {
 	@composeFrom[@Type] 
 
@@ -170,5 +170,4 @@ func (f *@ModelTypeName'By@FieldName) ApplyMutation(m @dalMutation[@Type]) @dalM
 			"filterFilter": gengo.ID("github.com/octohelm/storage/pkg/filter.Filter"),
 		})
 	}
-
 }

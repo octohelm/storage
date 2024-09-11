@@ -48,7 +48,8 @@ func (g *enumGen) genEnums(c gengo.Context, named *types.Named, enum *EnumType) 
 		options[i].Label = enum.Label(enum.Constants[i])
 	}
 
-	c.Render(gengo.Snippet{gengo.T: `
+	c.Render(gengo.Snippet{
+		gengo.T: `
 var Invalid@Type = @errorsNew("invalid @Type")
 
 func (@Type) EnumValues() []any {
@@ -78,7 +79,8 @@ type Option struct {
 }
 
 func (g *enumGen) genLabel(c gengo.Context, typ *types.TypeName, enum *EnumType, options []Option) {
-	c.Render(gengo.Snippet{gengo.T: `
+	c.Render(gengo.Snippet{
+		gengo.T: `
 func Parse@Type'LabelString(label string) (@Type, error) {
 	switch label {
 		@labelToConstCases
@@ -138,7 +140,8 @@ func (g *enumGen) genIntStringerEnums(c gengo.Context, tpe types.Type, enum *Enu
 		options[i].Label = enum.Label(enum.Constants[i])
 	}
 
-	c.Render(gengo.Snippet{gengo.T: `
+	c.Render(gengo.Snippet{
+		gengo.T: `
 var Invalid@Type = @errorsNew("invalid @Type")
 
 func (@Type) EnumValues() []any {
@@ -158,7 +161,8 @@ func (@Type) EnumValues() []any {
 		}),
 	})
 
-	c.Render(gengo.Snippet{gengo.T: `
+	c.Render(gengo.Snippet{
+		gengo.T: `
 func (v @Type) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
@@ -232,7 +236,8 @@ case @ConstName:
 
 	g.genLabel(c, tpeObj, enum, options)
 
-	c.Render(gengo.Snippet{gengo.T: `
+	c.Render(gengo.Snippet{
+		gengo.T: `
 func (v @Type) Value() (@driverValue, error) {
 	offset := 0
 	if o, ok := any(v).(@enumerationDriverValueOffset); ok {

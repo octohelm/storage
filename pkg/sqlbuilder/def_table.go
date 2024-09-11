@@ -1,20 +1,25 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"container/list"
 	"context"
-	"fmt"
+	"iter"
 	"sort"
-	"text/scanner"
+	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type TableDefinition interface {
 	T() Table
 }
 
-type TableExprParse interface {
-	Expr(query string, args ...any) *Ex
+type TableCanFragment interface {
+	Fragment(query string, args ...any) sqlfrag.Fragment
+
+	// Deprecated
+	// use Fragment instead
+	Expr(query string, args ...any) sqlfrag.Fragment
 }
 
 type TableWithTableName interface {
@@ -22,26 +27,15 @@ type TableWithTableName interface {
 }
 
 type Table interface {
-	SqlExpr
-
-	// TableName of table
 	TableName() string
 
-	// K
-	// get index by key name
-	// primaryKey could be use `pk`
-	K(k string) Key
-	// F
-	// get col by col name or struct field names
-	F(name string) Column
+	KeyPicker
+	KeySeq
 
-	// Cols
-	// get cols by col names or struct field name
-	Cols(names ...string) ColumnCollection
+	ColumnPicker
+	ColumnSeq
 
-	// Keys
-	// get indexes by index names
-	Keys(names ...string) KeyCollection
+	sqlfrag.Fragment
 }
 
 func T(tableName string, tableDefinitions ...TableDefinition) Table {
@@ -106,78 +100,38 @@ func (t *table) TableName() string {
 	return t.name
 }
 
+func (t *table) String() string {
+	return t.name
+}
+
 func (t *table) IsNil() bool {
 	return t == nil || len(t.name) == 0
 }
 
-func (t *table) Ex(ctx context.Context) *Ex {
-	return Expr(t.name).Ex(ctx)
+func (t *table) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return sqlfrag.Pair(t.name).Frag(ctx)
 }
 
-func (t *table) Expr(query string, args ...any) *Ex {
+func (t *table) Expr(query string, args ...any) sqlfrag.Fragment {
+	return t.Fragment(query, args...)
+}
+
+func (t *table) Fragment(query string, args ...any) sqlfrag.Fragment {
 	if query == "" {
 		return nil
 	}
 
-	n := len(args)
-	e := Expr("")
-	e.Grow(n)
-
-	s := &scanner.Scanner{}
-	s.Init(bytes.NewBuffer([]byte(query)))
-
-	queryCount := 0
-
-	for tok := s.Next(); tok != scanner.EOF; tok = s.Next() {
-		switch tok {
-		case '#':
-			fieldNameBuf := bytes.NewBuffer(nil)
-
-			e.WriteHolder(0)
-
-			for {
-				tok = s.Next()
-
-				if tok == scanner.EOF {
-					break
-				}
-
-				if (tok >= 'A' && tok <= 'Z') ||
-					(tok >= 'a' && tok <= 'z') ||
-					(tok >= '0' && tok <= '9') ||
-					tok == '_' {
-
-					fieldNameBuf.WriteRune(tok)
-					continue
-				}
-
-				e.WriteQueryByte(byte(tok))
-
-				break
-			}
-
-			if fieldNameBuf.Len() == 0 {
-				e.AppendArgs(t)
-			} else {
-				fieldName := fieldNameBuf.String()
-				col := t.F(fieldNameBuf.String())
-				if col == nil {
-					panic(fmt.Errorf("missing field fieldName %s of table %s", fieldName, t.TableName()))
-				}
-				e.AppendArgs(col)
-			}
-		case '?':
-			e.WriteQueryByte(byte(tok))
-			if queryCount < n {
-				e.AppendArgs(args[queryCount])
-				queryCount++
-			}
-		default:
-			e.WriteQueryByte(byte(tok))
-		}
+	argSet := sqlfrag.NamedArgSet{
+		"_t_": t,
 	}
 
-	return e
+	for col := range t.ColumnCollection.Cols() {
+		argSet["_t_"+col.FieldName()] = col
+	}
+
+	q := strings.ReplaceAll(query, "#", "@_t_")
+
+	return sqlfrag.Pair(q, append([]any{argSet}, args...)...)
 }
 
 type Tables struct {

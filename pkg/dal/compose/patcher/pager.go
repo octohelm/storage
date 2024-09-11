@@ -3,6 +3,7 @@ package patcher
 import (
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 )
 
 func Offset[M sqlbuilder.Model](offset int64) TypedQuerierPatcher[M] {
@@ -10,7 +11,7 @@ func Offset[M sqlbuilder.Model](offset int64) TypedQuerierPatcher[M] {
 }
 
 type offsetPatcher[M sqlbuilder.Model] struct {
-	fromTable[M]
+	modelscoped.M[M]
 
 	offset int64
 }
@@ -27,7 +28,7 @@ func Limit[M sqlbuilder.Model](limit int64) TypedQuerierPatcher[M] {
 }
 
 type limitPatcher[M sqlbuilder.Model] struct {
-	fromTable[M]
+	modelscoped.M[M]
 
 	limit int64
 }

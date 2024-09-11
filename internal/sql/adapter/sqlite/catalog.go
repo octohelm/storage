@@ -16,7 +16,7 @@ func (a *sqliteAdapter) Catalog(ctx context.Context) (*sqlbuilder.Tables, error)
 
 	tblSqlMaster := sqlbuilder.TableFromModel(&sqliteMaster{})
 
-	stmt := sqlbuilder.Select(tblSqlMaster.Cols()).From(tblSqlMaster)
+	stmt := sqlbuilder.Select(sqlbuilder.ColumnCollect(tblSqlMaster.Cols())).From(tblSqlMaster)
 
 	rows, err := a.Query(ctx, stmt)
 	if err != nil {

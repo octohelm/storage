@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/octohelm/storage/pkg/sqlfrag"
+
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
@@ -26,7 +28,7 @@ func Migrate(ctx context.Context, a adapter.Adapter, toTables *sqlbuilder.Tables
 		return err
 	}
 
-	migrations := make([]sqlbuilder.SqlExpr, 0)
+	migrations := make([]sqlfrag.Fragment, 0)
 
 	for _, name := range toTables.TableNames() {
 		as := diff(a.Dialect(), fromTables.Table(name), toTables.Table(name))

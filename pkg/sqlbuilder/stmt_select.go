@@ -2,16 +2,20 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type SelectStatement interface {
-	SqlExpr
+	sqlfrag.Fragment
+
 	selectStatement()
 }
 
-func Select(sqlExpr SqlExpr, modifiers ...SqlExpr) *StmtSelect {
+func Select(sqlExpr sqlfrag.Fragment, modifiers ...sqlfrag.Fragment) *StmtSelect {
 	return &StmtSelect{
-		sqlExpr:   sqlExpr,
+		projects:  sqlExpr,
 		modifiers: modifiers,
 	}
 }
@@ -19,10 +23,10 @@ func Select(sqlExpr SqlExpr, modifiers ...SqlExpr) *StmtSelect {
 type StmtSelect struct {
 	SelectStatement
 
-	sqlExpr   SqlExpr
 	table     Table
-	modifiers []SqlExpr
-	additions []Addition
+	modifiers []sqlfrag.Fragment
+	projects  sqlfrag.Fragment
+	additions Additions
 }
 
 func (s *StmtSelect) IsNil() bool {
@@ -35,12 +39,12 @@ func (s StmtSelect) From(table Table, additions ...Addition) *StmtSelect {
 	return &s
 }
 
-func (s *StmtSelect) Ex(ctx context.Context) *Ex {
+func (s *StmtSelect) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	multiTable := false
 
 	for i := range s.additions {
 		addition := s.additions[i]
-		if IsNilExpr(addition) {
+		if sqlfrag.IsNil(addition) {
 			continue
 		}
 
@@ -55,35 +59,55 @@ func (s *StmtSelect) Ex(ctx context.Context) *Ex {
 		})
 	}
 
-	e := Expr("SELECT")
-	e.Grow(len(s.additions) + 2)
+	return func(yield func(string, []any) bool) {
+		if !yield("SELECT", nil) {
+			return
+		}
 
-	if len(s.modifiers) > 0 {
-		for i := range s.modifiers {
-			e.WriteQueryByte(' ')
-			e.WriteExpr(s.modifiers[i])
+		for _, m := range s.modifiers {
+			for q, args := range m.Frag(ctx) {
+				if !yield(" "+q, args) {
+					return
+				}
+			}
+		}
+
+		if !yield(" ", nil) {
+			return
+		}
+
+		projects := s.projects
+
+		if sqlfrag.IsNil(s.projects) {
+			projects = sqlfrag.Const("*")
+		}
+
+		for q, args := range projects.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
+
+		if !sqlfrag.IsNil(s.table) {
+			if !yield(" FROM ", nil) {
+				return
+			}
+
+			for q, args := range s.table.Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
+		}
+
+		for q, args := range s.additions.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
 		}
 	}
-
-	sqlExpr := s.sqlExpr
-
-	if IsNilExpr(sqlExpr) {
-		sqlExpr = Expr("*")
-	}
-
-	e.WriteQueryByte(' ')
-	e.WriteExpr(sqlExpr)
-
-	if !IsNilExpr(s.table) {
-		e.WriteQuery(" FROM ")
-		e.WriteExpr(s.table)
-	}
-
-	WriteAdditions(e, s.additions...)
-
-	return e.Ex(ctx)
 }
 
 func ForUpdate() *OtherAddition {
-	return AsAddition(Expr("FOR UPDATE"))
+	return AsAddition(sqlfrag.Pair("FOR UPDATE"))
 }

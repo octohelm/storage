@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/testutil"
 	"github.com/octohelm/storage/pkg/migrator"
+	sqlbuildercatalog "github.com/octohelm/storage/pkg/sqlbuilder/catalog"
 	"github.com/octohelm/storage/testdata/model"
 )
 
@@ -46,12 +47,12 @@ func TestMigrate(t *testing.T) {
 	t.Run("Create Catalog", func(t *testing.T) {
 		ctx := testutil.NewContext(t)
 
-		cat := testutil.CatalogFrom(&model.User{})
+		cat := sqlbuildercatalog.From(&model.User{})
 		err := migrator.Migrate(ctx, a, cat)
 		testutil.Expect(t, err, testutil.Be[error](nil))
 
 		t.Run("Migrate To TableV2", func(t *testing.T) {
-			catV2 := testutil.CatalogFrom(&model.UserV2{})
+			catV2 := sqlbuildercatalog.From(&model.UserV2{})
 
 			err := migrator.Migrate(ctx, a, catV2)
 			testutil.Expect(t, err, testutil.Be[error](nil))

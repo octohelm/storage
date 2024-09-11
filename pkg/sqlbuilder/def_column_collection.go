@@ -3,25 +3,41 @@ package sqlbuilder
 import (
 	"context"
 	"fmt"
+	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type ColumnCollectionManger interface {
 	AddCol(cols ...Column)
 }
 
-func ColumnCollectionFromList(list []Column) ColumnCollection {
-	return &columns{l: list}
+type ColumnSeq interface {
+	Cols() iter.Seq[Column]
+}
+
+type ColumnPicker interface {
+	F(name string) Column
+}
+
+func ColumnCollect(cols iter.Seq[Column]) ColumnCollection {
+	newCols := &columns{}
+	for c := range cols {
+		newCols.AddCol(c)
+	}
+	return newCols
 }
 
 type ColumnCollection interface {
-	SqlExpr
+	sqlfrag.Fragment
+
+	ColumnSeq
+	ColumnPicker
+
+	Col(name string) Column
+	AllCols() iter.Seq2[int, Column]
 
 	Of(t Table) ColumnCollection
-
-	F(name string) Column
-	Col(name string) Column
-	Cols(names ...string) ColumnCollection
-	RangeCol(cb func(col Column, idx int) bool)
 	Len() int
 }
 
@@ -33,12 +49,20 @@ func Cols(names ...string) ColumnCollection {
 	return cols
 }
 
-type columns struct {
-	l []Column
+func PickColsByFieldNames(picker ColumnPicker, names ...string) ColumnCollection {
+	newCols := &columns{}
+	for _, colName := range names {
+		col := picker.F(colName)
+		if col == nil {
+			panic(fmt.Errorf("unknown column %s, %v", colName, names))
+		}
+		newCols.AddCol(col)
+	}
+	return newCols
 }
 
-func (cols *columns) IsNil() bool {
-	return cols == nil || cols.Len() == 0
+type columns struct {
+	l []Column
 }
 
 func (cols *columns) F(name string) (col Column) {
@@ -61,21 +85,6 @@ func (cols *columns) Col(name string) (col Column) {
 	return nil
 }
 
-func (cols *columns) Ex(ctx context.Context) *Ex {
-	e := Expr("")
-	e.Grow(cols.Len())
-
-	cols.RangeCol(func(col Column, idx int) bool {
-		if idx > 0 {
-			e.WriteQueryByte(',')
-		}
-		e.WriteExpr(col)
-		return true
-	})
-
-	return e.Ex(ctx)
-}
-
 func (cols *columns) Len() int {
 	if cols == nil || cols.l == nil {
 		return 0
@@ -83,30 +92,24 @@ func (cols *columns) Len() int {
 	return len(cols.l)
 }
 
-func (cols *columns) RangeCol(cb func(col Column, idx int) bool) {
-	for i := range cols.l {
-		if !cb(cols.l[i], i) {
-			break
+func (cols *columns) Cols() iter.Seq[Column] {
+	return func(yield func(Column) bool) {
+		for _, c := range cols.l {
+			if !yield(c) {
+				break
+			}
 		}
 	}
 }
 
-func (cols *columns) Cols(names ...string) ColumnCollection {
-	if len(names) == 0 {
-		return &columns{
-			l: cols.l,
+func (cols *columns) AllCols() iter.Seq2[int, Column] {
+	return func(yield func(int, Column) bool) {
+		for i, c := range cols.l {
+			if !yield(i, c) {
+				break
+			}
 		}
 	}
-
-	newCols := &columns{}
-	for _, colName := range names {
-		col := cols.F(colName)
-		if col == nil {
-			panic(fmt.Errorf("unknown column %s, %v", colName, names))
-		}
-		newCols.AddCol(col)
-	}
-	return newCols
 }
 
 func (cols *columns) Of(newTable Table) ColumnCollection {
@@ -124,5 +127,29 @@ func (cols *columns) AddCol(columns ...Column) {
 			continue
 		}
 		cols.l = append(cols.l, col)
+	}
+}
+
+func (cols *columns) IsNil() bool {
+	return cols == nil || cols.Len() == 0
+}
+
+func (cols *columns) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		for q, args := range sqlfrag.Join(",", cols.fragSeq()).Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
+	}
+}
+
+func (cols *columns) fragSeq() iter.Seq[sqlfrag.Fragment] {
+	return func(yield func(sqlfrag.Fragment) bool) {
+		for _, c := range cols.l {
+			if !yield(c) {
+				break
+			}
+		}
 	}
 }

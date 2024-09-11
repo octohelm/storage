@@ -1,16 +1,23 @@
 package sqlbuilder
 
 import (
-	"fmt"
+	"iter"
 	"strings"
 )
 
-type KeyCollection interface {
-	Of(t Table) KeyCollection
-
+type KeyPicker interface {
 	K(name string) Key
-	RangeKey(func(k Key, i int) bool)
-	Keys(names ...string) KeyCollection
+}
+
+type KeySeq interface {
+	Keys() iter.Seq[Key]
+}
+
+type KeyCollection interface {
+	KeyPicker
+	KeySeq
+
+	Of(t Table) KeyCollection
 	Len() int
 }
 
@@ -58,28 +65,12 @@ func (ks *keys) Of(newTable Table) KeyCollection {
 	return newKeys
 }
 
-func (ks *keys) Keys(names ...string) KeyCollection {
-	if len(names) == 0 {
-		return &keys{
-			l: ks.l,
-		}
-	}
-
-	newCols := &keys{}
-	for _, indexName := range names {
-		col := ks.K(indexName)
-		if col == nil {
-			panic(fmt.Errorf("unknown index %s", indexName))
-		}
-		newCols.AddKey(col)
-	}
-	return newCols
-}
-
-func (ks *keys) RangeKey(cb func(col Key, idx int) bool) {
-	for i := range ks.l {
-		if !cb(ks.l[i], i) {
-			break
+func (ks *keys) Keys() iter.Seq[Key] {
+	return func(yield func(Key) bool) {
+		for _, k := range ks.l {
+			if !yield(k) {
+				break
+			}
 		}
 	}
 }

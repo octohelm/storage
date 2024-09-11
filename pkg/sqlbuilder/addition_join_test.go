@@ -3,7 +3,10 @@ package sqlbuilder_test
 import (
 	"testing"
 
-	"github.com/octohelm/storage/internal/testutil"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
+	testingx "github.com/octohelm/x/testing"
+
 	. "github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
@@ -20,8 +23,8 @@ func TestJoin(t *testing.T) {
 	)
 
 	t.Run("JOIN ON", func(t *testing.T) {
-		testutil.ShouldBeExpr(t,
-			Select(MultiWith(", ",
+		testingx.Expect[sqlfrag.Fragment](t,
+			Select(sqlfrag.JoinValues(", ",
 				Alias(tUser.F("f_id"), "f_id"),
 				Alias(tUser.F("f_name"), "f_name"),
 				Alias(tUser.F("f_org_id"), "f_org_id"),
@@ -34,23 +37,23 @@ func TestJoin(t *testing.T) {
 					),
 				),
 			),
-			`
+			testutil.BeFragment(`
 SELECT t_user.f_id AS f_id, t_user.f_name AS f_name, t_user.f_org_id AS f_org_id, t_org.f_org_name AS f_org_name FROM t_user
 JOIN t_org AS t_org ON t_user.f_org_id = t_org.f_org_id
 `,
-		)
+			))
 	})
 	t.Run("JOIN USING", func(t *testing.T) {
-		testutil.ShouldBeExpr(t,
+		testingx.Expect[sqlfrag.Fragment](t,
 			Select(nil).
 				From(
 					tUser,
 					Join(tOrg).Using(tUser.F("f_org_id")),
 				),
-			`
+			testutil.BeFragment(`
 SELECT * FROM t_user
 JOIN t_org USING (f_org_id)
 `,
-		)
+			))
 	})
 }

@@ -9,11 +9,12 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type DB interface {
-	Exec(ctx context.Context, expr sqlbuilder.SqlExpr) (sql.Result, error)
-	Query(ctx context.Context, expr sqlbuilder.SqlExpr) (*sql.Rows, error)
+	Exec(ctx context.Context, expr sqlfrag.Fragment) (sql.Result, error)
+	Query(ctx context.Context, expr sqlfrag.Fragment) (*sql.Rows, error)
 	Transaction(ctx context.Context, action func(ctx context.Context) error) error
 	Close() error
 }
@@ -30,19 +31,19 @@ type Adapter interface {
 }
 
 type Dialect interface {
-	CreateTableIsNotExists(t sqlbuilder.Table) []sqlbuilder.SqlExpr
-	DropTable(t sqlbuilder.Table) sqlbuilder.SqlExpr
-	TruncateTable(t sqlbuilder.Table) sqlbuilder.SqlExpr
+	CreateTableIsNotExists(t sqlbuilder.Table) []sqlfrag.Fragment
+	DropTable(t sqlbuilder.Table) sqlfrag.Fragment
+	TruncateTable(t sqlbuilder.Table) sqlfrag.Fragment
 
-	AddColumn(col sqlbuilder.Column) sqlbuilder.SqlExpr
-	RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlbuilder.SqlExpr
-	ModifyColumn(col sqlbuilder.Column, prev sqlbuilder.Column) sqlbuilder.SqlExpr
-	DropColumn(col sqlbuilder.Column) sqlbuilder.SqlExpr
+	AddColumn(col sqlbuilder.Column) sqlfrag.Fragment
+	RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlfrag.Fragment
+	ModifyColumn(col sqlbuilder.Column, prev sqlbuilder.Column) sqlfrag.Fragment
+	DropColumn(col sqlbuilder.Column) sqlfrag.Fragment
 
-	AddIndex(key sqlbuilder.Key) sqlbuilder.SqlExpr
-	DropIndex(key sqlbuilder.Key) sqlbuilder.SqlExpr
+	AddIndex(key sqlbuilder.Key) sqlfrag.Fragment
+	DropIndex(key sqlbuilder.Key) sqlfrag.Fragment
 
-	DataType(columnDef sqlbuilder.ColumnDef) sqlbuilder.SqlExpr
+	DataType(columnDef sqlbuilder.ColumnDef) sqlfrag.Fragment
 }
 
 var adapters = sync.Map{}

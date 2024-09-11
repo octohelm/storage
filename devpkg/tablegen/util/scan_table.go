@@ -2,9 +2,10 @@ package util
 
 import (
 	"context"
-	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"go/types"
 	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 
 	"github.com/octohelm/gengo/pkg/gengo"
 	"github.com/octohelm/storage/pkg/sqlbuilder"

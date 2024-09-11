@@ -2,9 +2,12 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func Where(c SqlExpr) Addition {
+func Where(c sqlfrag.Fragment) Addition {
 	return &where{
 		condition: AsCond(c),
 	}
@@ -19,11 +22,19 @@ func (*where) AdditionType() AdditionType {
 }
 
 func (w *where) IsNil() bool {
-	return w == nil || IsNilExpr(w.condition)
+	return w == nil || sqlfrag.IsNil(w.condition)
 }
 
-func (w *where) Ex(ctx context.Context) *Ex {
-	e := Expr("WHERE ")
-	e.WriteExpr(w.condition)
-	return e.Ex(ctx)
+func (w *where) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield("WHERE ", nil) {
+			return
+		}
+
+		for q, args := range w.condition.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
+	}
 }

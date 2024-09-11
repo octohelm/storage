@@ -3,35 +3,19 @@ package sqlbuilder
 import (
 	"context"
 	"iter"
-	"math"
 	"slices"
+	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func WriteAssignments(e *Ex, assignments ...Assignment) {
-	count := 0
-
-	for i := range assignments {
-		a := assignments[i]
-
-		if IsNilExpr(a) {
-			continue
-		}
-
-		if count > 0 {
-			e.WriteQuery(", ")
-		}
-
-		e.WriteExpr(a)
-		count++
-	}
-}
-
 type Assignment interface {
-	SqlExpr
+	sqlfrag.Fragment
+
 	SqlAssignment()
 }
 
-func ColumnsAndValues(columnOrColumns SqlExpr, values ...any) Assignment {
+func ColumnsAndValues(columnOrColumns sqlfrag.Fragment, values ...any) Assignment {
 	lenOfColumn := 1
 	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
 		lenOfColumn = canLen.Len()
@@ -44,7 +28,7 @@ func ColumnsAndValues(columnOrColumns SqlExpr, values ...any) Assignment {
 	}
 }
 
-func ColumnsAndCollect(columnOrColumns SqlExpr, seq iter.Seq[any]) Assignment {
+func ColumnsAndCollect(columnOrColumns sqlfrag.Fragment, seq iter.Seq[any]) Assignment {
 	lenOfColumn := 1
 	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
 		lenOfColumn = canLen.Len()
@@ -59,8 +43,16 @@ func ColumnsAndCollect(columnOrColumns SqlExpr, seq iter.Seq[any]) Assignment {
 
 type Assignments []Assignment
 
+func (assignments Assignments) IsNil() bool {
+	return len(assignments) == 0
+}
+
+func (assignments Assignments) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return sqlfrag.Join(", ", sqlfrag.NonNil(slices.Values(assignments))).Frag(ctx)
+}
+
 type assignment struct {
-	columnOrColumns SqlExpr
+	columnOrColumns sqlfrag.Fragment
 	lenOfColumn     int
 	values          []any
 	valueSeq        iter.Seq[any]
@@ -69,66 +61,74 @@ type assignment struct {
 func (assignment) SqlAssignment() {}
 
 func (a *assignment) IsNil() bool {
-	return a == nil || IsNilExpr(a.columnOrColumns) || (a.valueSeq == nil && len(a.values) == 0)
+	return a == nil || sqlfrag.IsNil(a.columnOrColumns) || (a.valueSeq == nil && len(a.values) == 0)
 }
 
-func (a *assignment) Ex(ctx context.Context) *Ex {
-	e := Expr("")
-
+func (a *assignment) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	useValues := TogglesFromContext(ctx).Is(ToggleUseValues)
 
-	if useValues || a.valueSeq != nil {
-		e.WriteGroup(func(e *Ex) {
-			e.WriteExpr(ExprBy(func(ctx context.Context) *Ex {
-				return a.columnOrColumns.Ex(ContextWithToggles(ctx, Toggles{
-					ToggleMultiTable: false,
-				}))
-			}))
-		})
-
-		values := a.values
-
-		if a.valueSeq != nil {
-			values = slices.Collect(a.valueSeq)
-		}
-
-		if len(values) == 1 {
-			if s, ok := values[0].(SelectStatement); ok {
-				e.WriteQueryByte(' ')
-				e.WriteExpr(s)
-				return e.Ex(ctx)
-			}
-		}
-
-		e.WriteQuery(" VALUES ")
-
-		groupCount := int(math.Round(float64(len(values)) / float64(a.lenOfColumn)))
-
-		for i := 0; i < groupCount; i++ {
-			if i > 0 {
-				e.WriteQueryByte(',')
-			}
-
-			e.WriteGroup(func(e *Ex) {
-				for j := 0; j < a.lenOfColumn; j++ {
-					e.WriteHolder(j)
+	return func(yield func(string, []any) bool) {
+		// (f_a,f_b)
+		if useValues || a.valueSeq != nil {
+			for q, args := range sqlfrag.Group(a.columnOrColumns).Frag(ContextWithToggles(ctx, Toggles{
+				ToggleMultiTable: false,
+			})) {
+				if !yield(q, args) {
+					return
 				}
+			}
+
+			values := a.values
+
+			if a.valueSeq != nil {
+				values = slices.Collect(a.valueSeq)
+			}
+
+			// FROM
+			if len(values) == 1 {
+				if s, ok := values[0].(SelectStatement); ok {
+					if !yield(" ", nil) {
+						return
+					}
+
+					for q, args := range s.Frag(ctx) {
+						if !yield(q, args) {
+							return
+						}
+					}
+					return
+				}
+			}
+
+			if !yield(" VALUES ", nil) {
+				return
+			}
+
+			valuesFragmentSeq := sqlfrag.Map(slices.Chunk(values, a.lenOfColumn), func(values []any) sqlfrag.Fragment {
+				return sqlfrag.Pair("("+strings.Repeat(",?", len(values))[1:]+")", values...)
 			})
+
+			for q, args := range sqlfrag.Join(",", valuesFragmentSeq).Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
+
+			return
 		}
 
-		e.AppendArgs(values...)
-
-		return e.Ex(ctx)
-	}
-
-	e.WriteExpr(ExprBy(func(ctx context.Context) *Ex {
-		return a.columnOrColumns.Ex(ContextWithToggles(ctx, Toggles{
+		for q, args := range a.columnOrColumns.Frag(ContextWithToggles(ctx, Toggles{
 			ToggleMultiTable: false,
-		}))
-	}))
+		})) {
+			if !yield(q, args) {
+				return
+			}
+		}
 
-	e.WriteQuery(" = ?")
-	e.AppendArgs(a.values[0])
-
-	return e.Ex(ctx)
+		for q, args := range sqlfrag.Pair(" = ?", a.values[0]).Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
+	}
 }

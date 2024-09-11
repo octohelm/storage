@@ -3,9 +3,11 @@ package patcher
 import (
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func Join[M sqlbuilder.Model](table sqlbuilder.Table, on sqlbuilder.SqlExpr) TypedQuerierPatcher[M] {
+func Join[M sqlbuilder.Model](table sqlbuilder.Table, on sqlfrag.Fragment) TypedQuerierPatcher[M] {
 	return &joinPatcher[M]{
 		table: table,
 		on:    on,
@@ -13,9 +15,10 @@ func Join[M sqlbuilder.Model](table sqlbuilder.Table, on sqlbuilder.SqlExpr) Typ
 }
 
 type joinPatcher[M sqlbuilder.Model] struct {
-	fromTable[M]
+	modelscoped.M[M]
+
 	table sqlbuilder.Table
-	on    sqlbuilder.SqlExpr
+	on    sqlfrag.Fragment
 }
 
 func (w *joinPatcher[M]) ApplyQuerier(q dal.Querier) dal.Querier {

@@ -3,7 +3,10 @@ package sqlbuilder
 import (
 	"context"
 	"fmt"
+	"iter"
 	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func PrimaryKey(columns ColumnCollection, optFns ...IndexOptionFunc) Key {
@@ -40,10 +43,9 @@ func Index(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key
 	}
 
 	if columns != nil {
-		columns.RangeCol(func(col Column, idx int) bool {
+		for col := range columns.Cols() {
 			k.colNameAndOptions = append(k.colNameAndOptions, col.Name())
-			return true
-		})
+		}
 	}
 
 	for i := range optFns {
@@ -54,15 +56,18 @@ func Index(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key
 }
 
 type Key interface {
-	SqlExpr
+	sqlfrag.Fragment
+
 	TableDefinition
 
 	Of(table Table) Key
 
+	Name() string
+
 	IsPrimary() bool
 	IsUnique() bool
-	Name() string
-	Columns() ColumnCollection
+
+	ColumnSeq
 }
 
 type KeyDef interface {
@@ -82,8 +87,8 @@ func (k *key) IsNil() bool {
 	return k == nil
 }
 
-func (k *key) Ex(ctx context.Context) *Ex {
-	return ExactlyExpr(k.name).Ex(ctx)
+func (k *key) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return sqlfrag.Const(k.name).Frag(ctx)
 }
 
 func (k *key) T() Table {
@@ -120,16 +125,23 @@ func (k *key) IsPrimary() bool {
 	return k.isUnique && k.name == "primary" || strings.HasSuffix(k.name, "pkey")
 }
 
-func (k *key) Columns() ColumnCollection {
+func (k *key) Cols() iter.Seq[Column] {
 	if len(k.colNameAndOptions) == 0 {
 		panic(fmt.Errorf("invalid key %s of %s, missing cols", k.name, k.table.TableName()))
 	}
 
-	names := make([]string, len(k.colNameAndOptions))
+	return func(yield func(Column) bool) {
+		names := map[string]bool{}
+		for _, colNameAndOptions := range k.colNameAndOptions {
+			names[strings.Split(colNameAndOptions, "/")[0]] = true
+		}
 
-	for i := range names {
-		names[i] = strings.Split(k.colNameAndOptions[i], "/")[0]
+		for c := range k.table.Cols() {
+			if names[c.Name()] || names[c.FieldName()] {
+				if !yield(c) {
+					return
+				}
+			}
+		}
 	}
-
-	return k.table.Cols(names...)
 }

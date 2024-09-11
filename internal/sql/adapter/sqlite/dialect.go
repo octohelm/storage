@@ -2,193 +2,170 @@ package sqlite
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"iter"
 	"reflect"
-	"strings"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+
 	typex "github.com/octohelm/x/types"
 )
 
 var _ adapter.Dialect = (*dialect)(nil)
 
-type dialect struct {
-}
+type dialect struct{}
 
 func (dialect) DriverName() string {
 	return "sqlite"
 }
 
-func (c *dialect) AddIndex(key sqlbuilder.Key) sqlbuilder.SqlExpr {
+func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 	if key.IsPrimary() {
-		e := sqlbuilder.Expr("ALTER TABLE ")
-		e.WriteExpr(key.T())
-		e.WriteQuery(" ADD PRIMARY KEY ")
-		e.WriteGroup(func(e *sqlbuilder.Ex) {
-			e.WriteExpr(key.Columns())
-		})
-		e.WriteEnd()
-		return e
+		return sqlfrag.Pair("ALTER TABLE ? ADD PRIMARY KEY (?);", key.T(), sqlbuilder.ColumnCollect(key.Cols()))
 	}
 
-	e := sqlbuilder.Expr("CREATE ")
-	if key.IsUnique() {
-		e.WriteQuery("UNIQUE ")
-	}
-	e.WriteQuery("INDEX ")
-
-	e.WriteExpr(c.indexName(key))
-
-	e.WriteQuery(" ON ")
-	e.WriteExpr(key.T())
-
-	keyDef := key.(sqlbuilder.KeyDef)
-
-	e.WriteQueryByte(' ')
-	e.WriteGroup(func(e *sqlbuilder.Ex) {
-		for i, colNameAndOpt := range keyDef.ColNameAndOptions() {
-			parts := strings.Split(colNameAndOpt, "/")
-			if i != 0 {
-				_ = e.WriteByte(',')
+	return sqlfrag.Pair("CREATE @index_type @index_name ON @table (@columns);", sqlfrag.NamedArgSet{
+		"table": key.T(),
+		"index_type": func() sqlfrag.Fragment {
+			if key.IsUnique() {
+				return sqlfrag.Const("UNIQUE INDEX")
 			}
-			e.WriteExpr(key.T().F(parts[0]))
-			if len(parts) > 1 {
-				e.WriteQuery(" ")
-				e.WriteQuery(parts[1])
-			}
-		}
+			return sqlfrag.Const("INDEX")
+		}(),
+		"index_name": c.indexName(key),
+		"columns":    sqlbuilder.ColumnCollect(key.Cols()),
 	})
-
-	e.WriteEnd()
-	return e
 }
 
-func (c *dialect) DropIndex(key sqlbuilder.Key) sqlbuilder.SqlExpr {
+func (c *dialect) DropIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 	if key.IsPrimary() {
 		// pk could not changed
 		return nil
 	}
 
-	return sqlbuilder.Expr("DROP INDEX IF EXISTS @index;", sqlbuilder.NamedArgSet{
+	return sqlfrag.Pair("DROP INDEX IF EXISTS @index;", sqlfrag.NamedArgSet{
 		"index": c.indexName(key),
 	})
 }
 
-func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlbuilder.SqlExpr) {
-	expr := sqlbuilder.Expr("CREATE TABLE IF NOT EXISTS @table ", sqlbuilder.NamedArgSet{
+func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fragment) {
+	exprs = append(exprs, sqlfrag.Pair("CREATE TABLE IF NOT EXISTS @table (@def\n);", sqlfrag.NamedArgSet{
 		"table": t,
-	})
+		"def": sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
+			return func(yield func(string, []any) bool) {
+				var autoIncrement sqlbuilder.Column
 
-	expr.WriteGroup(func(e *sqlbuilder.Ex) {
-		cols := t.Cols()
+				idx := 0
+				for col := range t.Cols() {
+					def := col.Def()
 
-		if cols.IsNil() {
-			return
-		}
+					// skip deprecated col
+					if def.DeprecatedActions != nil {
+						continue
+					}
 
-		var autoIncrement sqlbuilder.Column
+					if def.AutoIncrement {
+						autoIncrement = col
+					}
 
-		cols.RangeCol(func(col sqlbuilder.Column, idx int) bool {
-			def := col.Def()
-
-			if def.DeprecatedActions != nil {
-				return true
-			}
-
-			if def.AutoIncrement {
-				autoIncrement = col
-			}
-
-			if idx > 0 {
-				e.WriteQueryByte(',')
-			}
-			e.WriteQueryByte('\n')
-			e.WriteQueryByte('\t')
-
-			e.WriteExpr(col)
-			e.WriteQueryByte(' ')
-			e.WriteExpr(c.DataType(col.Def()))
-
-			return true
-		})
-
-		t.Keys().RangeKey(func(key sqlbuilder.Key, idx int) bool {
-			if key.IsPrimary() {
-				var skip = false
-
-				if autoIncrement != nil {
-					key.Columns().RangeCol(func(col sqlbuilder.Column, idx int) bool {
-						if autoIncrement.Name() == col.Name() {
-							skip = true
-							// auto increment pk will create when table define
-							return false
+					if idx > 0 {
+						if !yield(",", nil) {
+							return
 						}
-						return true
-					})
+					}
+					idx++
+
+					if !yield("\n\t", nil) {
+						return
+					}
+
+					for q, args := range col.Frag(ctx) {
+						if !yield(q, args) {
+							return
+						}
+					}
+
+					if !yield(" ", nil) {
+						return
+					}
+
+					for q, args := range c.DataType(def).Frag(ctx) {
+						if !yield(q, args) {
+							return
+						}
+					}
 				}
 
-				if skip {
-					return true
-				}
+				for key := range t.Keys() {
+					if key.IsPrimary() {
+						skip := false
 
-				e.WriteQueryByte(',')
-				e.WriteQueryByte('\n')
-				e.WriteQueryByte('\t')
-				e.WriteQuery("PRIMARY KEY ")
-				e.WriteGroup(func(e *sqlbuilder.Ex) {
-					e.WriteExpr(key.Columns())
-				})
+						if autoIncrement != nil {
+							for col := range key.Cols() {
+								if autoIncrement.Name() == col.Name() {
+									skip = true
+									// auto increment pk will create when table define
+									break
+								}
+							}
+						}
+
+						if skip {
+							continue
+						}
+
+						for q, args := range sqlfrag.Pair(",\n\tPRIMARY KEY (?)", sqlbuilder.ColumnCollect(key.Cols())).Frag(ctx) {
+							if !yield(q, args) {
+								return
+							}
+						}
+					}
+				}
 			}
+		}),
+	}))
 
-			return true
-		})
-
-		expr.WriteQueryByte('\n')
-	})
-
-	expr.WriteEnd()
-	exprs = append(exprs, expr)
-
-	t.Keys().RangeKey(func(key sqlbuilder.Key, idx int) bool {
+	for key := range t.Keys() {
 		if !key.IsPrimary() {
 			exprs = append(exprs, c.AddIndex(key))
 		}
-		return true
-	})
+	}
 
 	return
 }
 
-func (c *dialect) DropTable(t sqlbuilder.Table) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("DROP TABLE IF EXISTS @table;", sqlbuilder.NamedArgSet{
+func (c *dialect) DropTable(t sqlbuilder.Table) sqlfrag.Fragment {
+	return sqlfrag.Pair("DROP TABLE IF EXISTS @table;", sqlfrag.NamedArgSet{
 		"table": t,
 	})
 }
 
-func (c *dialect) TruncateTable(t sqlbuilder.Table) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("TRUNCATE TABLE @table;", sqlbuilder.NamedArgSet{
+func (c *dialect) TruncateTable(t sqlbuilder.Table) sqlfrag.Fragment {
+	return sqlfrag.Pair("TRUNCATE TABLE @table;", sqlfrag.NamedArgSet{
 		"table": t,
 	})
 }
 
-func (c *dialect) AddColumn(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("ALTER TABLE @table ADD COLUMN @col @dataType;", sqlbuilder.NamedArgSet{
+func (c *dialect) AddColumn(col sqlbuilder.Column) sqlfrag.Fragment {
+	return sqlfrag.Pair("ALTER TABLE @table ADD COLUMN @col @dataType;", sqlfrag.NamedArgSet{
 		"table":    col.T(),
 		"col":      col,
 		"dataType": c.DataType(col.Def()),
 	})
 }
 
-func (c *dialect) RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("ALTER TABLE @table RENAME COLUMN @oldCol TO @newCol;", sqlbuilder.NamedArgSet{
+func (c *dialect) RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlfrag.Fragment {
+	return sqlfrag.Pair("ALTER TABLE @table RENAME COLUMN @oldCol TO @newCol;", sqlfrag.NamedArgSet{
 		"table":  col.T(),
 		"oldCol": col,
 		"newCol": target,
 	})
 }
 
-func (c *dialect) ModifyColumn(col sqlbuilder.Column, prevCol sqlbuilder.Column) sqlbuilder.SqlExpr {
+func (c *dialect) ModifyColumn(col sqlbuilder.Column, prevCol sqlbuilder.Column) sqlfrag.Fragment {
 	def := col.Def()
 
 	// incr id never modified
@@ -198,37 +175,35 @@ func (c *dialect) ModifyColumn(col sqlbuilder.Column, prevCol sqlbuilder.Column)
 
 	prevTmpCol := sqlbuilder.Col("__"+prevCol.Name(), sqlbuilder.ColDef(prevCol.Def())).Of(prevCol.T())
 
-	e := sqlbuilder.Expr("")
+	return sqlfrag.JoinValues("",
+		sqlfrag.Pair("ALTER TABLE @table RENAME COLUMN @prevCol TO @tmpCol;", sqlfrag.NamedArgSet{
+			"table":   prevCol.T(),
+			"prevCol": prevCol,
+			"tmpCol":  prevTmpCol,
+		}),
 
-	e.WriteExpr(sqlbuilder.Expr("ALTER TABLE @table RENAME COLUMN @prevCol TO @tmpCol;", sqlbuilder.NamedArgSet{
-		"table":   prevCol.T(),
-		"prevCol": prevCol,
-		"tmpCol":  prevTmpCol,
-	}))
+		c.AddColumn(col),
 
-	e.WriteExpr(c.AddColumn(col))
+		sqlfrag.Pair("UPDATE @table SET @col = @tmpCol;", sqlfrag.NamedArgSet{
+			"table":  col.T(),
+			"col":    col,
+			"tmpCol": prevTmpCol,
+		}),
 
-	e.WriteExpr(sqlbuilder.Expr("UPDATE @table SET @col = @tmpCol;", sqlbuilder.NamedArgSet{
-		"table":  col.T(),
-		"col":    col,
-		"tmpCol": prevTmpCol,
-	}))
-
-	e.WriteExpr(c.DropColumn(prevTmpCol))
-
-	return e
+		c.DropColumn(prevTmpCol),
+	)
 }
 
-func (c *dialect) DropColumn(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("ALTER TABLE @table DROP COLUMN @col;", sqlbuilder.NamedArgSet{
+func (c *dialect) DropColumn(col sqlbuilder.Column) sqlfrag.Fragment {
+	return sqlfrag.Pair("ALTER TABLE @table DROP COLUMN @col;", sqlfrag.NamedArgSet{
 		"table": col.T(),
 		"col":   col,
 	})
 }
 
-func (c *dialect) DataType(columnType sqlbuilder.ColumnDef) sqlbuilder.SqlExpr {
+func (c *dialect) DataType(columnType sqlbuilder.ColumnDef) sqlfrag.Fragment {
 	dbDataType := c.dbDataType(columnType.Type, columnType)
-	return sqlbuilder.Expr(dbDataType + c.dataTypeModify(columnType, dbDataType))
+	return sqlfrag.Pair(dbDataType + c.dataTypeModify(columnType, dbDataType))
 }
 
 func (c *dialect) dataType(typ typex.Type, columnType sqlbuilder.ColumnDef) string {
@@ -298,8 +273,8 @@ func (c *dialect) dataTypeModify(columnType sqlbuilder.ColumnDef, dataType strin
 	return buf.String()
 }
 
-func (c dialect) indexName(key sqlbuilder.Key) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr(fmt.Sprintf("%s_%s", key.T().TableName(), key.Name()))
+func (c dialect) indexName(key sqlbuilder.Key) sqlfrag.Fragment {
+	return sqlfrag.Pair(fmt.Sprintf("%s_%s", key.T().TableName(), key.Name()))
 }
 
 func normalizeDefaultValue(defaultValue *string, dataType string) string {

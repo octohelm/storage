@@ -2,6 +2,7 @@ package compose
 
 import (
 	"fmt"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/filter"
@@ -10,7 +11,6 @@ import (
 
 func ApplyMutationFromFilter[M any, T comparable](m dal.Mutation[M], col sqlbuilder.TypedColumn[T], f *filter.Filter[T]) dal.Mutation[M] {
 	if where, ok := WhereFromFilter(col, f); ok {
-
 		return m.WhereAnd(where)
 	}
 	return m
@@ -25,20 +25,20 @@ func ApplyQuerierFromFilter[T comparable](q dal.Querier, col sqlbuilder.TypedCol
 	return q
 }
 
-func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filter[T]) (sqlbuilder.SqlExpr, bool) {
+func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filter[T]) (sqlfrag.Fragment, bool) {
 	if f.IsZero() {
 		return nil, false
 	}
 
 	switch f.Op() {
 	case filter.OP__AND:
-		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlbuilder.SqlExpr, bool) {
+		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlfrag.Fragment, bool) {
 			return WhereFromFilter(col, f)
 		})
 		return sqlbuilder.And(rules...), true
 	case filter.OP__OR:
 		return sqlbuilder.Or(
-			filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlbuilder.SqlExpr, bool) {
+			filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlfrag.Fragment, bool) {
 				return WhereFromFilter(col, f)
 			})...,
 		), true
@@ -139,8 +139,8 @@ func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filt
 
 		s := fmt.Sprintf("%v", v)
 
-		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-			return col.Expr("# LIKE ?", s+"%")
+		return col.V(func(col sqlbuilder.Column) sqlfrag.Fragment {
+			return col.Fragment("# LIKE ?", s+"%")
 		}), true
 	case filter.OP__SUFFIX:
 		v, ok := filter.First(f.Args(), func(arg filter.Arg) (T, bool) {
@@ -155,8 +155,8 @@ func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filt
 
 		s := fmt.Sprintf("%v", v)
 
-		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-			return col.Expr("# LIKE ?", "%"+s)
+		return col.V(func(col sqlbuilder.Column) sqlfrag.Fragment {
+			return col.Fragment("# LIKE ?", "%"+s)
 		}), true
 
 	case filter.OP__CONTAINS:
@@ -172,8 +172,8 @@ func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filt
 
 		s := fmt.Sprintf("%v", v)
 
-		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-			return col.Expr("# LIKE ?", "%"+s+"%")
+		return col.V(func(col sqlbuilder.Column) sqlfrag.Fragment {
+			return col.Fragment("# LIKE ?", "%"+s+"%")
 		}), true
 	case filter.OP__NOTCONTAINS:
 		v, ok := filter.First(f.Args(), func(arg filter.Arg) (T, bool) {
@@ -188,8 +188,8 @@ func WhereFromFilter[T comparable](col sqlbuilder.TypedColumn[T], f *filter.Filt
 
 		s := fmt.Sprintf("%v", v)
 
-		return col.V(func(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-			return col.Expr("# NOT LIKE ?", "%"+s+"%")
+		return col.V(func(col sqlbuilder.Column) sqlfrag.Fragment {
+			return col.Fragment("# NOT LIKE ?", "%"+s+"%")
 		}), true
 	default:
 

@@ -71,5 +71,4 @@ func tryScan(ctx context.Context, rows *sql.Rows, item any) error {
 	default:
 		return <-done
 	}
-
 }

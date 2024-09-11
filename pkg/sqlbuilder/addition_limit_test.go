@@ -3,7 +3,11 @@ package sqlbuilder_test
 import (
 	"testing"
 
-	"github.com/octohelm/storage/internal/testutil"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+
+	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
+	testingx "github.com/octohelm/x/testing"
+
 	. "github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
@@ -11,7 +15,7 @@ func TestLimit(t *testing.T) {
 	table := T("T")
 
 	t.Run("select limit", func(t *testing.T) {
-		testutil.ShouldBeExpr(t,
+		testingx.Expect[sqlfrag.Fragment](t,
 			Select(nil).
 				From(
 					table,
@@ -19,14 +23,16 @@ func TestLimit(t *testing.T) {
 						TypedCol[int]("F_a").V(Eq(1)),
 					),
 					Limit(1),
-				), `
+				),
+
+			testutil.BeFragment(`
 SELECT * FROM T
 WHERE f_a = ?
 LIMIT 1
-`, 1)
+`, 1))
 	})
 	t.Run("select without limit", func(t *testing.T) {
-		testutil.ShouldBeExpr(t,
+		testingx.Expect[sqlfrag.Fragment](t,
 			Select(nil).
 				From(
 					table,
@@ -34,15 +40,16 @@ LIMIT 1
 						TypedCol[int]("F_a").V(Eq(1)),
 					),
 					Limit(-1),
-				), `
+				),
+			testutil.BeFragment(`
 SELECT * FROM T
 WHERE f_a = ?
 `, 1,
-		)
+			))
 	})
 
 	t.Run("select limit and offset", func(t *testing.T) {
-		testutil.ShouldBeExpr(t,
+		testingx.Expect[sqlfrag.Fragment](t,
 			Select(nil).
 				From(
 					table,
@@ -51,12 +58,12 @@ WHERE f_a = ?
 					),
 					Limit(10).Offset(200),
 				),
-			`
+			testutil.BeFragment(`
 SELECT * FROM T
 WHERE f_a = ?
 LIMIT 10 OFFSET 200
 `,
-			1,
-		)
+				1,
+			))
 	})
 }

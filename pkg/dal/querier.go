@@ -2,33 +2,36 @@ package dal
 
 import (
 	"context"
+	"fmt"
+	"iter"
 	"reflect"
 
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/pkg/errors"
 )
 
-//Intersect(q Querier) Querier
-//Except(q Querier) Querier
-
+// Intersect(q Querier) Querier
+// Except(q Querier) Querier
 func InSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.ColumnValueExpr[T] {
-	return func(v sqlbuilder.Column) sqlbuilder.SqlExpr {
+	return func(v sqlbuilder.Column) sqlfrag.Fragment {
 		ex := q.Select(col)
 		if ex.IsNil() {
 			return nil
 		}
-		return sqlbuilder.Expr("? IN (?)", v, ex)
+		return sqlfrag.Pair("? IN (?)", v, ex)
 	}
 }
 
 func NotInSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.ColumnValueExpr[T] {
-	return func(v sqlbuilder.Column) sqlbuilder.SqlExpr {
+	return func(v sqlbuilder.Column) sqlfrag.Fragment {
 		ex := q.Select(col)
 		if ex.IsNil() {
 			return nil
 		}
-		return sqlbuilder.Expr("? NOT IN (?)", v, ex)
+		return sqlfrag.Pair("? NOT IN (?)", v, ex)
 	}
 }
 
@@ -37,7 +40,7 @@ type QuerierPatcher interface {
 }
 
 type Querier interface {
-	sqlbuilder.SqlExpr
+	sqlfrag.Fragment
 
 	ExistsTable(table sqlbuilder.Table) bool
 	Apply(patchers ...QuerierPatcher) Querier
@@ -47,26 +50,26 @@ type Querier interface {
 	With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifiers ...string) Querier
 	AsTemporaryTable(tableName string) TemporaryTable
 
-	Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
-	CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
-	LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
-	RightJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
-	FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier
+	Join(t sqlbuilder.Table, on sqlfrag.Fragment) Querier
+	CrossJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier
+	LeftJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier
+	RightJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier
+	FullJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier
 
-	Where(where sqlbuilder.SqlExpr) Querier
-	WhereAnd(where sqlbuilder.SqlExpr) Querier
-	WhereOr(where sqlbuilder.SqlExpr) Querier
+	Where(where sqlfrag.Fragment) Querier
+	WhereAnd(where sqlfrag.Fragment) Querier
+	WhereOr(where sqlfrag.Fragment) Querier
 
-	OrderBy(orders ...*sqlbuilder.Order) Querier
+	OrderBy(orders ...sqlbuilder.Order) Querier
 
-	GroupBy(cols ...sqlbuilder.SqlExpr) Querier
-	Having(where sqlbuilder.SqlExpr) Querier
+	GroupBy(cols ...sqlfrag.Fragment) Querier
+	Having(where sqlfrag.Fragment) Querier
 
 	Limit(v int64) Querier
 	Offset(v int64) Querier
 
-	Distinct(extras ...sqlbuilder.SqlExpr) Querier
-	Select(projects ...sqlbuilder.SqlExpr) Querier
+	Distinct(extras ...sqlfrag.Fragment) Querier
+	Select(projects ...sqlfrag.Fragment) Querier
 
 	Scan(v any) Querier
 
@@ -101,17 +104,17 @@ type querier struct {
 
 	withStmt *sqlbuilder.WithStmt
 
-	orders []*sqlbuilder.Order
+	orders []sqlbuilder.Order
 
-	distinct []sqlbuilder.SqlExpr
-	groupBy  []sqlbuilder.SqlExpr
-	having   sqlbuilder.SqlExpr
+	distinct []sqlfrag.Fragment
+	groupBy  []sqlfrag.Fragment
+	having   sqlfrag.Fragment
 
 	limit  int64
 	offset int64
 
-	where    sqlbuilder.SqlExpr
-	projects []sqlbuilder.SqlExpr
+	where    sqlfrag.Fragment
+	projects []sqlfrag.Fragment
 
 	joins []sqlbuilder.Addition
 
@@ -151,31 +154,31 @@ func (q querier) With(t sqlbuilder.Table, build sqlbuilder.BuildSubQuery, modifi
 	return &q
 }
 
-func (q querier) CrossJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+func (q querier) CrossJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier {
 	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.CrossJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) LeftJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+func (q querier) LeftJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier {
 	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.LeftJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) RightJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+func (q querier) RightJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier {
 	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.RightJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) FullJoin(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+func (q querier) FullJoin(t sqlbuilder.Table, on sqlfrag.Fragment) Querier {
 	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.FullJoin(t).On(sqlbuilder.AsCond(on)))
 	return &q
 }
 
-func (q querier) Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
+func (q querier) Join(t sqlbuilder.Table, on sqlfrag.Fragment) Querier {
 	q.tables = append(q.tables, t)
 	q.joins = append(q.joins, sqlbuilder.Join(t).On(sqlbuilder.AsCond(on)))
 	return &q
@@ -183,13 +186,13 @@ func (q querier) Join(t sqlbuilder.Table, on sqlbuilder.SqlExpr) Querier {
 
 func (q *querier) IsNil() bool {
 	if q.whereStmtNotEmpty {
-		return sqlbuilder.IsNilExpr(q.where) || q.from == nil
+		return sqlfrag.IsNil(q.where) || q.from == nil
 	}
 	return q.from == nil
 }
 
-func (q *querier) Ex(ctx context.Context) *sqlbuilder.Ex {
-	return q.build().Ex(ctx)
+func (q *querier) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return q.build().Frag(ctx)
 }
 
 func resolveModel(v any) any {
@@ -210,44 +213,72 @@ func resolveModel(v any) any {
 func (q querier) Scan(v any) Querier {
 	if len(q.projects) == 0 {
 		if m, ok := resolveModel(v).(sqlbuilder.Model); ok {
-			q.projects = []sqlbuilder.SqlExpr{sqlbuilder.ColumnsByStruct(m)}
+			q.projects = []sqlfrag.Fragment{columnsByStruct(m)}
 		}
 	}
 	q.recv = v
 	return &q
 }
 
-func (q querier) Select(projects ...sqlbuilder.SqlExpr) Querier {
+func columnsByStruct(v any) sqlfrag.Fragment {
+	return sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
+		return func(yield func(string, []any) bool) {
+			i := 0
+
+			for fieldValue := range structs.AllFieldValue(ctx, v) {
+				if i > 0 {
+					if !yield(",", nil) {
+						return
+					}
+				}
+
+				if fieldValue.TableName != "" {
+					if !yield(fmt.Sprintf("%s.%s AS %s__%s", fieldValue.TableName, fieldValue.Field.Name, fieldValue.TableName, fieldValue.Field.Name), nil) {
+						return
+					}
+				} else {
+					if !yield(fieldValue.Field.Name, nil) {
+						return
+					}
+				}
+
+				i++
+			}
+		}
+	})
+}
+
+func (q querier) Select(projects ...sqlfrag.Fragment) Querier {
 	q.projects = projects
 	return &q
 }
 
-func (q querier) Where(where sqlbuilder.SqlExpr) Querier {
+func (q querier) Where(where sqlfrag.Fragment) Querier {
 	q.where = where
 	return &q
 }
 
-func (q querier) WhereAnd(where sqlbuilder.SqlExpr) Querier {
+func (q querier) WhereAnd(where sqlfrag.Fragment) Querier {
 	q.where = sqlbuilder.And(q.where, where)
 	return &q
 }
 
-func (q querier) WhereOr(where sqlbuilder.SqlExpr) Querier {
+func (q querier) WhereOr(where sqlfrag.Fragment) Querier {
 	q.where = sqlbuilder.Or(q.where, where)
 	return &q
 }
 
-func (q querier) OrderBy(orders ...*sqlbuilder.Order) Querier {
+func (q querier) OrderBy(orders ...sqlbuilder.Order) Querier {
 	q.orders = orders
 	return &q
 }
 
-func (q querier) GroupBy(cols ...sqlbuilder.SqlExpr) Querier {
+func (q querier) GroupBy(cols ...sqlfrag.Fragment) Querier {
 	q.groupBy = cols
 	return &q
 }
 
-func (q querier) Having(having sqlbuilder.SqlExpr) Querier {
+func (q querier) Having(having sqlfrag.Fragment) Querier {
 	q.having = having
 	return &q
 }
@@ -262,12 +293,12 @@ func (q querier) Offset(v int64) Querier {
 	return &q
 }
 
-func (q querier) Distinct(extras ...sqlbuilder.SqlExpr) Querier {
+func (q querier) Distinct(extras ...sqlfrag.Fragment) Querier {
 	q.distinct = extras
 	return &q
 }
 
-func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlExpr {
+func (q *querier) buildWhere(t sqlbuilder.Table) sqlfrag.Fragment {
 	if q.feature.softDelete {
 		if newModel, ok := q.from.(ModelNewer); ok {
 			m := newModel.New()
@@ -277,7 +308,7 @@ func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlExpr {
 
 				return sqlbuilder.And(
 					q.where,
-					sqlbuilder.CastCol[int](t.F(f)).V(sqlbuilder.Eq(0)),
+					sqlbuilder.CastColumn[int](t.F(f)).V(sqlbuilder.Eq(0)),
 				)
 			}
 		}
@@ -288,10 +319,10 @@ func (q *querier) buildWhere(t sqlbuilder.Table) sqlbuilder.SqlExpr {
 func (q *querier) AsSelect() sqlbuilder.SelectStatement {
 	from := q.from
 
-	modifies := make([]sqlbuilder.SqlExpr, 0)
+	modifies := make([]sqlfrag.Fragment, 0)
 
 	if q.distinct != nil {
-		modifies = append(modifies, sqlbuilder.Expr("DISTINCT"))
+		modifies = append(modifies, sqlfrag.Const("DISTINCT"))
 
 		if len(q.distinct) > 0 {
 			modifies = append(modifies, q.distinct...)
@@ -320,18 +351,18 @@ func (q *querier) AsSelect() sqlbuilder.SelectStatement {
 		additions = append(additions, sqlbuilder.Limit(q.limit).Offset(q.offset))
 	}
 
-	var projects sqlbuilder.SqlExpr
+	var projects sqlfrag.Fragment
 
-	if q.projects != nil {
+	if len(q.projects) > 0 {
 		projects = sqlbuilder.MultiMayAutoAlias(q.projects...)
 	}
 
 	return sqlbuilder.Select(projects, modifies...).From(from, additions...)
 }
 
-func (q *querier) build() sqlbuilder.SqlExpr {
+func (q *querier) build() sqlfrag.Fragment {
 	if q.withStmt != nil {
-		return q.withStmt.Exec(func(tables ...sqlbuilder.Table) sqlbuilder.SqlExpr {
+		return q.withStmt.Exec(func(tables ...sqlbuilder.Table) sqlfrag.Fragment {
 			return q.AsSelect()
 		})
 	}
@@ -421,7 +452,7 @@ func (q *querier) AsTemporaryTable(tableName string) TemporaryTable {
 	return &tmpTable{
 		Table:  tmpT,
 		origin: q.from,
-		build: func(table sqlbuilder.Table) sqlbuilder.SqlExpr {
+		build: func(table sqlbuilder.Table) sqlfrag.Fragment {
 			return q
 		},
 	}
@@ -430,7 +461,7 @@ func (q *querier) AsTemporaryTable(tableName string) TemporaryTable {
 type tmpTable struct {
 	sqlbuilder.Table
 	origin sqlbuilder.Table
-	build  func(table sqlbuilder.Table) sqlbuilder.SqlExpr
+	build  func(table sqlbuilder.Table) sqlfrag.Fragment
 }
 
 func (t *tmpTable) Unwrap() sqlbuilder.Model {

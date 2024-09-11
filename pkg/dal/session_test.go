@@ -2,7 +2,6 @@ package dal_test
 
 import (
 	"context"
-
 	"sync"
 	"testing"
 
@@ -54,6 +53,7 @@ func TestCRUD(t *testing.T) {
 				OnConflict(model.UserT.I.IName).
 				DoNothing().
 				Save(ctx)
+
 			testutil.Expect(t, err, testutil.Be[error](nil))
 
 			c, err := dal.From(model.UserT).Count(ctx)

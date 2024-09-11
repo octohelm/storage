@@ -2,10 +2,12 @@ package patcher
 
 import (
 	"context"
-
 	"github.com/octohelm/storage/pkg/dal"
 	dalcomposetarget "github.com/octohelm/storage/pkg/dal/compose/target"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+	slicesx "github.com/octohelm/x/slices"
 )
 
 func InSelectIfExists[T any, M sqlbuilder.Model](
@@ -16,26 +18,32 @@ func InSelectIfExists[T any, M sqlbuilder.Model](
 	return dal.InSelect(col, ApplyToQuerier(dal.From(dalcomposetarget.Table[M](ctx), dal.WhereStmtNotEmpty()).Select(col), patchers...))
 }
 
-func DistinctSelect[M sqlbuilder.Model](projects ...sqlbuilder.SqlExpr) TypedQuerierPatcher[M] {
+func DistinctSelect[M sqlbuilder.Model](projects ...sqlfrag.Fragment) TypedQuerierPatcher[M] {
 	return &selectPatcher[M]{
 		distinct: true,
 		projects: projects,
 	}
 }
 
-func Select[M sqlbuilder.Model](projects ...sqlbuilder.SqlExpr) TypedQuerierPatcher[M] {
-	return &selectPatcher[M]{projects: projects}
+func Select[M sqlbuilder.Model](projects ...sqlfrag.Fragment) TypedQuerierPatcher[M] {
+	return &selectPatcher[M]{
+		projects: projects,
+	}
 }
 
-func Returning[M sqlbuilder.Model](projects ...sqlbuilder.SqlExpr) dal.MutationPatcher[M] {
-	return &selectPatcher[M]{projects: projects}
+func Returning[M sqlbuilder.Model](projects ...modelscoped.Column[M]) dal.MutationPatcher[M] {
+	return &selectPatcher[M]{
+		projects: slicesx.Map(projects, func(col modelscoped.Column[M]) sqlfrag.Fragment {
+			return col
+		}),
+	}
 }
 
 type selectPatcher[M sqlbuilder.Model] struct {
-	fromTable[M]
+	modelscoped.M[M]
 
 	distinct bool
-	projects []sqlbuilder.SqlExpr
+	projects []sqlfrag.Fragment
 }
 
 func (w *selectPatcher[M]) ApplyMutation(m dal.Mutation[M]) dal.Mutation[M] {

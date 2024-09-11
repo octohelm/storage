@@ -7,8 +7,10 @@ import (
 	"sync"
 )
 
-var _ driver.DriverContext = &driverContextWithMutex{}
-var _ driver.Driver = &driverContextWithMutex{}
+var (
+	_ driver.DriverContext = &driverContextWithMutex{}
+	_ driver.Driver        = &driverContextWithMutex{}
+)
 
 type driverContextWithMutex struct {
 	driver.DriverContext
@@ -38,8 +40,10 @@ func (c *driverContextWithMutex) OpenConnector(name string) (driver.Connector, e
 	}, nil
 }
 
-var _ driver.Connector = &connectorWithMutex{}
-var _ io.Closer = &connectorWithMutex{}
+var (
+	_ driver.Connector = &connectorWithMutex{}
+	_ io.Closer        = &connectorWithMutex{}
+)
 
 type connectorWithMutex struct {
 	*driverContextWithMutex
@@ -61,9 +65,11 @@ func (c *connectorWithMutex) Connect(ctx context.Context) (driver.Conn, error) {
 	return &connWithMutex{Mutex: c.Mutex, Conn: conn}, nil
 }
 
-var _ driver.QueryerContext = &connWithMutex{}
-var _ driver.ExecerContext = &connWithMutex{}
-var _ driver.ConnBeginTx = &connWithMutex{}
+var (
+	_ driver.QueryerContext = &connWithMutex{}
+	_ driver.ExecerContext  = &connWithMutex{}
+	_ driver.ConnBeginTx    = &connWithMutex{}
+)
 
 type connWithMutex struct {
 	*sync.Mutex
@@ -96,8 +102,10 @@ func (c *connWithMutex) BeginTx(ctx context.Context, options driver.TxOptions) (
 	return &txWithMutex{Mutex: c.Mutex, tx: tx}, nil
 }
 
-var _ driver.QueryerContext = &txWithMutex{}
-var _ driver.ExecerContext = &txWithMutex{}
+var (
+	_ driver.QueryerContext = &txWithMutex{}
+	_ driver.ExecerContext  = &txWithMutex{}
+)
 
 type txWithMutex struct {
 	*sync.Mutex

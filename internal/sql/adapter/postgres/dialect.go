@@ -2,196 +2,166 @@ package postgres
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"iter"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 	typex "github.com/octohelm/x/types"
 )
 
 var _ adapter.Dialect = (*dialect)(nil)
 
-type dialect struct {
-}
+type dialect struct{}
 
 func (dialect) DriverName() string {
 	return "postgres"
 }
 
-func (c *dialect) indexName(key sqlbuilder.Key) string {
+func (c *dialect) indexName(key sqlbuilder.Key) sqlfrag.Fragment {
 	name := key.Name()
 	if name == "primary" {
 		name = "pkey"
 	}
-	return key.T().TableName() + "_" + name
+	return sqlfrag.Const(key.T().TableName() + "_" + name)
 }
 
-func (c *dialect) AddIndex(key sqlbuilder.Key) sqlbuilder.SqlExpr {
+func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 	if key.IsPrimary() {
-		e := sqlbuilder.Expr("ALTER TABLE ")
-		e.WriteExpr(key.T())
-		e.WriteQuery(" ADD PRIMARY KEY ")
-		e.WriteGroup(func(e *sqlbuilder.Ex) {
-			e.WriteExpr(key.Columns())
-		})
-		e.WriteEnd()
-		return e
+		return sqlfrag.Pair("ALTER TABLE ? ADD PRIMARY KEY (?);", key.T(), sqlbuilder.ColumnCollect(key.Cols()))
 	}
-
-	e := sqlbuilder.Expr("CREATE ")
-
-	if key.IsUnique() {
-		e.WriteQuery("UNIQUE ")
-	}
-
-	e.WriteQuery("INDEX ")
-
-	e.WriteQuery(c.indexName(key))
-
-	e.WriteQuery(" ON ")
-	e.WriteExpr(key.T())
 
 	keyDef := key.(sqlbuilder.KeyDef)
 
-	if m := strings.ToUpper(keyDef.Method()); m != "" {
-		if m == "SPATIAL" {
-			m = "GIST"
-		}
-		e.WriteQuery(" USING ")
-		e.WriteQuery(m)
-	}
-
-	e.WriteQueryByte(' ')
-	e.WriteGroup(func(e *sqlbuilder.Ex) {
-		for i, colNameAndOpt := range keyDef.ColNameAndOptions() {
-			parts := strings.Split(colNameAndOpt, "/")
-			if i != 0 {
-				_ = e.WriteByte(',')
+	return sqlfrag.Pair("CREATE @index_type @index_name ON @table @index_method (@columns);", sqlfrag.NamedArgSet{
+		"table": key.T(),
+		"index_type": func() sqlfrag.Fragment {
+			if key.IsUnique() {
+				return sqlfrag.Const("UNIQUE INDEX")
 			}
-			e.WriteExpr(key.T().F(parts[0]))
-			if len(parts) > 1 {
-				e.WriteQuery(" ")
-				e.WriteQuery(parts[1])
+			return sqlfrag.Const("INDEX")
+		}(),
+		"index_name": c.indexName(key),
+		"index_method": func() sqlfrag.Fragment {
+			if m := strings.ToUpper(keyDef.Method()); m != "" {
+				if m == "SPATIAL" {
+					m = "GIST"
+				}
+				return sqlfrag.Const(fmt.Sprintf("USING %s", m))
 			}
-		}
+			return sqlfrag.Empty()
+		}(),
+		"columns": sqlbuilder.ColumnCollect(key.Cols()),
 	})
-
-	e.WriteEnd()
-	return e
 }
 
-func (c *dialect) DropIndex(key sqlbuilder.Key) sqlbuilder.SqlExpr {
+func (c *dialect) DropIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 	if key.IsPrimary() {
-		e := sqlbuilder.Expr("ALTER TABLE ")
-		e.WriteExpr(key.T())
-		e.WriteQuery(" DROP CONSTRAINT ")
-		e.WriteQuery(c.indexName(key))
-		e.WriteEnd()
-		return e
+		return sqlfrag.Pair("ALTER TABLE ? DROP CONSTRAINT ?;", key.T(), c.indexName(key))
 	}
-	e := sqlbuilder.Expr("DROP ")
-
-	e.WriteQuery("INDEX IF EXISTS ")
-	e.WriteQuery(c.indexName(key))
-	e.WriteEnd()
-
-	return e
+	return sqlfrag.Pair("DROP INDEX IF EXISTS ?;", c.indexName(key))
 }
 
-func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlbuilder.SqlExpr) {
-	expr := sqlbuilder.Expr("CREATE TABLE IF NOT EXISTS @table ", sqlbuilder.NamedArgSet{
+func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fragment) {
+	exprs = append(exprs, sqlfrag.Pair("CREATE TABLE IF NOT EXISTS @table (@def\n);", sqlfrag.NamedArgSet{
 		"table": t,
-	})
+		"def": sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
+			return func(yield func(string, []any) bool) {
+				idx := 0
 
-	expr.WriteGroup(func(e *sqlbuilder.Ex) {
-		cols := t.Cols()
+				for col := range t.Cols() {
+					def := col.Def()
 
-		if cols.IsNil() {
-			return
-		}
+					// skip deprecated col
+					if def.DeprecatedActions != nil {
+						continue
+					}
 
-		cols.RangeCol(func(col sqlbuilder.Column, idx int) bool {
-			def := col.Def()
+					if idx > 0 {
+						if !yield(",", nil) {
+							return
+						}
+					}
 
-			if def.DeprecatedActions != nil {
-				return true
+					idx++
+
+					if !yield("\n\t", nil) {
+						return
+					}
+
+					for q, args := range col.Frag(ctx) {
+						if !yield(q, args) {
+							return
+						}
+					}
+
+					if !yield(" ", nil) {
+						return
+					}
+
+					for q, args := range c.DataType(def).Frag(ctx) {
+						if !yield(q, args) {
+							return
+						}
+					}
+				}
+
+				for key := range t.Keys() {
+					if key.IsPrimary() {
+						for q, args := range sqlfrag.Pair(",\n\tPRIMARY KEY (?)", sqlbuilder.ColumnCollect(key.Cols())).Frag(ctx) {
+							if !yield(q, args) {
+								return
+							}
+						}
+					}
+				}
 			}
+		}),
+	}))
 
-			if idx > 0 {
-				e.WriteQueryByte(',')
-			}
-			e.WriteQueryByte('\n')
-			e.WriteQueryByte('\t')
-
-			e.WriteExpr(col)
-			e.WriteQueryByte(' ')
-			e.WriteExpr(c.DataType(def))
-
-			return true
-		})
-
-		t.Keys().RangeKey(func(key sqlbuilder.Key, idx int) bool {
-			if key.IsPrimary() {
-				e.WriteQueryByte(',')
-				e.WriteQueryByte('\n')
-				e.WriteQueryByte('\t')
-				e.WriteQuery("PRIMARY KEY ")
-				e.WriteGroup(func(e *sqlbuilder.Ex) {
-					e.WriteExpr(key.Columns())
-				})
-			}
-			return true
-		})
-
-		expr.WriteQueryByte('\n')
-	})
-
-	expr.WriteEnd()
-
-	exprs = append(exprs, expr)
-
-	t.Keys().RangeKey(func(key sqlbuilder.Key, idx int) bool {
+	for key := range t.Keys() {
 		if !key.IsPrimary() {
 			exprs = append(exprs, c.AddIndex(key))
 		}
-		return true
-	})
+	}
 
 	return
 }
 
-func (c *dialect) DropTable(t sqlbuilder.Table) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("DROP TABLE IF EXISTS @table;", sqlbuilder.NamedArgSet{
+func (c *dialect) DropTable(t sqlbuilder.Table) sqlfrag.Fragment {
+	return sqlfrag.Pair("DROP TABLE IF EXISTS @table;", sqlfrag.NamedArgSet{
 		"table": t,
 	})
 }
 
-func (c *dialect) TruncateTable(t sqlbuilder.Table) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("TRUNCATE TABLE @table;", sqlbuilder.NamedArgSet{
+func (c *dialect) TruncateTable(t sqlbuilder.Table) sqlfrag.Fragment {
+	return sqlfrag.Pair("TRUNCATE TABLE @table;", sqlfrag.NamedArgSet{
 		"table": t,
 	})
 }
 
-func (c *dialect) AddColumn(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("ALTER TABLE @table ADD COLUMN @col @dataType;", sqlbuilder.NamedArgSet{
+func (c *dialect) AddColumn(col sqlbuilder.Column) sqlfrag.Fragment {
+	return sqlfrag.Pair("ALTER TABLE @table ADD COLUMN @col @dataType;", sqlfrag.NamedArgSet{
 		"table":    col.T(),
 		"col":      col,
 		"dataType": c.DataType(col.Def()),
 	})
 }
 
-func (c *dialect) RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("ALTER TABLE @table RENAME COLUMN @oldCol TO @newCol;", sqlbuilder.NamedArgSet{
+func (c *dialect) RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlfrag.Fragment {
+	return sqlfrag.Pair("ALTER TABLE @table RENAME COLUMN @oldCol TO @newCol;", sqlfrag.NamedArgSet{
 		"table":  col.T(),
 		"oldCol": col,
 		"newCol": target,
 	})
 }
 
-func (c *dialect) ModifyColumn(col sqlbuilder.Column, prev sqlbuilder.Column) sqlbuilder.SqlExpr {
+func (c *dialect) ModifyColumn(col sqlbuilder.Column, prev sqlbuilder.Column) sqlfrag.Fragment {
 	def := col.Def()
 	prevDef := prev.Def()
 
@@ -199,87 +169,61 @@ func (c *dialect) ModifyColumn(col sqlbuilder.Column, prev sqlbuilder.Column) sq
 		return nil
 	}
 
-	e := sqlbuilder.Expr("ALTER TABLE ")
-	e.WriteExpr(col.T())
-
 	dbDataType := c.dataType(def.Type, def)
 	prevDbDataType := c.dataType(prevDef.Type, prevDef)
 
-	isFirstSub := true
-	isEmpty := true
-
-	prepareAppendSubCmd := func() {
-		if !isFirstSub {
-			e.WriteQueryByte(',')
-		}
-		isFirstSub = false
-		isEmpty = false
-	}
+	actions := []sqlfrag.Fragment{}
 
 	if dbDataType != prevDbDataType {
-		prepareAppendSubCmd()
-
-		e.WriteQuery(" ALTER COLUMN ")
-		e.WriteExpr(col)
-		e.WriteQuery(" TYPE ")
-		e.WriteQuery(dbDataType)
-
-		e.WriteQuery(" /* FROM ")
-		e.WriteQuery(prevDbDataType)
-		e.WriteQuery(" */")
+		actions = append(actions, sqlfrag.Pair(
+			"ALTER COLUMN ? TYPE ? /* FROM ? */",
+			col, sqlfrag.Const(dbDataType), sqlfrag.Const(prevDbDataType),
+		))
 	}
 
 	if def.Null != prevDef.Null {
-		prepareAppendSubCmd()
-
-		e.WriteQuery(" ALTER COLUMN ")
-		e.WriteExpr(col)
-		if !def.Null {
-			e.WriteQuery(" SET NOT NULL")
-		} else {
-			e.WriteQuery(" DROP NOT NULL")
+		action := "SET"
+		if def.Null {
+			action = "DROP"
 		}
+
+		actions = append(actions, sqlfrag.Pair(
+			"ALTER COLUMN ? ? NOT NULL",
+			col, sqlfrag.Const(action),
+		))
 	}
 
 	defaultValue := normalizeDefaultValue(def.Default, dbDataType)
 	prevDefaultValue := normalizeDefaultValue(prevDef.Default, prevDbDataType)
 
 	if defaultValue != prevDefaultValue {
-		prepareAppendSubCmd()
-
-		e.WriteQuery(" ALTER COLUMN ")
-		e.WriteExpr(col)
 		if def.Default != nil {
-			e.WriteQuery(" SET DEFAULT ")
-			e.WriteQuery(defaultValue)
-
-			e.WriteQuery(" /* FROM ")
-			e.WriteQuery(prevDefaultValue)
-			e.WriteQuery(" */")
+			actions = append(actions, sqlfrag.Pair("ALTER COLUMN ? SET DEFAULT ? /* FROM ? */", col, sqlfrag.Const(defaultValue), sqlfrag.Const(prevDefaultValue)))
 		} else {
-			e.WriteQuery(" DROP DEFAULT")
+			actions = append(actions, sqlfrag.Pair("ALTER COLUMN ? DROP DEFAULT", col))
 		}
 	}
 
-	if isEmpty {
+	if len(actions) == 0 {
 		return nil
 	}
 
-	e.WriteEnd()
-
-	return e
+	return sqlfrag.Pair("ALTER TABLE @table @actions", sqlfrag.NamedArgSet{
+		"table":   col.T(),
+		"actions": sqlfrag.JoinValues(", ", actions...),
+	})
 }
 
-func (c *dialect) DropColumn(col sqlbuilder.Column) sqlbuilder.SqlExpr {
-	return sqlbuilder.Expr("ALTER TABLE @table DROP COLUMN @col;", sqlbuilder.NamedArgSet{
+func (c *dialect) DropColumn(col sqlbuilder.Column) sqlfrag.Fragment {
+	return sqlfrag.Pair("ALTER TABLE @table DROP COLUMN @col;", sqlfrag.NamedArgSet{
 		"table": col.T(),
 		"col":   col,
 	})
 }
 
-func (c *dialect) DataType(columnType sqlbuilder.ColumnDef) sqlbuilder.SqlExpr {
+func (c *dialect) DataType(columnType sqlbuilder.ColumnDef) sqlfrag.Fragment {
 	dbDataType := dealias(c.dbDataType(columnType.Type, columnType))
-	return sqlbuilder.Expr(dbDataType + autocompleteSize(dbDataType, columnType) + c.dataTypeModify(columnType, dbDataType))
+	return sqlfrag.Pair(dbDataType + autocompleteSize(dbDataType, columnType) + c.dataTypeModify(columnType, dbDataType))
 }
 
 func (c *dialect) dataType(typ typex.Type, columnType sqlbuilder.ColumnDef) string {

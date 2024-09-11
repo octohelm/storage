@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"reflect"
 	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 
 	"github.com/octohelm/storage/internal/sql/scanner/nullable"
 	reflectx "github.com/octohelm/x/reflect"

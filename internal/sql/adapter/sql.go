@@ -12,8 +12,7 @@ type SqlDo interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
-type sqlDoContext struct {
-}
+type sqlDoContext struct{}
 
 func ContextWithSqlDo(ctx context.Context, db SqlDo) context.Context {
 	return contextx.WithValue(ctx, sqlDoContext{}, db)

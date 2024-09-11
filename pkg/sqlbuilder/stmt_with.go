@@ -2,10 +2,13 @@ package sqlbuilder
 
 import (
 	"context"
+	"iter"
 	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-type BuildSubQuery func(table Table) SqlExpr
+type BuildSubQuery func(table Table) sqlfrag.Fragment
 
 func WithRecursive(t Table, build BuildSubQuery) *WithStmt {
 	return With(t, build, "RECURSIVE")
@@ -19,7 +22,7 @@ type WithStmt struct {
 	modifiers []string
 	tables    []Table
 	asList    []BuildSubQuery
-	statement func(tables ...Table) SqlExpr
+	statement func(tables ...Table) sqlfrag.Fragment
 }
 
 func (w *WithStmt) IsNil() bool {
@@ -32,44 +35,68 @@ func (w WithStmt) With(t Table, build BuildSubQuery) *WithStmt {
 	return &w
 }
 
-func (w WithStmt) Exec(statement func(tables ...Table) SqlExpr) *WithStmt {
+func (w WithStmt) Exec(statement func(tables ...Table) sqlfrag.Fragment) *WithStmt {
 	w.statement = statement
 	return &w
 }
 
-func (w *WithStmt) Ex(ctx context.Context) *Ex {
-	e := Expr("WITH ")
-
-	if len(w.modifiers) > 0 {
-		e.WriteQuery(strings.Join(w.modifiers, " "))
-		e.WriteQuery(" ")
-	}
-
-	for i := range w.tables {
-		if i > 0 {
-			e.WriteQuery(", ")
+func (w *WithStmt) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield("WITH", nil) {
+			return
 		}
 
-		table := w.tables[i]
+		if len(w.modifiers) > 0 {
+			if !yield(" "+strings.Join(w.modifiers, " "), nil) {
+				return
+			}
+		}
 
-		e.WriteExpr(table)
-		e.WriteGroup(func(e *Ex) {
-			e.WriteExpr(table.Cols())
-		})
+		for i, t := range w.tables {
+			if i > 0 {
+				if !yield(",", nil) {
+					return
+				}
+			}
 
-		e.WriteQuery(" AS ")
+			if !yield("\n", nil) {
+				return
+			}
 
-		build := w.asList[i]
+			for q, args := range t.Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
+			for q, args := range sqlfrag.Group(sqlfrag.Join(",", sqlfrag.Map(t.Cols(), func(col Column) sqlfrag.Fragment {
+				return col
+			}))).Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
 
-		e.WriteGroup(func(e *Ex) {
-			e.WriteQueryByte('\n')
-			e.WriteExpr(build(table))
-			e.WriteQueryByte('\n')
-		})
+			if !yield("\n  AS ", nil) {
+				return
+			}
+
+			build := w.asList[i]
+
+			for q, args := range sqlfrag.Group(build(t)).Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
+		}
+
+		if !yield("\n", nil) {
+			return
+		}
+
+		for q, args := range w.statement(w.tables...).Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
 	}
-
-	e.WriteQueryByte('\n')
-	e.WriteExpr(w.statement(w.tables...))
-
-	return e.Ex(ctx)
 }

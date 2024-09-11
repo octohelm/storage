@@ -14,7 +14,7 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v List[T]) RuntimeDoc(names ...string) ([]string, bool) {
+func (v List[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Items":

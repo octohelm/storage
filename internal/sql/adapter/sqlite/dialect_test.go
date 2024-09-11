@@ -4,7 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/octohelm/storage/internal/testutil"
+	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
+	testingx "github.com/octohelm/x/testing"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
@@ -23,12 +27,12 @@ func TestSqliteDialect(t *testing.T) {
 	)
 
 	cases := map[string]struct {
-		expr   sqlbuilder.SqlExpr
-		expect sqlbuilder.SqlExpr
+		expr   sqlfrag.Fragment
+		expect sqlfrag.Fragment
 	}{
 		"CreateTableIsNotExists": {
 			c.CreateTableIsNotExists(table)[0],
-			sqlbuilder.Expr( /* language=sqlite */ `CREATE TABLE IF NOT EXISTS t (
+			sqlfrag.Pair( /* language=sqlite */ `CREATE TABLE IF NOT EXISTS t (
 	f_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	f_name TEXT NOT NULL DEFAULT '',
 	f_created_at BIGINT NOT NULL DEFAULT '0',
@@ -37,37 +41,39 @@ func TestSqliteDialect(t *testing.T) {
 		},
 		"DropTable": {
 			c.DropTable(table),
-			sqlbuilder.Expr( /* language=sqlite */ "DROP TABLE IF EXISTS t;"),
+			sqlfrag.Pair( /* language=sqlite */ "DROP TABLE IF EXISTS t;"),
 		},
 		"TruncateTable": {
 			c.TruncateTable(table),
-			sqlbuilder.Expr( /* language=sqlite */ "TRUNCATE TABLE t;"),
+			sqlfrag.Pair( /* language=sqlite */ "TRUNCATE TABLE t;"),
 		},
 		"AddColumn": {
 			c.AddColumn(table.F("f_name")),
-			sqlbuilder.Expr( /* language=sqlite */ "ALTER TABLE t ADD COLUMN f_name TEXT NOT NULL DEFAULT '';"),
+			sqlfrag.Pair( /* language=sqlite */ "ALTER TABLE t ADD COLUMN f_name TEXT NOT NULL DEFAULT '';"),
 		},
 		"DropColumn": {
 			c.DropColumn(table.F("f_name")),
-			sqlbuilder.Expr( /* language=sqlite */ "ALTER TABLE t DROP COLUMN f_name;"),
+			sqlfrag.Pair( /* language=sqlite */ "ALTER TABLE t DROP COLUMN f_name;"),
 		},
 		"AddIndex": {
 			c.AddIndex(table.K("I_name")),
-			sqlbuilder.Expr( /* language=sqlite */ "CREATE UNIQUE INDEX t_i_name ON t (f_id,f_name);"),
+			sqlfrag.Pair( /* language=sqlite */ "CREATE UNIQUE INDEX t_i_name ON t (f_id,f_name);"),
 		},
 		"AddPrimaryKey": {
 			c.AddIndex(table.K("PRIMARY")),
-			sqlbuilder.Expr( /* language=sqlite */ "ALTER TABLE t ADD PRIMARY KEY (f_id);"),
+			sqlfrag.Pair( /* language=sqlite */ "ALTER TABLE t ADD PRIMARY KEY (f_id);"),
 		},
 		"DropIndex": {
 			c.DropIndex(table.K("I_name")),
-			sqlbuilder.Expr( /* language=sqlite */ "DROP INDEX IF EXISTS t_i_name;"),
+			sqlfrag.Pair( /* language=sqlite */ "DROP INDEX IF EXISTS t_i_name;"),
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			testutil.ShouldBeExpr(t, c.expr, c.expect.Ex(context.Background()).Query())
+			q, args := sqlfrag.All(context.Background(), c.expect)
+
+			testingx.Expect(t, c.expr, testutil.BeFragment(q, args...))
 		})
 	}
 }

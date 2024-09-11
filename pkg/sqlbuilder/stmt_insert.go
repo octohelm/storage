@@ -3,6 +3,8 @@ package sqlbuilder
 import (
 	"context"
 	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func Insert(modifiers ...string) *StmtInsert {
@@ -11,11 +13,10 @@ func Insert(modifiers ...string) *StmtInsert {
 	}
 }
 
-// https://dev.mysql.com/doc/refman/5.6/en/insert.html
 type StmtInsert struct {
 	table       Table
 	modifiers   []string
-	assignments []Assignment
+	assignments Assignments
 	additions   Additions
 }
 
@@ -39,62 +40,59 @@ func (s *StmtInsert) IsNil() bool {
 	return s == nil || s.table == nil || len(s.assignments) == 0
 }
 
-func (s *StmtInsert) Ex(ctx context.Context) *Ex {
-	e := Expr("INSERT")
+func (s *StmtInsert) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield("INSERT", nil) {
+			return
+		}
 
-	if len(s.modifiers) > 0 {
 		for i := range s.modifiers {
-			e.WriteQueryByte(' ')
-			e.WriteQuery(s.modifiers[i])
+			if !yield(" "+s.modifiers[i], nil) {
+				return
+			}
+		}
+
+		if !yield(" INTO ", nil) {
+			return
+		}
+
+		for q, args := range s.table.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
+		}
+
+		if !yield(" ", nil) {
+			return
+		}
+
+		for q, args := range s.assignments.Frag(ContextWithToggles(ctx, Toggles{
+			ToggleUseValues: true,
+		})) {
+			if !yield(q, args) {
+				return
+			}
+		}
+
+		for q, args := range s.additions.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
 		}
 	}
-
-	e.WriteQuery(" INTO ")
-	e.WriteExpr(s.table)
-	e.WriteQueryByte(' ')
-
-	e.WriteExpr(ExprBy(func(ctx context.Context) *Ex {
-		e := Expr("")
-		e.Grow(len(s.assignments))
-
-		ctx = ContextWithToggles(ctx, Toggles{
-			ToggleUseValues: true,
-		})
-
-		WriteAssignments(e, s.assignments...)
-
-		return e.Ex(ctx)
-	}))
-
-	WriteAdditions(e, s.additions...)
-
-	return e.Ex(ctx)
 }
 
 func OnDuplicateKeyUpdate(assignments ...Assignment) *OtherAddition {
-	assigns := assignments
 	if len(assignments) == 0 {
 		return nil
 	}
 
-	e := Expr("ON DUPLICATE KEY UPDATE ")
-
-	for i := range assigns {
-		if i > 0 {
-			e.WriteQuery(", ")
-		}
-		e.WriteExpr(assigns[i])
-	}
-
-	return AsAddition(e)
+	return AsAddition(sqlfrag.Pair("ON DUPLICATE KEY UPDATE ?", Assignments(assignments)))
 }
 
-func Returning(expr SqlExpr) *OtherAddition {
-	e := Expr("RETURNING ")
+func Returning(expr sqlfrag.Fragment) *OtherAddition {
 	if expr == nil || expr.IsNil() {
-		e.WriteQueryByte('*')
-	} else {
-		e.WriteExpr(expr)
+		return AsAddition(sqlfrag.Pair("RETURNING *"))
 	}
-	return AsAddition(e)
+	return AsAddition(sqlfrag.Pair("RETURNING ?", expr))
 }

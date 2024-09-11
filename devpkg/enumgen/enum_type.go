@@ -68,7 +68,7 @@ func (e *EnumType) Label(cv *types.Const) string {
 
 func (e *EnumType) Value(cv *types.Const) any {
 	if named, ok := cv.Type().(*types.Named); ok {
-		var parts = strings.SplitN(cv.Name(), "__", 2)
+		parts := strings.SplitN(cv.Name(), "__", 2)
 
 		if len(parts) == 2 && parts[0] == gengo.UpperSnakeCase(named.Obj().Name()) {
 			return parts[1]

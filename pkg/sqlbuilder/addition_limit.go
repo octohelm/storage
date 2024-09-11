@@ -2,11 +2,13 @@ package sqlbuilder
 
 import (
 	"context"
-	"strconv"
+	"fmt"
+	"iter"
 )
 
 type LimitAddition interface {
 	Addition
+
 	Offset(offset int64) LimitAddition
 }
 
@@ -34,14 +36,16 @@ func (l *limit) IsNil() bool {
 	return l == nil || l.rowCount <= 0
 }
 
-func (l *limit) Ex(ctx context.Context) *Ex {
-	e := ExactlyExpr("LIMIT ")
-	e.WriteQuery(strconv.FormatInt(l.rowCount, 10))
+func (l *limit) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield(fmt.Sprintf("LIMIT %d", l.rowCount), nil) {
+			return
+		}
 
-	if l.offset > 0 {
-		e.WriteQuery(" OFFSET ")
-		e.WriteQuery(strconv.FormatInt(l.offset, 10))
+		if l.offset > 0 {
+			if !yield(fmt.Sprintf(" OFFSET %d", l.offset), nil) {
+				return
+			}
+		}
 	}
-
-	return e.Ex(ctx)
 }

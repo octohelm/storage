@@ -2,11 +2,12 @@ package structs
 
 import (
 	"context"
+	"iter"
+	"reflect"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder/internal"
 	reflectx "github.com/octohelm/x/reflect"
 	typesx "github.com/octohelm/x/types"
-	"iter"
-	"reflect"
 )
 
 func AllNonZeroFieldValue(ctx context.Context, v any, excludeFields ...string) iter.Seq[*FieldValue] {

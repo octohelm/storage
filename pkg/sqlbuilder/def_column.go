@@ -2,21 +2,29 @@ package sqlbuilder
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"github.com/octohelm/storage/pkg/sqlbuilder/internal/columndef"
+	"iter"
 	"reflect"
 	"strings"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder/internal/columndef"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 
 	"github.com/octohelm/x/types"
 )
 
 type Column interface {
-	SqlExpr
+	sqlfrag.Fragment
+
 	TableDefinition
 	Def() ColumnDef
-	Expr(query string, args ...any) *Ex
+
+	Fragment(query string, args ...any) sqlfrag.Fragment
+
 	Of(table Table) Column
 	With(optionFns ...ColOptionFunc) Column
+
 	MatchName(name string) bool
 	Name() string
 	FieldName() string
@@ -121,6 +129,13 @@ func (c *column[T]) Name() string {
 	return c.name
 }
 
+func (c *column[T]) String() string {
+	if c.table != nil {
+		return fmt.Sprintf("%s.%s", c.table, c.name)
+	}
+	return c.name
+}
+
 func (c column[T]) Of(table Table) Column {
 	return &column[T]{
 		table:     table,
@@ -134,43 +149,36 @@ func (c *column[T]) IsNil() bool {
 	return c == nil
 }
 
-func (c *column[T]) Ex(ctx context.Context) *Ex {
+func (c *column[T]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	toggles := TogglesFromContext(ctx)
+
 	if toggles.Is(ToggleMultiTable) {
 		if c.table == nil {
 			panic(fmt.Errorf("table of %s is not defined", c.name))
 		}
+
 		if toggles.Is(ToggleNeedAutoAlias) {
-			return Expr("?.? AS ?", c.table, Expr(c.name), Expr(fmt.Sprintf("%s__%s", c.table.TableName(), c.name))).Ex(ctx)
+			return sqlfrag.Pair("?.? AS ?",
+				c.table,
+				sqlfrag.Const(c.name),
+				sqlfrag.Pair(fmt.Sprintf("%s__%s", c.table.TableName(), c.name)),
+			).Frag(ctx)
 		}
-		return Expr("?.?", c.table, Expr(c.name)).Ex(ctx)
+
+		return sqlfrag.Pair("?.?", c.table, sqlfrag.Const(c.name)).Frag(ctx)
 	}
-	return ExactlyExpr(c.name).Ex(ctx)
+
+	return sqlfrag.Const(c.name).Frag(ctx)
 }
 
-func (c *column[T]) Expr(query string, args ...any) *Ex {
-	n := len(args)
-	e := Expr("")
-	e.Grow(n)
+func (c *column[T]) Expr(query string, args ...any) sqlfrag.Fragment {
+	return c.Fragment(query, args...)
+}
 
-	qc := 0
+func (c *column[T]) Fragment(query string, args ...any) sqlfrag.Fragment {
+	q := strings.ReplaceAll(query, "#", "@_column")
 
-	for _, key := range []byte(query) {
-		switch key {
-		case '#':
-			e.WriteExpr(c)
-		case '?':
-			e.WriteQueryByte(key)
-			if n > qc {
-				e.AppendArgs(args[qc])
-				qc++
-			}
-		default:
-			e.WriteQueryByte(key)
-		}
-	}
-
-	return e
+	return sqlfrag.Pair(q, append([]any{sql.Named("_column", c)}, args)...)
 }
 
 func (c *column[T]) By(ops ...ColumnValueExpr[T]) Assignment {
@@ -184,6 +192,6 @@ func (c *column[T]) By(ops ...ColumnValueExpr[T]) Assignment {
 	return ColumnsAndValues(c, values...)
 }
 
-func (c *column[T]) V(operator ColumnValueExpr[T]) SqlExpr {
+func (c *column[T]) V(operator ColumnValueExpr[T]) sqlfrag.Fragment {
 	return operator(c)
 }

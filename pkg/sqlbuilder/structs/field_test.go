@@ -77,7 +77,7 @@ func BenchmarkTableFieldsFor(b *testing.B) {
 
 	_ = Fields(context.Background(), typex.FromRType(typeP))
 
-	//b.Log(typex.FromRType(reflect.TypeOf(p)).Unwrap() == typex.FromRType(reflect.TypeOf(p)).Unwrap())
+	// b.Log(typex.FromRType(reflect.TypeOf(p)).Unwrap() == typex.FromRType(reflect.TypeOf(p)).Unwrap())
 
 	b.Run("StructFieldsFor", func(b *testing.B) {
 		typP := typex.FromRType(typeP)
