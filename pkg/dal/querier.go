@@ -33,7 +33,7 @@ func NotInSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.Col
 }
 
 type QuerierPatcher interface {
-	Apply(q Querier) Querier
+	ApplyQuerier(q Querier) Querier
 }
 
 type Querier interface {
@@ -134,7 +134,7 @@ func (q *querier) Apply(patchers ...QuerierPatcher) Querier {
 
 	for _, p := range patchers {
 		if p != nil {
-			applied = p.Apply(applied)
+			applied = p.ApplyQuerier(applied)
 		}
 	}
 
@@ -437,6 +437,6 @@ func (t *tmpTable) Unwrap() sqlbuilder.Model {
 	return t.origin
 }
 
-func (t *tmpTable) Apply(q Querier) Querier {
+func (t *tmpTable) ApplyQuerier(q Querier) Querier {
 	return q.With(t.Table, t.build)
 }

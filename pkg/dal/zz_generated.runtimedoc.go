@@ -21,15 +21,15 @@ func (v Database) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"Endpoint of database",
 			}, true
-		case "NameOverwrites":
+		case "NameOverwrite":
 			return []string{
 				"Overwrite dbname when not empty",
 			}, true
-		case "UsernameOverwrites":
+		case "UsernameOverwrite":
 			return []string{
 				"Overwrite username when not empty",
 			}, true
-		case "PasswordOverwrites":
+		case "PasswordOverwrite":
 			return []string{
 				"Overwrite password when not empty",
 			}, true

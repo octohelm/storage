@@ -5,16 +5,20 @@ import (
 	"database/sql/driver"
 	"github.com/pkg/errors"
 	"iter"
+	"slices"
 	"time"
 
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/datatypes"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
-	"github.com/octohelm/x/slices"
+	slicesx "github.com/octohelm/x/slices"
 )
 
-func Prepare[T any](v *T) Mutation[T] {
+// Prepare
+// Deprecated
+// use Insert InsertNonZero InsertValues Update Delete instead
+func Prepare[T sqlbuilder.Model](v *T) MutationDeprecated[T] {
 	if _, ok := any(v).(sqlbuilder.Table); ok {
 		panic(errors.Errorf("Prepare should be some data struct, but got %T", v))
 	}
@@ -31,15 +35,110 @@ func Prepare[T any](v *T) Mutation[T] {
 	}
 }
 
-type Mutation[T any] interface {
+type MutationDeprecated[T sqlbuilder.Model] interface {
 	IncludesZero(columns ...sqlbuilder.Column) Mutation[T]
 	Values(valueSeq iter.Seq[*T], cols ...sqlbuilder.Column) Mutation[T]
 	FromSelect(q Querier, cols ...sqlbuilder.Column) Mutation[T]
 
-	ForDelete(opts ...OptionFunc) Mutation[T]
-	ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation[T]
+	ForDelete(opts ...OptionFunc) MutationMustWithWhere[T]
+	ForUpdateSet(assignments ...sqlbuilder.Assignment) MutationMustWithWhere[T]
+
+	MutationMustWithWhere[T]
+}
+
+type MutationMustWithWhere[T any] interface {
+	Mutation[T]
 
 	Where(where sqlbuilder.SqlExpr) Mutation[T]
+}
+
+func InsertNonZero[T sqlbuilder.Model](value *T, zeroFieldsIncludes ...sqlbuilder.Column) Mutation[T] {
+	if m, ok := any(value).(ModelWithCreationTime); ok {
+		m.MarkCreatedAt()
+	}
+
+	return &mutation[T]{
+		target: value,
+		feature: feature{
+			softDelete: true,
+		},
+		zeroFieldsIncludes: zeroFieldsIncludes,
+	}
+}
+
+func UpdateNonZero[T sqlbuilder.Model](v *T, zeroFieldsIncludes ...sqlbuilder.Column) MutationMustWithWhere[T] {
+	return &mutation[T]{
+		target: v,
+		feature: feature{
+			softDelete: true,
+		},
+		zeroFieldsIncludes: zeroFieldsIncludes,
+	}
+}
+
+func Insert[T sqlbuilder.Model](value *T, cols ...sqlbuilder.Column) Mutation[T] {
+	if m, ok := any(value).(ModelWithCreationTime); ok {
+		m.MarkCreatedAt()
+	}
+
+	return &mutation[T]{
+		target: value,
+		feature: feature{
+			softDelete: true,
+		},
+		insertValues: &insertValues[T]{
+			columns:  cols,
+			valueSeq: slices.Values([]*T{value}),
+		},
+	}
+}
+
+func InsertValues[T sqlbuilder.Model](valueSeq iter.Seq[*T], cols ...sqlbuilder.Column) Mutation[T] {
+	return &mutation[T]{
+		target: new(T),
+		feature: feature{
+			softDelete: true,
+		},
+		insertValues: &insertValues[T]{
+			columns:  cols,
+			valueSeq: valueSeq,
+		},
+	}
+}
+
+func Update[T sqlbuilder.Model](v *T, cols ...sqlbuilder.Column) MutationMustWithWhere[T] {
+	return &mutation[T]{
+		target: v,
+		feature: feature{
+			softDelete: true,
+		},
+		update: &updateAction{
+			columns: cols,
+		},
+	}
+}
+
+func Delete[T sqlbuilder.Model](opts ...OptionFunc) MutationMustWithWhere[T] {
+	c := &mutation[T]{
+		target:    new(T),
+		forDelete: true,
+		feature: feature{
+			softDelete: true,
+		},
+	}
+
+	for i := range opts {
+		opts[i](c)
+	}
+
+	return c
+}
+
+type Mutation[T any] interface {
+	WhereAnd(where sqlbuilder.SqlExpr) Mutation[T]
+	WhereOr(where sqlbuilder.SqlExpr) Mutation[T]
+
+	Apply(patchers ...MutationPatcher[T]) Mutation[T]
 
 	OnConflict(cols sqlbuilder.ColumnCollection) Mutation[T]
 	DoNothing() Mutation[T]
@@ -52,20 +151,24 @@ type Mutation[T any] interface {
 	Save(ctx context.Context) error
 }
 
-type mutation[T any] struct {
-	target             *T
-	recv               any
-	zeroFieldsIncludes []sqlbuilder.Column
+type MutationPatcher[T any] interface {
+	ApplyMutation(m Mutation[T]) Mutation[T]
+}
 
+type mutation[T any] struct {
+	target               *T
+	recv                 any
+	zeroFieldsIncludes   []sqlbuilder.Column
 	assignmentsForUpdate sqlbuilder.Assignments
-	where                sqlbuilder.SqlExpr
+
+	where sqlbuilder.SqlExpr
 
 	conflict              sqlbuilder.ColumnCollection
 	onConflictDoWith      func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.Addition
 	onConflictDoUpdateSet []sqlbuilder.Column
 
-	fromSelect *fromSelect
-
+	fromSelect   *fromSelect
+	update       *updateAction
 	insertValues *insertValues[T]
 
 	returning []sqlbuilder.SqlExpr
@@ -75,9 +178,47 @@ type mutation[T any] struct {
 	feature
 }
 
+func (c mutation[T]) Apply(patchers ...MutationPatcher[T]) Mutation[T] {
+	var applied Mutation[T] = &c
+
+	for _, p := range patchers {
+		if p != nil {
+			applied = p.ApplyMutation(applied)
+		}
+	}
+
+	return applied
+}
+
+type updateAction struct {
+	columns columns
+}
+
 type insertValues[T any] struct {
-	columns  []sqlbuilder.Column
+	columns  columns
 	valueSeq iter.Seq[*T]
+}
+
+type columns []sqlbuilder.Column
+
+func (cc columns) colsForMut(t sqlbuilder.Table) sqlbuilder.ColumnCollection {
+	cols := sqlbuilder.Cols()
+
+	if len(cc) > 0 {
+		for _, c := range cc {
+			if col := t.F(c.FieldName()); col != nil {
+				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+			}
+		}
+	} else {
+		for col, _ := range t.Cols().RangeCol {
+			if !col.Def().AutoIncrement {
+				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+			}
+		}
+	}
+
+	return cols
 }
 
 type fromSelect struct {
@@ -108,7 +249,7 @@ func (c mutation[T]) FromSelect(q Querier, cols ...sqlbuilder.Column) Mutation[T
 	return &c
 }
 
-func (c mutation[T]) ForDelete(fns ...OptionFunc) Mutation[T] {
+func (c mutation[T]) ForDelete(fns ...OptionFunc) MutationMustWithWhere[T] {
 	c.forDelete = true
 	for i := range fns {
 		fns[i](&c)
@@ -116,13 +257,23 @@ func (c mutation[T]) ForDelete(fns ...OptionFunc) Mutation[T] {
 	return &c
 }
 
-func (c mutation[T]) ForUpdateSet(assignments ...sqlbuilder.Assignment) Mutation[T] {
+func (c mutation[T]) ForUpdateSet(assignments ...sqlbuilder.Assignment) MutationMustWithWhere[T] {
 	c.assignmentsForUpdate = assignments
 	return &c
 }
 
 func (c mutation[T]) Where(where sqlbuilder.SqlExpr) Mutation[T] {
 	c.where = where
+	return &c
+}
+
+func (c mutation[T]) WhereAnd(where sqlbuilder.SqlExpr) Mutation[T] {
+	c.where = sqlbuilder.And(c.where, where)
+	return &c
+}
+
+func (c mutation[T]) WhereOr(where sqlbuilder.SqlExpr) Mutation[T] {
+	c.where = sqlbuilder.Or(c.where, where)
 	return &c
 }
 
@@ -270,38 +421,28 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 	var stmt sqlbuilder.SqlExpr
 
 	if where := c.buildWhere(t); where != nil {
-		assignmentsForUpdate := c.assignmentsForUpdate
-		if len(assignmentsForUpdate) == 0 {
-			assignmentsForUpdate = toAssignments(t, c.target, c.includeFieldNames()...)
+		var assignmentsForUpdate []sqlbuilder.Assignment
+
+		if c.update != nil {
+			assignmentsForUpdate = toAssignmentsOf(c.target, c.update.columns.colsForMut(t))
+		} else {
+			assignmentsForUpdate = c.assignmentsForUpdate
+			if len(assignmentsForUpdate) == 0 {
+				assignmentsForUpdate = toAssignments(t, c.target, c.includeFieldNames()...)
+			}
 		}
 
-		stmt = sqlbuilder.Update(t).
-			Where(where, additions...).
-			Set(assignmentsForUpdate...)
+		stmt = sqlbuilder.Update(t).Where(where, additions...).Set(assignmentsForUpdate...)
 	} else if c.fromSelect != nil {
 		stmt = sqlbuilder.Insert().Into(t, additions...).
 			Values(
-				t.Cols(slices.Map(c.fromSelect.columns, func(e sqlbuilder.Column) string {
+				t.Cols(slicesx.Map(c.fromSelect.columns, func(e sqlbuilder.Column) string {
 					return e.Name()
 				})...),
 				c.fromSelect.values,
 			)
 	} else if c.insertValues != nil {
-		cols := sqlbuilder.Cols()
-
-		if len(c.insertValues.columns) > 0 {
-			for _, c := range c.insertValues.columns {
-				if col := t.F(c.FieldName()); col != nil {
-					cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
-				}
-			}
-		} else {
-			for col, _ := range t.Cols().RangeCol {
-				if !col.Def().AutoIncrement {
-					cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
-				}
-			}
-		}
+		cols := c.insertValues.columns.colsForMut(t)
 
 		stmt = sqlbuilder.Insert().Into(t, additions...).ValuesCollect(cols, func(yield func(any) bool) {
 			for value := range c.insertValues.valueSeq {
@@ -372,6 +513,15 @@ func toColumnsAndValues(t sqlbuilder.Table, m any, excludeFields ...string) (col
 func toAssignments(t sqlbuilder.Table, m any, excludeFields ...string) (assignments sqlbuilder.Assignments) {
 	for sfv := range structs.AllNonZeroFieldValue(context.Background(), m, excludeFields...) {
 		if col := t.F(sfv.Field.FieldName); col != nil {
+			assignments = append(assignments, sqlbuilder.CastCol[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
+		}
+	}
+	return
+}
+
+func toAssignmentsOf(m any, cc sqlbuilder.ColumnCollection) (assignments sqlbuilder.Assignments) {
+	for sfv := range structs.AllFieldValue(context.Background(), m) {
+		if col := cc.F(sfv.Field.FieldName); col != nil {
 			assignments = append(assignments, sqlbuilder.CastCol[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
 		}
 	}

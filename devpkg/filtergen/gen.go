@@ -75,10 +75,10 @@ func (g *filterGen) generateSubFilter(c gengo.Context, tables map[*types.Named]s
 	}
 
 	c.Render(gengo.Snippet{gengo.T: `
-func @ModelTypeName'By@ModelFieldName'From@FromModelTypeName'(ctx @contextContext, patchers ...@querierpatcherTyped[@FromModelType]) @querierpatcherTyped[@ModelType] {
-	return @querierpatcherWhere[@ModelType](
+func @ModelTypeName'By@ModelFieldName'From@FromModelTypeName'(ctx @contextContext, patchers ...@patcherTyped[@FromModelType]) @patcherTyped[@ModelType] {
+	return @patcherWhere[@ModelType](
 		@ModelType'T.@ModelFieldName.V(
-			@querierpatcherInSelectIfExists(ctx, @FromModelType'T.@FromModelFieldName, patchers...),
+			@patcherInSelectIfExists(ctx, @FromModelType'T.@FromModelFieldName, patchers...),
 		),
 	)
 }
@@ -91,10 +91,10 @@ func @ModelTypeName'By@ModelFieldName'From@FromModelTypeName'(ctx @contextContex
 		"FromModelType":      gengo.ID(fromModeType.String()),
 		"FromModelFieldName": gengo.ID(fromModelFieldName),
 
-		"contextContext":                 gengo.ID("context.Context"),
-		"querierpatcherTyped":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Typed"),
-		"querierpatcherWhere":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Where"),
-		"querierpatcherInSelectIfExists": gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.InSelectIfExists"),
+		"contextContext":          gengo.ID("context.Context"),
+		"patcherTyped":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/patcher.TypedQuerierPatcher"),
+		"patcherWhere":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/patcher.Where"),
+		"patcherInSelectIfExists": gengo.ID("github.com/octohelm/storage/pkg/dal/compose/patcher.InSelectIfExists"),
 	})
 }
 
@@ -143,8 +143,12 @@ type @ModelTypeName'By@FieldName struct {
 }
 
 
-func (f *@ModelTypeName'By@FieldName) Apply(q @dalQuerier) @dalQuerier {
+func (f *@ModelTypeName'By@FieldName) ApplyQuerier(q @dalQuerier) @dalQuerier {
 	return @composeApplyQuerierFromFilter(q, @Type'T.@FieldName, f.@FieldName)
+}
+
+func (f *@ModelTypeName'By@FieldName) ApplyMutation(m @dalMutation[@Type]) @dalMutation[@Type] {
+	return @composeApplyMutationFromFilter(m, @Type'T.@FieldName, f.@FieldName)
 }
 `,
 			"ModelTypeName": gengo.ID(named.Obj().Name()),
@@ -156,10 +160,14 @@ func (f *@ModelTypeName'By@FieldName) Apply(q @dalQuerier) @dalQuerier {
 			"domainName":   gengo.ID(camelcase.LowerKebabCase(domainName)),
 			"fieldName":    gengo.ID(camelcase.LowerCamelCase(fieldName)),
 
-			"dalQuerier":                    gengo.ID("github.com/octohelm/storage/pkg/dal.Querier"),
-			"composeFrom":                   gengo.ID("github.com/octohelm/storage/pkg/dal/compose.From"),
-			"composeApplyQuerierFromFilter": gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyQuerierFromFilter"),
-			"filterFilter":                  gengo.ID("github.com/octohelm/storage/pkg/filter.Filter"),
+			"dalQuerier":  gengo.ID("github.com/octohelm/storage/pkg/dal.Querier"),
+			"dalMutation": gengo.ID("github.com/octohelm/storage/pkg/dal.Mutation"),
+
+			"composeApplyQuerierFromFilter":  gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyQuerierFromFilter"),
+			"composeApplyMutationFromFilter": gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyMutationFromFilter"),
+
+			"composeFrom":  gengo.ID("github.com/octohelm/storage/pkg/dal/compose.From"),
+			"filterFilter": gengo.ID("github.com/octohelm/storage/pkg/filter.Filter"),
 		})
 	}
 

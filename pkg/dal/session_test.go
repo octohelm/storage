@@ -21,8 +21,12 @@ type FilterUserByAge struct {
 	Age *filter.Filter[int64] `name:"age" in:"query"`
 }
 
-func (i FilterUserByAge) Apply(q dal.Querier) dal.Querier {
+func (i FilterUserByAge) ApplyQuerier(q dal.Querier) dal.Querier {
 	return compose.ApplyQuerierFromFilter(q, model.UserT.Age, i.Age)
+}
+
+func (i FilterUserByAge) ApplyMutation(m dal.Mutation[model.User]) dal.Mutation[model.User] {
+	return compose.ApplyMutationFromFilter(m, model.UserT.Age, i.Age)
 }
 
 func TestCRUD(t *testing.T) {
@@ -35,22 +39,18 @@ func TestCRUD(t *testing.T) {
 		ctx := ctxs[i]
 
 		t.Run("batch insert", func(t *testing.T) {
-			err := dal.Prepare(&model.User{}).
-				Values(
-					func(yield func(*model.User) bool) {
-						for i := 0; i < 100; i++ {
-							usr := &model.User{
-								Name: uuid.New().String(),
-								Age:  int64(i),
-							}
-							if !yield(usr) {
-								return
-							}
-						}
-					},
-					model.UserT.Name,
-					model.UserT.Age,
-				).
+			err := dal.InsertValues(func(yield func(*model.User) bool) {
+				for i := 0; i < 100; i++ {
+					usr := &model.User{
+						Name: uuid.New().String(),
+						Age:  int64(i),
+					}
+
+					if !yield(usr) {
+						return
+					}
+				}
+			}).
 				OnConflict(model.UserT.I.IName).
 				DoNothing().
 				Save(ctx)
@@ -60,8 +60,11 @@ func TestCRUD(t *testing.T) {
 			testutil.Expect(t, err, testutil.Be[error](nil))
 			testutil.Expect(t, c, testutil.Be(100))
 
-			err = dal.Prepare(&model.User{}).ForDelete(dal.HardDelete()).
-				Where(model.UserT.Age.V(sqlbuilder.Gte(int64(0)))).Save(ctx)
+			err = dal.Delete[model.User](dal.HardDelete()).Apply(
+				FilterUserByAge{
+					Age: filter.Gte[int64](0),
+				},
+			).Save(ctx)
 			testutil.Expect(t, err, testutil.Be[error](nil))
 		})
 
@@ -70,7 +73,7 @@ func TestCRUD(t *testing.T) {
 				Name: uuid.New().String(),
 				Age:  100,
 			}
-			err := dal.Prepare(usr).IncludesZero(model.UserT.Nickname).
+			err := dal.InsertNonZero(usr, model.UserT.Nickname).
 				Returning(model.UserT.ID).Scan(usr).
 				Save(ctx)
 
@@ -81,7 +84,7 @@ func TestCRUD(t *testing.T) {
 				usr2 := &model.User{
 					Name: usr.Name,
 				}
-				err := dal.Prepare(usr2).Save(ctx)
+				err := dal.InsertNonZero(usr2).Save(ctx)
 				testutil.Expect(t, dberr.IsErrConflict(err), testutil.Be(true))
 			})
 
@@ -91,7 +94,7 @@ func TestCRUD(t *testing.T) {
 					Nickname: "test",
 				}
 
-				err := dal.Prepare(usr2).
+				err := dal.InsertNonZero(usr2).
 					OnConflict(model.UserT.I.IName).DoNothing().
 					Returning(model.UserT.ID, model.UserT.Age).Scan(usr2).
 					Save(ctx)
@@ -105,7 +108,7 @@ func TestCRUD(t *testing.T) {
 					Nickname: "test",
 				}
 
-				err := dal.Prepare(usr2).
+				err := dal.InsertNonZero(usr2).
 					OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
 					Returning(model.UserT.ID, model.UserT.Age, model.UserT.Username).Scan(usr2).
 					Save(ctx)
@@ -119,7 +122,7 @@ func TestCRUD(t *testing.T) {
 				usr2 := &model.User{
 					Nickname: "test test",
 				}
-				update := dal.Prepare(usr2).Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
+				update := dal.UpdateNonZero(usr2).Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
 
 				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -127,9 +130,10 @@ func TestCRUD(t *testing.T) {
 
 			t.Run("SoftDelete", func(t *testing.T) {
 				deletedUser := &model.User{}
-				update := dal.Prepare(&model.User{}).ForDelete().
-					Returning().Scan(deletedUser).
-					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
+
+				update := dal.Delete[model.User]().
+					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID))).
+					Returning().Scan(deletedUser)
 
 				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -140,9 +144,9 @@ func TestCRUD(t *testing.T) {
 			t.Run("Delete", func(t *testing.T) {
 				deletedUser := &model.User{}
 
-				update := dal.Prepare(&model.User{}).ForDelete(dal.HardDelete()).
-					Returning().Scan(deletedUser).
-					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID)))
+				update := dal.Delete[model.User](dal.HardDelete()).
+					Where(model.UserT.ID.V(sqlbuilder.Eq(usr.ID))).
+					Returning().Scan(deletedUser)
 
 				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -156,7 +160,9 @@ func TestCRUD(t *testing.T) {
 					org := &model.Org{
 						Name: uuid.New().String(),
 					}
-					if err := dal.Prepare(org).Returning(model.OrgT.ID).Scan(org).Save(ctx); err != nil {
+					if err := dal.InsertNonZero(org).
+						Returning(model.OrgT.ID).Scan(org).
+						Save(ctx); err != nil {
 						return err
 					}
 				}
@@ -167,7 +173,7 @@ func TestCRUD(t *testing.T) {
 						Age:  int64(i),
 					}
 
-					err := dal.Prepare(usr).IncludesZero(model.UserT.Nickname).
+					err := dal.InsertNonZero(usr, model.UserT.Nickname).
 						Returning(model.UserT.ID).Scan(usr).
 						Save(ctx)
 					if err != nil {
@@ -175,9 +181,11 @@ func TestCRUD(t *testing.T) {
 					}
 
 					if i >= 100 {
-						if err := dal.Prepare(usr).ForDelete().Where(
-							model.UserT.Age.V(sqlbuilder.Eq[int64](usr.Age)),
-						).Save(ctx); err != nil {
+						if err := dal.Delete[model.User]().
+							Where(
+								model.UserT.Age.V(sqlbuilder.Eq[int64](usr.Age)),
+							).
+							Save(ctx); err != nil {
 							return err
 						}
 					}
@@ -186,7 +194,7 @@ func TestCRUD(t *testing.T) {
 						UserID: usr.ID,
 						OrgID:  usr.ID%2 + 1,
 					}
-					if err := dal.Prepare(orgUsr).Save(ctx); err != nil {
+					if err := dal.InsertNonZero(orgUsr).Save(ctx); err != nil {
 						return err
 					}
 				}
@@ -353,26 +361,11 @@ func TestMultipleTxLockedWithSqlite(t *testing.T) {
 			go func() {
 				defer wg.Done()
 
-				err := dal.Prepare(usr2).
+				err := dal.Insert(usr2).
 					OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
 					Save(ctx)
 
 				testutil.Expect(t, err, testutil.Be[error](nil))
-			}()
-		}
-
-		for i := 0; i < 2; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-
-				//err := Tx(ctx, usr2, func(ctx context.Context) error {
-				//	return dal.Prepare(usr2).
-				//		OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).
-				//		Save(ctx)
-				//})
-				//
-				//testutil.Expect(t, err, testutil.Be[error](nil))
 			}()
 		}
 

@@ -8,6 +8,14 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
+func ApplyMutationFromFilter[M any, T comparable](m dal.Mutation[M], col sqlbuilder.TypedColumn[T], f *filter.Filter[T]) dal.Mutation[M] {
+	if where, ok := WhereFromFilter(col, f); ok {
+
+		return m.WhereAnd(where)
+	}
+	return m
+}
+
 func ApplyQuerierFromFilter[T comparable](q dal.Querier, col sqlbuilder.TypedColumn[T], f *filter.Filter[T]) dal.Querier {
 	if q.ExistsTable(col.T()) {
 		if where, ok := WhereFromFilter(col, f); ok {
