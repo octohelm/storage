@@ -35,7 +35,9 @@ func TestStmtUpdate(t *testing.T) {
 					Comment("Comment"),
 				),
 			testutil.BeFragment(`
-UPDATE t_0 SET f_a = ?, f_b = t_1.f_a FROM t_1
+UPDATE t_0
+SET f_a = ?, f_b = t_1.f_a
+FROM t_1
 WHERE t_0.f_a = ?
 /* Comment */`, 1, 1))
 	})

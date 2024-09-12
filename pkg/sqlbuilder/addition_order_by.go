@@ -78,7 +78,7 @@ func (o *order) IsNil() bool {
 
 func (o *order) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return func(yield func(string, []any) bool) {
-		for q, args := range sqlfrag.Group(o.target).Frag(ctx) {
+		for q, args := range sqlfrag.InlineBlock(o.target).Frag(ctx) {
 			if !yield(q, args) {
 				return
 			}

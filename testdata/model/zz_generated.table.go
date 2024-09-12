@@ -45,7 +45,7 @@ type tableOrg struct {
 
 	I indexesOfOrg
 
-	ID        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[Org, uint64]
+	ID        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[Org, OrgID]
 	Name      github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[Org, string]
 	CreatedAt github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[Org, github_com_octohelm_storage_pkg_datatypes.Datetime]
 	UpdatedAt github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[Org, int64]
@@ -60,7 +60,7 @@ type indexesOfOrg struct {
 var OrgT = &tableOrg{
 	Table: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[Org](),
 
-	ID:        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[Org, uint64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[Org]().F("ID")),
+	ID:        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[Org, OrgID](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[Org]().F("ID")),
 	Name:      github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[Org, string](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[Org]().F("Name")),
 	CreatedAt: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[Org, github_com_octohelm_storage_pkg_datatypes.Datetime](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[Org]().F("CreatedAt")),
 	UpdatedAt: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[Org, int64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[Org]().F("UpdatedAt")),
@@ -101,8 +101,8 @@ type tableOrgUser struct {
 	I indexesOfOrgUser
 
 	ID     github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[OrgUser, uint64]
-	UserID github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[OrgUser, uint64]
-	OrgID  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[OrgUser, uint64]
+	UserID github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[OrgUser, UserID]
+	OrgID  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[OrgUser, OrgID]
 }
 
 type indexesOfOrgUser struct {
@@ -114,8 +114,8 @@ var OrgUserT = &tableOrgUser{
 	Table: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[OrgUser](),
 
 	ID:     github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[OrgUser, uint64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[OrgUser]().F("ID")),
-	UserID: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[OrgUser, uint64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[OrgUser]().F("UserID")),
-	OrgID:  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[OrgUser, uint64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[OrgUser]().F("OrgID")),
+	UserID: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[OrgUser, UserID](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[OrgUser]().F("UserID")),
+	OrgID:  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[OrgUser, OrgID](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[OrgUser]().F("OrgID")),
 
 	I: indexesOfOrgUser{
 		Primary: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[OrgUser]().MK("primary"),
@@ -166,7 +166,7 @@ type tableUser struct {
 
 	I indexesOfUser
 
-	ID        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[User, uint64]
+	ID        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[User, UserID]
 	Name      github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[User, string]
 	Nickname  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[User, string]
 	Username  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[User, string]
@@ -186,7 +186,7 @@ type indexesOfUser struct {
 var UserT = &tableUser{
 	Table: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[User](),
 
-	ID:        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[User, uint64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[User]().F("ID")),
+	ID:        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[User, UserID](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[User]().F("ID")),
 	Name:      github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[User, string](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[User]().F("Name")),
 	Nickname:  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[User, string](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[User]().F("Nickname")),
 	Username:  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[User, string](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[User]().F("Username")),

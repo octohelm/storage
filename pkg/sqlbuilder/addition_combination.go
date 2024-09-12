@@ -70,8 +70,10 @@ func (c *combination) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			}
 		}
 
-		if !(yield(sqlfrag.All(ctx, c.stmtSelect))) {
-			return
+		for q, args := range c.stmtSelect.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
 		}
 	}
 }

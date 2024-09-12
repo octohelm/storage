@@ -92,9 +92,9 @@ func @ModelTypeName'By@ModelFieldName'From@FromModelTypeName'(ctx @contextContex
 		"FromModelFieldName": gengo.ID(fromModelFieldName),
 
 		"contextContext":          gengo.ID("context.Context"),
-		"patcherTyped":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/patcher.TypedQuerierPatcher"),
-		"patcherWhere":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/patcher.Where"),
-		"patcherInSelectIfExists": gengo.ID("github.com/octohelm/storage/pkg/dal/compose/patcher.InSelectIfExists"),
+		"patcherTyped":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Typed"),
+		"patcherWhere":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Where"),
+		"patcherInSelectIfExists": gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.InSelectIfExists"),
 	})
 }
 
@@ -121,13 +121,13 @@ func (g *filterGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table, n
 
 	for _, fieldName := range indexedFields {
 		f := t.F(fieldName)
-		fieldType := f.Def().Type
+		fieldType := sqlbuilder.GetColumnDef(f).Type
 
 		fieldComment := fmt.Sprintf("按 %s 筛选", func() string {
-			if comment := f.Def().Comment; comment != "" {
+			if comment := sqlbuilder.GetColumnDef(f).Comment; comment != "" {
 				return comment
 			}
-			if list := f.Def().Description; len(list) > 0 {
+			if list := sqlbuilder.GetColumnDef(f).Description; len(list) > 0 {
 				return list[0]
 			}
 			return ""
@@ -143,12 +143,16 @@ type @ModelTypeName'By@FieldName struct {
 }
 
 
-func (f *@ModelTypeName'By@FieldName) ApplyQuerier(q @dalQuerier) @dalQuerier {
-	return @composeApplyQuerierFromFilter(q, @Type'T.@FieldName, f.@FieldName)
+func (f *@ModelTypeName'By@FieldName) OperatorType() @sqlpipeOperatorType {
+	return @sqlpipeOperatorFilter
 }
 
-func (f *@ModelTypeName'By@FieldName) ApplyMutation(m @dalMutation[@Type]) @dalMutation[@Type] {
-	return @composeApplyMutationFromFilter(m, @Type'T.@FieldName, f.@FieldName)
+func (f *@ModelTypeName'By@FieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSource[@Type] {
+	return src.Pipe(@sqlpipefilterAsWhere(@Type'T.@FieldName, f.@FieldName))
+}
+
+func (f *@ModelTypeName'By@FieldName) ApplyQuerier(q @dalQuerier) @dalQuerier {
+	return @composeApplyQuerierFromFilter(q, @Type'T.@FieldName, f.@FieldName)
 }
 `,
 			"ModelTypeName": gengo.ID(named.Obj().Name()),
@@ -163,8 +167,12 @@ func (f *@ModelTypeName'By@FieldName) ApplyMutation(m @dalMutation[@Type]) @dalM
 			"dalQuerier":  gengo.ID("github.com/octohelm/storage/pkg/dal.Querier"),
 			"dalMutation": gengo.ID("github.com/octohelm/storage/pkg/dal.Mutation"),
 
-			"composeApplyQuerierFromFilter":  gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyQuerierFromFilter"),
-			"composeApplyMutationFromFilter": gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyMutationFromFilter"),
+			"composeApplyQuerierFromFilter": gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyQuerierFromFilter"),
+
+			"sqlpipeSource":         gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.Source"),
+			"sqlpipeOperatorType":   gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.OperatorType"),
+			"sqlpipeOperatorFilter": gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.OperatorFilter"),
+			"sqlpipefilterAsWhere":  gengo.ID("github.com/octohelm/storage/pkg/sqlpipe/filter.AsWhere"),
 
 			"composeFrom":  gengo.ID("github.com/octohelm/storage/pkg/dal/compose.From"),
 			"filterFilter": gengo.ID("github.com/octohelm/storage/pkg/filter.Filter"),

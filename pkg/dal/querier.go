@@ -3,19 +3,18 @@ package dal
 import (
 	"context"
 	"fmt"
-	"iter"
-	"reflect"
-
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/pkg/errors"
+	"iter"
+	"reflect"
 )
 
 // Intersect(q Querier) Querier
 // Except(q Querier) Querier
-func InSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.ColumnValueExpr[T] {
+func InSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.ColumnValuer[T] {
 	return func(v sqlbuilder.Column) sqlfrag.Fragment {
 		ex := q.Select(col)
 		if ex.IsNil() {
@@ -25,7 +24,7 @@ func InSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.Column
 	}
 }
 
-func NotInSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.ColumnValueExpr[T] {
+func NotInSelect[T any](col sqlbuilder.TypedColumn[T], q Querier) sqlbuilder.ColumnValuer[T] {
 	return func(v sqlbuilder.Column) sqlfrag.Fragment {
 		ex := q.Select(col)
 		if ex.IsNil() {
@@ -414,22 +413,6 @@ type ScanIterator = scanner.ScanIterator
 
 var ErrSkipScan = errors.New("scan skip")
 
-func Recv[T any](next func(v *T) error) ScanIterator {
-	return &typedScanner[T]{next: next}
-}
-
-type typedScanner[T any] struct {
-	next func(v *T) error
-}
-
-func (*typedScanner[T]) New() any {
-	return new(T)
-}
-
-func (t *typedScanner[T]) Next(v any) error {
-	return t.next(v.(*T))
-}
-
 type TemporaryTable interface {
 	sqlbuilder.Table
 	TableWrapper
@@ -439,7 +422,7 @@ type TemporaryTable interface {
 func (q *querier) AsTemporaryTable(tableName string) TemporaryTable {
 	projects := q.projects
 
-	cols := make([]sqlbuilder.TableDefinition, 0, len(projects))
+	cols := make([]sqlfrag.Fragment, 0, len(projects))
 
 	for _, p := range projects {
 		if col, ok := p.(sqlbuilder.Column); ok {

@@ -83,7 +83,7 @@ func TestPostgresDialect(t *testing.T) {
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			q, args := sqlfrag.All(context.Background(), c.expect)
+			q, args := sqlfrag.Collect(context.Background(), c.expect)
 
 			testingx.Expect(t, c.expr, testutil.BeFragment(q, args...))
 		})

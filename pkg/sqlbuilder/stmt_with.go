@@ -42,7 +42,7 @@ func (w WithStmt) Exec(statement func(tables ...Table) sqlfrag.Fragment) *WithSt
 
 func (w *WithStmt) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return func(yield func(string, []any) bool) {
-		if !yield("WITH", nil) {
+		if !yield("\nWITH", nil) {
 			return
 		}
 
@@ -68,7 +68,8 @@ func (w *WithStmt) Frag(ctx context.Context) iter.Seq2[string, []any] {
 					return
 				}
 			}
-			for q, args := range sqlfrag.Group(sqlfrag.Join(",", sqlfrag.Map(t.Cols(), func(col Column) sqlfrag.Fragment {
+
+			for q, args := range sqlfrag.InlineBlock(sqlfrag.Join(",", sqlfrag.Map(t.Cols(), func(col Column) sqlfrag.Fragment {
 				return col
 			}))).Frag(ctx) {
 				if !yield(q, args) {
@@ -76,21 +77,15 @@ func (w *WithStmt) Frag(ctx context.Context) iter.Seq2[string, []any] {
 				}
 			}
 
-			if !yield("\n  AS ", nil) {
+			if !yield(" AS ", nil) {
 				return
 			}
 
-			build := w.asList[i]
-
-			for q, args := range sqlfrag.Group(build(t)).Frag(ctx) {
+			for q, args := range sqlfrag.Block(w.asList[i](t)).Frag(ctx) {
 				if !yield(q, args) {
 					return
 				}
 			}
-		}
-
-		if !yield("\n", nil) {
-			return
 		}
 
 		for q, args := range w.statement(w.tables...).Frag(ctx) {

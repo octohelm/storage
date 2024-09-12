@@ -10,6 +10,7 @@ const (
 	ToggleMultiTable    = "MultiTable"
 	ToggleNeedAutoAlias = "NeedAlias"
 	ToggleUseValues     = "UseValues"
+	ToggleInProject     = "InProject"
 )
 
 type Toggles map[string]bool

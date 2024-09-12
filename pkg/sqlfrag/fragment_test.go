@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
@@ -23,6 +24,20 @@ func TestFragment(t *testing.T) {
 		testingx.Expect[sqlfrag.Fragment](t,
 			sqlfrag.Const("SELECT 1"),
 			testutil.BeFragment("SELECT 1"),
+		)
+	})
+
+	t.Run("flatten seq", func(t *testing.T) {
+		testingx.Expect[sqlfrag.Fragment](t,
+			sqlfrag.Pair(`#ID IN (?)`, slices.Values([]any{28, 29, 30})),
+			testutil.BeFragment("#ID IN (?,?,?)", 28, 29, 30),
+		)
+	})
+
+	t.Run("flatten typed seq", func(t *testing.T) {
+		testingx.Expect[sqlfrag.Fragment](t,
+			sqlfrag.Pair(`#ID IN (?)`, slices.Values([]int{28, 29, 30})),
+			testutil.BeFragment("#ID IN (?,?,?)", 28, 29, 30),
 		)
 	})
 
@@ -76,14 +91,20 @@ func TestFragment(t *testing.T) {
 
 		t.Run("deep nested", func(t *testing.T) {
 			testingx.Expect(t,
-				sqlfrag.Pair(`CREATE TABLE IF NOT EXISTS @table (@col)`, sqlfrag.NamedArgSet{
+				sqlfrag.Pair(`CREATE TABLE IF NOT EXISTS @table @col`, sqlfrag.NamedArgSet{
 					"table": sqlfrag.Pair("t"),
-					"col": sqlfrag.Pair("@col @type", sqlfrag.NamedArgSet{
-						"col":  sqlfrag.Pair("f_id"),
-						"type": sqlfrag.Pair("int"),
-					}),
+					"col": sqlfrag.Block(
+						sqlfrag.Pair("\n@col @type", sqlfrag.NamedArgSet{
+							"col":  sqlfrag.Pair("f_id"),
+							"type": sqlfrag.Pair("int"),
+						}),
+					),
 				}),
-				testutil.BeFragment("CREATE TABLE IF NOT EXISTS t (f_id int)"),
+				testutil.BeFragment(`
+CREATE TABLE IF NOT EXISTS t (
+	f_id int
+)
+`),
 			)
 		})
 	})

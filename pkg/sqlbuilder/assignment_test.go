@@ -19,8 +19,12 @@ func TestAssignment(t *testing.T) {
 				},
 				ColumnsAndValues(Cols("a", "b"), 1, 2, 3, 4),
 			),
-			testutil.BeFragment(
-				"(a,b) VALUES (?,?),(?,?)",
+			testutil.BeFragment(`
+(a,b)
+VALUES
+	(?,?),
+	(?,?)
+`,
 				1, 2, 3, 4,
 			),
 		)

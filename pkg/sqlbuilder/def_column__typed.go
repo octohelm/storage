@@ -6,13 +6,25 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func CastColumn[T any](col Column) TypedColumn[T] {
-	return &column[T]{
+func CastColumn[T any](col Column, fns ...ColOptionFunc) TypedColumn[T] {
+	c := &column[T]{
 		name:      col.Name(),
 		fieldName: col.FieldName(),
-		table:     col.T(),
-		def:       col.Def(),
+
+		table:    GetColumnTable(col),
+		def:      GetColumnDef(col),
+		computed: GetColumnComputed(col),
 	}
+
+	for _, fn := range fns {
+		fn(c)
+	}
+
+	return c
+}
+
+type ColumnWrapper interface {
+	Unwrap() Column
 }
 
 func TypedColOf[T any](t Table, name string) TypedColumn[T] {
@@ -33,56 +45,56 @@ func TypedCol[T any](name string, fns ...ColOptionFunc) TypedColumn[T] {
 type TypedColumn[T any] interface {
 	Column
 
-	V(op ColumnValueExpr[T]) sqlfrag.Fragment
-	By(ops ...ColumnValueExpr[T]) Assignment
+	V(op ColumnValuer[T]) sqlfrag.Fragment
+	By(ops ...ColumnValuer[T]) Assignment
 }
 
 // +gengo:runtimedoc=false
-type ColumnValueExpr[T any] func(v Column) sqlfrag.Fragment
+type ColumnValuer[T any] func(v Column) sqlfrag.Fragment
 
-func AsValue[T any](v TypedColumn[T]) ColumnValueExpr[T] {
+func AsValue[T any](v TypedColumn[T]) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("?", v)
 	}
 }
 
-func Value[T any](v T) ColumnValueExpr[T] {
+func Value[T any](v T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("?", v)
 	}
 }
 
-func Incr[T any](v T) ColumnValueExpr[T] {
+func Incr[T any](v T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? + ?", c, v)
 	}
 }
 
-func Des[T any](v T) ColumnValueExpr[T] {
+func Des[T any](v T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? - ?", c, v)
 	}
 }
 
-func Eq[T comparable](expect T) ColumnValueExpr[T] {
+func Eq[T comparable](expect T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? = ?", c, expect)
 	}
 }
 
-func EqCol[T comparable](expect TypedColumn[T]) ColumnValueExpr[T] {
+func EqCol[T comparable](expect TypedColumn[T]) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? = ?", c, expect)
 	}
 }
 
-func NeqCol[T comparable](expect TypedColumn[T]) ColumnValueExpr[T] {
+func NeqCol[T comparable](expect TypedColumn[T]) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? <> ?", c, expect)
 	}
 }
 
-func In[T any](values ...T) ColumnValueExpr[T] {
+func In[T any](values ...T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		if len(values) == 0 {
 			return nil
@@ -91,7 +103,7 @@ func In[T any](values ...T) ColumnValueExpr[T] {
 	}
 }
 
-func NotIn[T any](values ...T) ColumnValueExpr[T] {
+func NotIn[T any](values ...T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		if len(values) == 0 {
 			return nil
@@ -100,79 +112,79 @@ func NotIn[T any](values ...T) ColumnValueExpr[T] {
 	}
 }
 
-func IsNull[T any]() ColumnValueExpr[T] {
+func IsNull[T any]() ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? IS NULL", c)
 	}
 }
 
-func IsNotNull[T any]() ColumnValueExpr[T] {
+func IsNotNull[T any]() ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? IS NOT NULL", c)
 	}
 }
 
-func Neq[T any](expect T) ColumnValueExpr[T] {
+func Neq[T any](expect T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? <> ?", c, expect)
 	}
 }
 
-func Like[T ~string](s T) ColumnValueExpr[T] {
+func Like[T ~string](s T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? LIKE ?", c, "%"+s+"%")
 	}
 }
 
-func NotLike[T ~string](s T) ColumnValueExpr[T] {
+func NotLike[T ~string](s T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? NOT LIKE ?", c, "%"+s+"%")
 	}
 }
 
-func LeftLike[T ~string](s T) ColumnValueExpr[T] {
+func LeftLike[T ~string](s T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? LIKE ?", c, "%"+s)
 	}
 }
 
-func RightLike[T ~string](s T) ColumnValueExpr[T] {
+func RightLike[T ~string](s T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? LIKE ?", c, s+"%")
 	}
 }
 
-func Between[T comparable](leftValue T, rightValue T) ColumnValueExpr[T] {
+func Between[T comparable](leftValue T, rightValue T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? BETWEEN ? AND ?", c, leftValue, rightValue)
 	}
 }
 
-func NotBetween[T comparable](leftValue T, rightValue T) ColumnValueExpr[T] {
+func NotBetween[T comparable](leftValue T, rightValue T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? NOT BETWEEN ? AND ?", c, leftValue, rightValue)
 	}
 }
 
-func Gt[T comparable](min T) ColumnValueExpr[T] {
+func Gt[T comparable](min T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? > ?", c, min)
 	}
 }
 
-func Gte[T comparable](min T) ColumnValueExpr[T] {
+func Gte[T comparable](min T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? >= ?", c, min)
 	}
 }
 
-func Lt[T comparable](max T) ColumnValueExpr[T] {
+func Lt[T comparable](max T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? < ?", c, max)
 	}
 }
 
-func Lte[T comparable](max T) ColumnValueExpr[T] {
+func Lte[T comparable](max T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		return sqlfrag.Pair("? <= ?", c, max)
 	}

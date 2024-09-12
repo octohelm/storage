@@ -42,7 +42,7 @@ func (m OneToOne[ID, Record]) Keys() []ID {
 	return maps.Keys(m)
 }
 
-func (m OneToOne[ID, Record]) AsInKeys() sqlbuilder.ColumnValueExpr[ID] {
+func (m OneToOne[ID, Record]) AsInKeys() sqlbuilder.ColumnValuer[ID] {
 	return sqlbuilder.In(maps.Keys(m)...)
 }
 

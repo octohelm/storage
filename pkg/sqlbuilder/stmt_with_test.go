@@ -48,15 +48,21 @@ func TestWithStmt(t *testing.T) {
 				}),
 			testutil.BeFragment(`
 WITH
-t_group_with_parent(f_group_id,f_parent_group_id)
-  AS (SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_group_id AS t_group_relation__f_group_id FROM t_group_relation
-RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id),
-t_group_with_parent(f_group_id,f_parent_group_id)
-  AS (SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_group_id AS t_group_relation__f_group_id FROM t_group_relation
-RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id)
-SELECT * FROM t_group_with_parent
+t_group_with_parent(f_group_id,f_parent_group_id) AS (
+	SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_group_id AS t_group_relation__f_group_id
+	FROM t_group_relation
+	RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id
+),
+t_group_with_parent(f_group_id,f_parent_group_id) AS (
+	SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_group_id AS t_group_relation__f_group_id
+	FROM t_group_relation
+	RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id
+)
+SELECT *
+FROM t_group_with_parent
 `))
 	})
+
 	t.Run("WithRecursive", func(t *testing.T) {
 		testingx.Expect[sqlfrag.Fragment](t,
 			WithRecursive((&GroupWithParentAndChildren{}).T(), func(tmpTableGroupWithParentAndChildren Table) sqlfrag.Fragment {
@@ -72,6 +78,7 @@ SELECT * FROM t_group_with_parent
 					return s
 				}).Exec(func(tables ...Table) sqlfrag.Fragment {
 					tmpTableGroupWithParent := tables[0]
+
 					return Select(
 						MultiMayAutoAlias(
 							tmpTableGroupWithParent.F("f_group_id"),
@@ -106,17 +113,24 @@ SELECT * FROM t_group_with_parent
 			}),
 			testutil.BeFragment(`
 WITH RECURSIVE
-t_group_with_parent_and_children(f_group_id,f_parent_group_id,f_depth)
-  AS (WITH
-t_group_with_parent(f_group_id,f_parent_group_id)
-  AS (SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_parent_group_id AS t_group_relation__f_parent_group_id FROM t_group_relation
-RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id)
-SELECT f_group_id, f_parent_group_id, 0 AS f_depth FROM t_group_with_parent
-WHERE f_group_id = ?
-UNION ALL SELECT t_group_with_parent.f_group_id AS t_group_with_parent__f_group_id, t_group_with_parent.f_parent_group_id AS t_group_with_parent__f_parent_group_id, t_group_with_parent_and_children.f_depth + 1 AS f_depth FROM t_group_with_parent
-CROSS JOIN t_group_with_parent_and_children
-WHERE (t_group_with_parent.f_group_id <> t_group_with_parent_and_children.f_group_id) AND (t_group_with_parent.f_parent_group_id = t_group_with_parent_and_children.f_group_id))
-SELECT * FROM t_group_with_parent_and_children
+t_group_with_parent_and_children(f_group_id,f_parent_group_id,f_depth) AS (
+	WITH
+	t_group_with_parent(f_group_id,f_parent_group_id) AS (
+		SELECT t_group.f_group_id AS t_group__f_group_id, t_group_relation.f_parent_group_id AS t_group_relation__f_parent_group_id
+		FROM t_group_relation
+		RIGHT JOIN t_group ON t_group.f_group_id = t_group_relation.f_group_id
+	)
+	SELECT f_group_id, f_parent_group_id, 0 AS f_depth
+	FROM t_group_with_parent
+	WHERE f_group_id = ?
+	UNION ALL 
+	SELECT t_group_with_parent.f_group_id AS t_group_with_parent__f_group_id, t_group_with_parent.f_parent_group_id AS t_group_with_parent__f_parent_group_id, t_group_with_parent_and_children.f_depth + 1 AS f_depth
+	FROM t_group_with_parent
+	CROSS JOIN t_group_with_parent_and_children
+	WHERE (t_group_with_parent.f_group_id <> t_group_with_parent_and_children.f_group_id) AND (t_group_with_parent.f_parent_group_id = t_group_with_parent_and_children.f_group_id)
+)
+SELECT *
+FROM t_group_with_parent_and_children
 `, 1201375536060956676))
 	})
 }

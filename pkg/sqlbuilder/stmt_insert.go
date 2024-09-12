@@ -3,8 +3,6 @@ package sqlbuilder
 import (
 	"context"
 	"iter"
-
-	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func Insert(modifiers ...string) *StmtInsert {
@@ -42,7 +40,7 @@ func (s *StmtInsert) IsNil() bool {
 
 func (s *StmtInsert) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return func(yield func(string, []any) bool) {
-		if !yield("INSERT", nil) {
+		if !yield("\nINSERT", nil) {
 			return
 		}
 
@@ -80,19 +78,4 @@ func (s *StmtInsert) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			}
 		}
 	}
-}
-
-func OnDuplicateKeyUpdate(assignments ...Assignment) *OtherAddition {
-	if len(assignments) == 0 {
-		return nil
-	}
-
-	return AsAddition(sqlfrag.Pair("ON DUPLICATE KEY UPDATE ?", Assignments(assignments)))
-}
-
-func Returning(expr sqlfrag.Fragment) *OtherAddition {
-	if expr == nil || expr.IsNil() {
-		return AsAddition(sqlfrag.Pair("RETURNING *"))
-	}
-	return AsAddition(sqlfrag.Pair("RETURNING ?", expr))
 }

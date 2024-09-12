@@ -55,10 +55,15 @@ func Index(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key
 	return k
 }
 
+func GetKeyTable(key Key) Table {
+	if withDef, ok := key.(WithTable); ok {
+		return withDef.T()
+	}
+	return nil
+}
+
 type Key interface {
 	sqlfrag.Fragment
-
-	TableDefinition
 
 	Of(table Table) Key
 

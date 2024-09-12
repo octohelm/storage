@@ -38,7 +38,8 @@ func TestJoin(t *testing.T) {
 				),
 			),
 			testutil.BeFragment(`
-SELECT t_user.f_id AS f_id, t_user.f_name AS f_name, t_user.f_org_id AS f_org_id, t_org.f_org_name AS f_org_name FROM t_user
+SELECT t_user.f_id AS f_id, t_user.f_name AS f_name, t_user.f_org_id AS f_org_id, t_org.f_org_name AS f_org_name
+FROM t_user
 JOIN t_org AS t_org ON t_user.f_org_id = t_org.f_org_id
 `,
 			))
@@ -51,7 +52,8 @@ JOIN t_org AS t_org ON t_user.f_org_id = t_org.f_org_id
 					Join(tOrg).Using(tUser.F("f_org_id")),
 				),
 			testutil.BeFragment(`
-SELECT * FROM t_user
+SELECT *
+FROM t_user
 JOIN t_org USING (f_org_id)
 `,
 			))

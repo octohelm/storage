@@ -51,3 +51,6 @@ func (DeleteFunc) RuntimeDoc(names ...string) ([]string, bool) {
 func (OptionFunc) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+func (RecvFunc[M]) RuntimeDoc(names ...string) ([]string, bool) {
+	return []string{}, true
+}

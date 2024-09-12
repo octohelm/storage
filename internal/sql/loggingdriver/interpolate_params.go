@@ -127,8 +127,8 @@ func InterpolateParams(query string, args []driver.NamedValue, loc *time.Locatio
 			default:
 				return "", fmt.Errorf("unsupported type %T: %v", v, v)
 			}
-		case '\n':
-			buf = append(buf, ' ')
+		case '\t':
+			buf = append(buf, []byte("    ")...)
 		default:
 			buf = append(buf, q)
 		}

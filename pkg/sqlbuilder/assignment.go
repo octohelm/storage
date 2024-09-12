@@ -70,7 +70,7 @@ func (a *assignment) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return func(yield func(string, []any) bool) {
 		// (f_a,f_b)
 		if useValues || a.valueSeq != nil {
-			for q, args := range sqlfrag.Group(a.columnOrColumns).Frag(ContextWithToggles(ctx, Toggles{
+			for q, args := range sqlfrag.InlineBlock(a.columnOrColumns).Frag(ContextWithToggles(ctx, Toggles{
 				ToggleMultiTable: false,
 			})) {
 				if !yield(q, args) {
@@ -96,19 +96,20 @@ func (a *assignment) Frag(ctx context.Context) iter.Seq2[string, []any] {
 							return
 						}
 					}
+
 					return
 				}
 			}
 
-			if !yield(" VALUES ", nil) {
+			if !yield("\nVALUES", nil) {
 				return
 			}
 
 			valuesFragmentSeq := sqlfrag.Map(slices.Chunk(values, a.lenOfColumn), func(values []any) sqlfrag.Fragment {
-				return sqlfrag.Pair("("+strings.Repeat(",?", len(values))[1:]+")", values...)
+				return sqlfrag.Pair("\n("+strings.Repeat(",?", len(values))[1:]+")", values...)
 			})
 
-			for q, args := range sqlfrag.Join(",", valuesFragmentSeq).Frag(ctx) {
+			for q, args := range sqlfrag.BlockWithoutBrackets(valuesFragmentSeq).Frag(ctx) {
 				if !yield(q, args) {
 					return
 				}

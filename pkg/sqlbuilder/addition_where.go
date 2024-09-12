@@ -8,6 +8,11 @@ import (
 )
 
 func Where(c sqlfrag.Fragment) Addition {
+	switch x := c.(type) {
+	case *where:
+		return x
+	}
+
 	return &where{
 		condition: AsCond(c),
 	}

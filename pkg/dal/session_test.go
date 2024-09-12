@@ -78,7 +78,7 @@ func TestCRUD(t *testing.T) {
 				Save(ctx)
 
 			testutil.Expect(t, err, testutil.Be[error](nil))
-			testutil.Expect(t, usr.ID, testutil.Not(testutil.Be(uint64(0))))
+			testutil.Expect(t, usr.ID, testutil.Not(testutil.Be(model.UserID(0))))
 
 			t.Run("Save same user agent, should conflict", func(t *testing.T) {
 				usr2 := &model.User{
@@ -122,7 +122,7 @@ func TestCRUD(t *testing.T) {
 				usr2 := &model.User{
 					Nickname: "test test",
 				}
-				update := dal.UpdateNonZero(usr2).Where(model.UserT.ID.V(sqlbuilder.Eq[uint64](100)))
+				update := dal.UpdateNonZero(usr2).Where(model.UserT.ID.V(sqlbuilder.Eq[model.UserID](100)))
 
 				err := update.Save(ctx)
 				testutil.Expect(t, err, testutil.Be[error](nil))
@@ -192,7 +192,7 @@ func TestCRUD(t *testing.T) {
 
 					orgUsr := &model.OrgUser{
 						UserID: usr.ID,
-						OrgID:  usr.ID%2 + 1,
+						OrgID:  model.OrgID(int(usr.ID)%2 + 1),
 					}
 					if err := dal.InsertNonZero(orgUsr).Save(ctx); err != nil {
 						return err

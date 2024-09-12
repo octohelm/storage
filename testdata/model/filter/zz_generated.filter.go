@@ -9,6 +9,8 @@ import (
 	github_com_octohelm_storage_pkg_dal_compose "github.com/octohelm/storage/pkg/dal/compose"
 	github_com_octohelm_storage_pkg_datatypes "github.com/octohelm/storage/pkg/datatypes"
 	github_com_octohelm_storage_pkg_filter "github.com/octohelm/storage/pkg/filter"
+	github_com_octohelm_storage_pkg_sqlpipe "github.com/octohelm/storage/pkg/sqlpipe"
+	github_com_octohelm_storage_pkg_sqlpipe_filter "github.com/octohelm/storage/pkg/sqlpipe/filter"
 	github_com_octohelm_storage_testdata_model "github.com/octohelm/storage/testdata/model"
 )
 
@@ -16,15 +18,19 @@ type UserByID struct {
 	github_com_octohelm_storage_pkg_dal_compose.From[github_com_octohelm_storage_testdata_model.User]
 
 	// 按  筛选
-	ID *github_com_octohelm_storage_pkg_filter.Filter[uint64] `name:"user~id,omitempty" in:"query"`
+	ID *github_com_octohelm_storage_pkg_filter.Filter[github_com_octohelm_storage_testdata_model.UserID] `name:"user~id,omitempty" in:"query"`
+}
+
+func (f *UserByID) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
+}
+
+func (f *UserByID) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.UserT.ID, f.ID))
 }
 
 func (f *UserByID) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
 	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.ID, f.ID)
-}
-
-func (f *UserByID) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.UserT.ID, f.ID)
 }
 
 type UserByName struct {
@@ -34,12 +40,16 @@ type UserByName struct {
 	Name *github_com_octohelm_storage_pkg_filter.Filter[string] `name:"user~name,omitempty" in:"query"`
 }
 
-func (f *UserByName) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.Name, f.Name)
+func (f *UserByName) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
 }
 
-func (f *UserByName) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.UserT.Name, f.Name)
+func (f *UserByName) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.UserT.Name, f.Name))
+}
+
+func (f *UserByName) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
+	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.Name, f.Name)
 }
 
 type UserByNickname struct {
@@ -49,12 +59,16 @@ type UserByNickname struct {
 	Nickname *github_com_octohelm_storage_pkg_filter.Filter[string] `name:"user~nickname,omitempty" in:"query"`
 }
 
-func (f *UserByNickname) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.Nickname, f.Nickname)
+func (f *UserByNickname) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
 }
 
-func (f *UserByNickname) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.UserT.Nickname, f.Nickname)
+func (f *UserByNickname) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.UserT.Nickname, f.Nickname))
+}
+
+func (f *UserByNickname) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
+	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.Nickname, f.Nickname)
 }
 
 type UserByAge struct {
@@ -64,12 +78,16 @@ type UserByAge struct {
 	Age *github_com_octohelm_storage_pkg_filter.Filter[int64] `name:"user~age,omitempty" in:"query"`
 }
 
-func (f *UserByAge) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.Age, f.Age)
+func (f *UserByAge) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
 }
 
-func (f *UserByAge) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.UserT.Age, f.Age)
+func (f *UserByAge) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.UserT.Age, f.Age))
+}
+
+func (f *UserByAge) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
+	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.Age, f.Age)
 }
 
 type UserByCreatedAt struct {
@@ -79,12 +97,16 @@ type UserByCreatedAt struct {
 	CreatedAt *github_com_octohelm_storage_pkg_filter.Filter[github_com_octohelm_storage_pkg_datatypes.Datetime] `name:"user~createdAt,omitempty" in:"query"`
 }
 
-func (f *UserByCreatedAt) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.CreatedAt, f.CreatedAt)
+func (f *UserByCreatedAt) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
 }
 
-func (f *UserByCreatedAt) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.UserT.CreatedAt, f.CreatedAt)
+func (f *UserByCreatedAt) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.UserT.CreatedAt, f.CreatedAt))
+}
+
+func (f *UserByCreatedAt) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
+	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.CreatedAt, f.CreatedAt)
 }
 
 type UserByDeletedAt struct {
@@ -94,27 +116,35 @@ type UserByDeletedAt struct {
 	DeletedAt *github_com_octohelm_storage_pkg_filter.Filter[int64] `name:"user~deletedAt,omitempty" in:"query"`
 }
 
-func (f *UserByDeletedAt) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.DeletedAt, f.DeletedAt)
+func (f *UserByDeletedAt) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
 }
 
-func (f *UserByDeletedAt) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.User] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.UserT.DeletedAt, f.DeletedAt)
+func (f *UserByDeletedAt) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.User] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.UserT.DeletedAt, f.DeletedAt))
+}
+
+func (f *UserByDeletedAt) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
+	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.UserT.DeletedAt, f.DeletedAt)
 }
 
 type OrgByID struct {
 	github_com_octohelm_storage_pkg_dal_compose.From[github_com_octohelm_storage_testdata_model.Org]
 
 	// 按  筛选
-	ID *github_com_octohelm_storage_pkg_filter.Filter[uint64] `name:"org~id,omitempty" in:"query"`
+	ID *github_com_octohelm_storage_pkg_filter.Filter[github_com_octohelm_storage_testdata_model.OrgID] `name:"org~id,omitempty" in:"query"`
+}
+
+func (f *OrgByID) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
+}
+
+func (f *OrgByID) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.Org]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.Org] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.OrgT.ID, f.ID))
 }
 
 func (f *OrgByID) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
 	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.OrgT.ID, f.ID)
-}
-
-func (f *OrgByID) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.Org]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.Org] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.OrgT.ID, f.ID)
 }
 
 type OrgByName struct {
@@ -124,12 +154,16 @@ type OrgByName struct {
 	Name *github_com_octohelm_storage_pkg_filter.Filter[string] `name:"org~name,omitempty" in:"query"`
 }
 
-func (f *OrgByName) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.OrgT.Name, f.Name)
+func (f *OrgByName) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
 }
 
-func (f *OrgByName) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.Org]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.Org] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.OrgT.Name, f.Name)
+func (f *OrgByName) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.Org]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.Org] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.OrgT.Name, f.Name))
+}
+
+func (f *OrgByName) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
+	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.OrgT.Name, f.Name)
 }
 
 type OrgByCreatedAt struct {
@@ -139,10 +173,14 @@ type OrgByCreatedAt struct {
 	CreatedAt *github_com_octohelm_storage_pkg_filter.Filter[github_com_octohelm_storage_pkg_datatypes.Datetime] `name:"org~createdAt,omitempty" in:"query"`
 }
 
-func (f *OrgByCreatedAt) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.OrgT.CreatedAt, f.CreatedAt)
+func (f *OrgByCreatedAt) OperatorType() github_com_octohelm_storage_pkg_sqlpipe.OperatorType {
+	return github_com_octohelm_storage_pkg_sqlpipe.OperatorFilter
 }
 
-func (f *OrgByCreatedAt) ApplyMutation(m github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.Org]) github_com_octohelm_storage_pkg_dal.Mutation[github_com_octohelm_storage_testdata_model.Org] {
-	return github_com_octohelm_storage_pkg_dal_compose.ApplyMutationFromFilter(m, github_com_octohelm_storage_testdata_model.OrgT.CreatedAt, f.CreatedAt)
+func (f *OrgByCreatedAt) Next(src github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.Org]) github_com_octohelm_storage_pkg_sqlpipe.Source[github_com_octohelm_storage_testdata_model.Org] {
+	return src.Pipe(github_com_octohelm_storage_pkg_sqlpipe_filter.AsWhere(github_com_octohelm_storage_testdata_model.OrgT.CreatedAt, f.CreatedAt))
+}
+
+func (f *OrgByCreatedAt) ApplyQuerier(q github_com_octohelm_storage_pkg_dal.Querier) github_com_octohelm_storage_pkg_dal.Querier {
+	return github_com_octohelm_storage_pkg_dal_compose.ApplyQuerierFromFilter(q, github_com_octohelm_storage_testdata_model.OrgT.CreatedAt, f.CreatedAt)
 }

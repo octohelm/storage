@@ -7,39 +7,43 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func Count(sqlExprs ...sqlfrag.Fragment) *Function {
-	if len(sqlExprs) == 0 {
+func Count(fragments ...sqlfrag.Fragment) *Function {
+	if len(fragments) == 0 {
 		return Func("COUNT", sqlfrag.Pair("1"))
 	}
-	return Func("COUNT", sqlExprs...)
+	return Func("COUNT", fragments...)
 }
 
-func Avg(sqlExprs ...sqlfrag.Fragment) *Function {
-	return Func("AVG", sqlExprs...)
+func Avg(fragments ...sqlfrag.Fragment) *Function {
+	return Func("AVG", fragments...)
 }
 
-func Distinct(sqlExprs ...sqlfrag.Fragment) *Function {
-	return Func("DISTINCT", sqlExprs...)
+func AnyValue(fragments ...sqlfrag.Fragment) *Function {
+	return Func("ANY_VALUE", fragments...)
 }
 
-func Min(sqlExprs ...sqlfrag.Fragment) *Function {
-	return Func("MIN", sqlExprs...)
+func Distinct(fragments ...sqlfrag.Fragment) *Function {
+	return Func("DISTINCT", fragments...)
 }
 
-func Max(sqlExprs ...sqlfrag.Fragment) *Function {
-	return Func("MAX", sqlExprs...)
+func Min(fragments ...sqlfrag.Fragment) *Function {
+	return Func("MIN", fragments...)
 }
 
-func First(sqlExprs ...sqlfrag.Fragment) *Function {
-	return Func("FIRST", sqlExprs...)
+func Max(fragments ...sqlfrag.Fragment) *Function {
+	return Func("MAX", fragments...)
 }
 
-func Last(sqlExprs ...sqlfrag.Fragment) *Function {
-	return Func("LAST", sqlExprs...)
+func First(fragments ...sqlfrag.Fragment) *Function {
+	return Func("FIRST", fragments...)
 }
 
-func Sum(sqlExprs ...sqlfrag.Fragment) *Function {
-	return Func("SUM", sqlExprs...)
+func Last(fragments ...sqlfrag.Fragment) *Function {
+	return Func("LAST", fragments...)
+}
+
+func Sum(fragments ...sqlfrag.Fragment) *Function {
+	return Func("SUM", fragments...)
 }
 
 func Func(name string, args ...sqlfrag.Fragment) *Function {
@@ -68,7 +72,7 @@ func (f *Function) Frag(ctx context.Context) iter.Seq2[string, []any] {
 		}
 
 		if len(f.args) == 0 {
-			for q, args := range sqlfrag.Group(sqlfrag.Const('*')).Frag(ctx) {
+			for q, args := range sqlfrag.InlineBlock(sqlfrag.Const('*')).Frag(ctx) {
 				if !yield(q, args) {
 					return
 				}
@@ -76,7 +80,7 @@ func (f *Function) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			return
 		}
 
-		for q, args := range sqlfrag.Group(sqlfrag.JoinValues(",", f.args...)).Frag(ctx) {
+		for q, args := range sqlfrag.InlineBlock(sqlfrag.JoinValues(",", f.args...)).Frag(ctx) {
 			if !yield(q, args) {
 				return
 			}

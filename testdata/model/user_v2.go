@@ -3,7 +3,7 @@ package model
 import "github.com/octohelm/storage/pkg/sqlbuilder"
 
 type UserV2 struct {
-	ID       uint64 `db:"f_id,autoincrement"`
+	ID       UserID `db:"f_id,autoincrement"`
 	Nickname string `db:"f_nickname,size=255,default=''"`
 	Gender   Gender `db:"f_gender,default='0'"`
 	Name     string `db:"f_name,deprecated=f_real_name"`

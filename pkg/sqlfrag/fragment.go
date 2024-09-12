@@ -5,6 +5,7 @@ import (
 	"context"
 	"iter"
 	"slices"
+	"strings"
 )
 
 func IsNil(e Fragment) bool {
@@ -16,7 +17,7 @@ type Fragment interface {
 	Frag(ctx context.Context) iter.Seq2[string, []any]
 }
 
-func All(ctx context.Context, f Fragment) (string, []any) {
+func Collect(ctx context.Context, f Fragment) (string, []any) {
 	if f.IsNil() {
 		return "", nil
 	}
@@ -25,12 +26,21 @@ func All(ctx context.Context, f Fragment) (string, []any) {
 	args := make([]any, 0)
 
 	for query, queryArgs := range f.Frag(ctx) {
-		b.WriteString(query)
+		if len(query) > 0 {
+			if query[0] == '\r' {
+				b.WriteRune('\n')
+				b.WriteString(query[1:])
+			} else {
+				b.WriteString(query)
+			}
+		}
 
 		if len(queryArgs) > 0 {
 			args = slices.Concat(args, queryArgs)
 		}
 	}
 
-	return b.String(), args
+	q := b.String()
+
+	return strings.TrimPrefix(q, "\n"), args
 }

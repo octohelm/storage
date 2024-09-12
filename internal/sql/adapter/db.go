@@ -31,7 +31,7 @@ func (d *db) Exec(ctx context.Context, frag sqlfrag.Fragment) (sql.Result, error
 		return nil, nil
 	}
 
-	query, args := sqlfrag.All(ctx, frag)
+	query, args := sqlfrag.Collect(ctx, frag)
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {
 		result, err := sqlDo.ExecContext(ctx, query, args...)
 		if err != nil {
@@ -51,7 +51,7 @@ func (d *db) Query(ctx context.Context, frag sqlfrag.Fragment) (*sql.Rows, error
 	if sqlfrag.IsNil(frag) {
 		return nil, nil
 	}
-	query, args := sqlfrag.All(ctx, frag)
+	query, args := sqlfrag.Collect(ctx, frag)
 
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {
 		return sqlDo.QueryContext(ctx, query, args...)

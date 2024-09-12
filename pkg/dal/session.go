@@ -104,7 +104,7 @@ func (s *session) Tx(ctx context.Context, fn func(ctx context.Context) error) er
 }
 
 func (s *session) T(m any) sqlbuilder.Table {
-	if td, ok := m.(sqlbuilder.TableDefinition); ok {
+	if td, ok := m.(sqlbuilder.WithTable); ok {
 		return td.T()
 	}
 	if td, ok := m.(sqlbuilder.Table); ok {

@@ -55,7 +55,7 @@ func (o *onConflict) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			return col
 		}))
 
-		for q, args := range sqlfrag.Group(columnSeq).Frag(ctx) {
+		for q, args := range sqlfrag.InlineBlock(columnSeq).Frag(ctx) {
 			if !yield(q, args) {
 				return
 			}

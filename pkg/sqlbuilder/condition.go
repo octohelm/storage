@@ -47,26 +47,35 @@ func (c *Condition) IsNil() bool {
 }
 
 func And(conditions ...sqlfrag.Fragment) SqlCondition {
-	return composedCondition("AND", filterNilCondition(conditions)...)
+	return composedCondition("AND", progressCondition(conditions)...)
 }
 
 func Or(conditions ...sqlfrag.Fragment) SqlCondition {
-	return composedCondition("OR", filterNilCondition(conditions)...)
+	return composedCondition("OR", progressCondition(conditions)...)
 }
 
 func Xor(conditions ...sqlfrag.Fragment) SqlCondition {
-	return composedCondition("XOR", filterNilCondition(conditions)...)
+	return composedCondition("XOR", progressCondition(conditions)...)
 }
 
-func filterNilCondition(conditions []sqlfrag.Fragment) []SqlCondition {
+func progressCondition(conditions []sqlfrag.Fragment) []SqlCondition {
 	finals := make([]SqlCondition, 0, len(conditions))
 
 	for i := range conditions {
-		condition := AsCond(conditions[i])
-		if sqlfrag.IsNil(condition) {
+		c := conditions[i]
+
+		switch x := conditions[i].(type) {
+		case *where:
+			c = x.condition
+		default:
+
+		}
+
+		if sqlfrag.IsNil(c) {
 			continue
 		}
-		finals = append(finals, condition)
+
+		finals = append(finals, AsCond(c))
 	}
 
 	return finals
@@ -117,6 +126,15 @@ func (c *ComposedCondition) IsNil() bool {
 
 func (c *ComposedCondition) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return func(yield func(string, []any) bool) {
+		if len(c.conditions) == 1 {
+			for q, args := range c.conditions[0].Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
+			}
+			return
+		}
+
 		for i, cond := range c.conditions {
 			if i > 0 {
 				if !yield(" "+c.op+" ", nil) {
@@ -124,7 +142,7 @@ func (c *ComposedCondition) Frag(ctx context.Context) iter.Seq2[string, []any] {
 				}
 			}
 
-			for q, args := range sqlfrag.Group(cond).Frag(ctx) {
+			for q, args := range sqlfrag.InlineBlock(cond).Frag(ctx) {
 				if !yield(q, args) {
 					return
 				}

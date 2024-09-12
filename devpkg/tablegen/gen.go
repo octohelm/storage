@@ -106,7 +106,7 @@ var @Type'T = &table@Type{
 
 		"FieldNames": func(sw gengo.SnippetWriter) {
 			for col := range cols {
-				if def := col.Def(); def.DeprecatedActions == nil {
+				if def := sqlbuilder.GetColumnDef(col); def.DeprecatedActions == nil {
 					sw.Render(gengo.Snippet{
 						gengo.T: `
 @FieldName @modelScopedTypedColumn[@Type, @FieldType]
@@ -123,7 +123,7 @@ var @Type'T = &table@Type{
 
 		"fieldNameValues": func(sw gengo.SnippetWriter) {
 			for col := range cols {
-				if def := col.Def(); def.DeprecatedActions == nil {
+				if def := sqlbuilder.GetColumnDef(col); def.DeprecatedActions == nil {
 					sw.Render(gengo.Snippet{
 						gengo.T: `
 @FieldName: @modelScopedCastTypedColumn[@Type,@FieldType](@modelScopedFromModel[@Type]().F(@FieldNameValue)),
@@ -181,13 +181,13 @@ func (g *tableGen) generateDescriptions(c gengo.Context, t sqlbuilder.Table, nam
 	colRelations := map[string][]string{}
 
 	for col := range t.Cols() {
-		def := col.Def()
+		def := sqlbuilder.GetColumnDef(col)
 
 		if def.Comment != "" {
 			colComments[col.FieldName()] = def.Comment
 		}
 		if len(def.Description) > 0 {
-			colDescriptions[col.FieldName()] = col.Def().Description
+			colDescriptions[col.FieldName()] = sqlbuilder.GetColumnDef(col).Description
 		}
 		if len(def.Relation) > 0 {
 			colRelations[col.FieldName()] = def.Relation

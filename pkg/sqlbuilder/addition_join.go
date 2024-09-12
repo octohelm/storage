@@ -69,25 +69,30 @@ func (j *join) IsNil() bool {
 
 func (j *join) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return func(yield func(string, []any) bool) {
-		t := "JOIN "
+		cmd := "JOIN "
 		if j.prefix != "" {
-			t = j.prefix + " " + t
+			cmd = j.prefix + " " + cmd
 		}
 
-		if !yield(t, nil) {
+		if !yield(cmd, nil) {
 			return
 		}
 
-		if !yield(sqlfrag.All(ctx, j.target)) {
-			return
+		for q, args := range j.target.Frag(ctx) {
+			if !yield(q, args) {
+				return
+			}
 		}
 
 		if !(sqlfrag.IsNil(j.joinCondition)) {
 			if !yield(" ON ", nil) {
 				return
 			}
-			if !yield(sqlfrag.All(ctx, j.joinCondition)) {
-				return
+
+			for q, args := range j.joinCondition.Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
 			}
 		}
 
@@ -100,7 +105,7 @@ func (j *join) Frag(ctx context.Context) iter.Seq2[string, []any] {
 				ToggleMultiTable: false,
 			})
 
-			for q, args := range sqlfrag.Join(", ", sqlfrag.NonNil(slices.Values(j.joinColumnList))).Frag(ctx) {
+			for q, args := range sqlfrag.Join(",", sqlfrag.NonNil(slices.Values(j.joinColumnList))).Frag(ctx) {
 				if !yield(q, args) {
 					return
 				}

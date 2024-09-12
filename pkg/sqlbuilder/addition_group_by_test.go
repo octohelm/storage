@@ -22,7 +22,8 @@ func TestGroupBy(t *testing.T) {
 			),
 
 			testutil.BeFragment(`
-SELECT * FROM t_x
+SELECT *
+FROM t_x
 WHERE f_a = ?
 GROUP BY f_a HAVING f_a = ?
 `, 1, 1),
@@ -38,7 +39,8 @@ GROUP BY f_a HAVING f_a = ?
 					GroupBy(AscOrder(Col("F_a")), DescOrder(Col("F_b"))),
 				),
 			testutil.BeFragment(`
-SELECT * FROM t_x
+SELECT *
+FROM t_x
 WHERE f_a = ?
 GROUP BY (f_a) ASC,(f_b) DESC
 `,
@@ -54,7 +56,8 @@ GROUP BY (f_a) ASC,(f_b) DESC
 					GroupBy(AscOrder(Col("F_a")), DescOrder(Col("F_b"))),
 				),
 			testutil.BeFragment(`
-SELECT * FROM t_x
+SELECT *
+FROM t_x
 WHERE f_a = ?
 GROUP BY (f_a) ASC,(f_b) DESC
 `,

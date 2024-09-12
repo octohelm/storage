@@ -3,6 +3,7 @@ package sqlbuilder
 import (
 	"context"
 	"iter"
+	"slices"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 
@@ -23,16 +24,23 @@ type StmtUpdate struct {
 	from      Table
 	modifiers []string
 
-	assignments Assignments
+	assignments iter.Seq[Assignment]
 	additions   Additions
 }
 
 func (s *StmtUpdate) IsNil() bool {
-	return s == nil || sqlfrag.IsNil(s.table) || len(s.assignments) == 0
+	return s == nil || sqlfrag.IsNil(s.table) || s.assignments == nil
+}
+
+func (s StmtUpdate) SetBy(assignments iter.Seq[Assignment]) *StmtUpdate {
+	s.assignments = assignments
+	return &s
 }
 
 func (s StmtUpdate) Set(assignments ...Assignment) *StmtUpdate {
-	s.assignments = assignments
+	if len(assignments) > 0 {
+		s.assignments = slices.Values(assignments)
+	}
 	return &s
 }
 
@@ -46,7 +54,9 @@ func (s StmtUpdate) From(table Table, additions ...Addition) *StmtUpdate {
 }
 
 func (s StmtUpdate) Where(c sqlfrag.Fragment, additions ...Addition) *StmtUpdate {
-	s.additions = []Addition{Where(c)}
+	if c != nil {
+		s.additions = []Addition{Where(c)}
+	}
 	if len(additions) > 0 {
 		s.additions = append(s.additions, additions...)
 	}
@@ -61,7 +71,7 @@ func (s *StmtUpdate) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 
 	return func(yield func(string, []any) bool) {
-		if !yield("UPDATE", nil) {
+		if !yield("\nUPDATE", nil) {
 			return
 		}
 
@@ -81,12 +91,12 @@ func (s *StmtUpdate) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			}
 		}
 
-		if s.assignments != nil {
-			if !yield(" SET ", nil) {
+		if assignments := s.assignments; assignments != nil {
+			if !yield("\nSET ", nil) {
 				return
 			}
 
-			for q, args := range s.assignments.Frag(ctx) {
+			for q, args := range sqlfrag.Join(", ", sqlfrag.NonNil(assignments)).Frag(ctx) {
 				if !yield(q, args) {
 					return
 				}
@@ -94,7 +104,7 @@ func (s *StmtUpdate) Frag(ctx context.Context) iter.Seq2[string, []any] {
 		}
 
 		if s.from != nil {
-			if !yield(" FROM ", nil) {
+			if !yield("\nFROM ", nil) {
 				return
 			}
 			for q, args := range s.from.Frag(ctx) {

@@ -35,10 +35,11 @@ func (m *fragmentMatcher[A]) Match(actual A) bool {
 	if sqlfrag.IsNil(actual) {
 		return m.query == ""
 	}
-	q, args := sqlfrag.All(context.Background(), actual)
+	q, args := sqlfrag.Collect(context.Background(), actual)
 	if len(m.args) == 0 && len(args) == 0 {
 		return m.query == q
 	}
+
 	return m.query == q && reflect.DeepEqual(m.args, args)
 }
 
@@ -46,7 +47,7 @@ func (m *fragmentMatcher[A]) FormatActual(actual A) string {
 	if sqlfrag.IsNil(actual) {
 		return ""
 	}
-	q, args := sqlfrag.All(context.Background(), actual)
+	q, args := sqlfrag.Collect(context.Background(), actual)
 	return fmt.Sprintf("%s | %v", q, args)
 }
 

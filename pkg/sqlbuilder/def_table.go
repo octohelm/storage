@@ -10,7 +10,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-type TableDefinition interface {
+type WithTable interface {
 	T() Table
 }
 
@@ -38,7 +38,7 @@ type Table interface {
 	sqlfrag.Fragment
 }
 
-func T(tableName string, tableDefinitions ...TableDefinition) Table {
+func T(tableName string, tableDefinitions ...sqlfrag.Fragment) Table {
 	t := &table{
 		name:             tableName,
 		ColumnCollection: &columns{},

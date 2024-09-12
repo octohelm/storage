@@ -23,7 +23,7 @@ func Select(sqlExpr sqlfrag.Fragment, modifiers ...sqlfrag.Fragment) *StmtSelect
 type StmtSelect struct {
 	SelectStatement
 
-	table     Table
+	table     sqlfrag.Fragment
 	modifiers []sqlfrag.Fragment
 	projects  sqlfrag.Fragment
 	additions Additions
@@ -33,7 +33,7 @@ func (s *StmtSelect) IsNil() bool {
 	return s == nil
 }
 
-func (s StmtSelect) From(table Table, additions ...Addition) *StmtSelect {
+func (s StmtSelect) From(table sqlfrag.Fragment, additions ...Addition) *StmtSelect {
 	s.table = table
 	s.additions = additions
 	return &s
@@ -60,7 +60,7 @@ func (s *StmtSelect) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 
 	return func(yield func(string, []any) bool) {
-		if !yield("SELECT", nil) {
+		if !yield("\nSELECT", nil) {
 			return
 		}
 
@@ -82,14 +82,16 @@ func (s *StmtSelect) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			projects = sqlfrag.Const("*")
 		}
 
-		for q, args := range projects.Frag(ctx) {
+		for q, args := range projects.Frag(ContextWithToggles(ctx, Toggles{
+			ToggleInProject: true,
+		})) {
 			if !yield(q, args) {
 				return
 			}
 		}
 
 		if !sqlfrag.IsNil(s.table) {
-			if !yield(" FROM ", nil) {
+			if !yield("\nFROM ", nil) {
 				return
 			}
 

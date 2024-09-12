@@ -2,24 +2,11 @@ package migrator
 
 import (
 	"context"
-	"sort"
-
-	"github.com/octohelm/storage/pkg/sqlfrag"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
+	"github.com/octohelm/storage/pkg/migrator/internal"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-)
-
-type actionType int
-
-const (
-	dropTableIndex actionType = iota
-	dropTableColumn
-	renameTableColumn
-	modifyTableColumn
-	addTableColumn
-	addTableIndex
-	createTable
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func Migrate(ctx context.Context, a adapter.Adapter, toTables *sqlbuilder.Tables) error {
@@ -31,12 +18,12 @@ func Migrate(ctx context.Context, a adapter.Adapter, toTables *sqlbuilder.Tables
 	migrations := make([]sqlfrag.Fragment, 0)
 
 	for _, name := range toTables.TableNames() {
-		as := diff(a.Dialect(), fromTables.Table(name), toTables.Table(name))
-		sort.Sort(as)
-
-		for i := range as {
-			migrations = append(migrations, as[i].exprs...)
+		d := internal.Diff(a.Dialect(), fromTables.Table(name), toTables.Table(name))
+		if sqlfrag.IsNil(d) {
+			continue
 		}
+
+		migrations = append(migrations, d)
 	}
 
 	if len(migrations) == 0 {

@@ -26,7 +26,8 @@ func TestLimit(t *testing.T) {
 				),
 
 			testutil.BeFragment(`
-SELECT * FROM T
+SELECT *
+FROM T
 WHERE f_a = ?
 LIMIT 1
 `, 1))
@@ -42,7 +43,8 @@ LIMIT 1
 					Limit(-1),
 				),
 			testutil.BeFragment(`
-SELECT * FROM T
+SELECT *
+FROM T
 WHERE f_a = ?
 `, 1,
 			))
@@ -59,7 +61,8 @@ WHERE f_a = ?
 					Limit(10).Offset(200),
 				),
 			testutil.BeFragment(`
-SELECT * FROM T
+SELECT *
+FROM T
 WHERE f_a = ?
 LIMIT 10 OFFSET 200
 `,

@@ -1,0 +1,200 @@
+package ex
+
+import (
+	"cmp"
+	"context"
+	"github.com/octohelm/storage/internal/sql/scanner"
+	"github.com/octohelm/storage/pkg/dal"
+	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlpipe"
+	exiternal "github.com/octohelm/storage/pkg/sqlpipe/ex/internal"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal"
+	"github.com/octohelm/x/ptr"
+	"github.com/pkg/errors"
+	"iter"
+	"slices"
+)
+
+type SourceExecutor[M sqlpipe.Model] interface {
+	sqlpipe.Source[M]
+
+	From(source sqlpipe.Source[M]) SourceExecutor[M]
+
+	PipeE(operators ...sqlpipe.SourceOperator[M]) SourceExecutor[M]
+
+	// just execute
+	Commit(ctx context.Context) error
+
+	// execute then iter item
+	Item(ctx context.Context) iter.Seq2[*M, error]
+	// execute then range
+	Range(ctx context.Context, fn func(*M)) error
+
+	// execute then scan as one item
+	FindOne(ctx context.Context) (*M, error)
+	// execute then list as item list
+	List(ctx context.Context) ([]*M, error)
+	// execute then list to item adder
+	ListTo(ctx context.Context, adder Adder[M]) error
+	// execute as count
+	CountTo(ctx context.Context, x *int64) error
+}
+
+type Adder[M sqlpipe.Model] interface {
+	Add(m *M)
+}
+
+func FromSource[M sqlpipe.Model](src sqlpipe.Source[M]) SourceExecutor[M] {
+	return &Executor[M]{
+		src: src,
+	}
+}
+
+type Executor[M sqlpipe.Model] struct {
+	src sqlpipe.Source[M]
+
+	operators []sqlpipe.SourceOperator[M]
+}
+
+func (e *Executor[M]) Tx(ctx context.Context, do func(ctx context.Context) error) error {
+	return dal.Tx(ctx, *new(M), do)
+}
+
+func (e *Executor[M]) From(src sqlpipe.Source[M]) SourceExecutor[M] {
+	return FromSource(src)
+}
+
+func (e *Executor[M]) Pipe(operators ...sqlpipe.SourceOperator[M]) sqlpipe.Source[M] {
+	return e.source().Pipe(operators...)
+}
+
+func (e *Executor[M]) IsNil() bool {
+	return e.source().IsNil()
+}
+
+func (e *Executor[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return e.source().Frag(ctx)
+}
+
+func (e *Executor[M]) ApplyStmt(ctx context.Context, s internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+	return e.source().ApplyStmt(ctx, s)
+}
+
+func (e Executor[M]) PipeE(operators ...sqlpipe.SourceOperator[M]) SourceExecutor[M] {
+	e.operators = append(e.operators, operators...)
+	return &e
+}
+
+func (e *Executor[M]) session(ctx context.Context) dal.Session {
+	m := new(M)
+	s := dal.SessionFor(ctx, m)
+	if s == nil {
+		panic(errors.Errorf("invalid model %T", m))
+	}
+	return s
+}
+
+func (e *Executor[M]) source() sqlpipe.Source[M] {
+	s := e.src
+	if s == nil {
+		s = sqlpipe.From[M]()
+	}
+
+	if len(e.operators) > 0 {
+		return s.Pipe(slices.SortedFunc(slices.Values(e.operators), func(a sqlpipe.SourceOperator[M], b sqlpipe.SourceOperator[M]) int {
+			return cmp.Compare(a.OperatorType(), b.OperatorType())
+		})...)
+	}
+
+	return s
+}
+
+func (e *Executor[M]) Commit(ctx context.Context) error {
+	_, err := e.session(ctx).Adapter().Exec(ctx, e.source())
+	return err
+}
+
+func (e *Executor[M]) List(ctx context.Context) ([]*M, error) {
+	list := make([]*M, 0)
+
+	for item, err := range e.Item(ctx) {
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, item)
+	}
+
+	return list, nil
+}
+
+func (e *Executor[M]) Range(ctx context.Context, fn func(m *M)) error {
+	for item, err := range e.Item(ctx) {
+		if err != nil {
+			return err
+		}
+		fn(item)
+	}
+	return nil
+}
+
+func (e *Executor[M]) ListTo(ctx context.Context, listAdder Adder[M]) error {
+	for item, err := range e.Item(ctx) {
+		if err != nil {
+			return err
+		}
+		listAdder.Add(item)
+	}
+	return nil
+}
+
+func (e *Executor[M]) FindOne(ctx context.Context) (*M, error) {
+	for item, err := range e.PipeE(sqlpipe.Limit[M](1)).Item(ctx) {
+		if err != nil {
+			return nil, err
+		}
+		return item, err
+	}
+	return nil, nil
+}
+
+func (e *Executor[M]) Item(ctx context.Context) iter.Seq2[*M, error] {
+	s := e.session(ctx)
+
+	ex := e.source().Pipe(
+		sqlpipe.DefaultProject[M](internal.ColumnsByStruct(new(M))),
+	)
+
+	x := dal.RecvFunc[M](func(ctx context.Context, recv func(v *M) error) error {
+		rows, err := s.Adapter().Query(internal.FlagsContext.Inject(ctx, internal.Flags{
+			OptForReturning: ptr.Ptr(true),
+		}), ex)
+		if err != nil {
+			return err
+		}
+		return scanner.Scan(ctx, rows, dal.Recv(recv))
+	})
+
+	return x.Item(ctx)
+}
+
+func (e *Executor[M]) CountTo(ctx context.Context, x *int64) error {
+	s := e.session(ctx)
+
+	ex := e.source().Pipe(
+		sqlpipe.Project[M](sqlbuilder.Count()),
+		exiternal.WithoutAddition[M](func(a sqlbuilder.Addition) bool {
+			switch a.AdditionType() {
+			case sqlbuilder.AdditionLimit, sqlbuilder.AdditionOrderBy:
+				return true
+			default:
+				return false
+			}
+		}),
+	)
+
+	rows, err := s.Adapter().Query(ctx, ex)
+	if err != nil {
+		return err
+	}
+	return scanner.Scan(ctx, rows, x)
+}

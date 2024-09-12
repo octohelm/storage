@@ -2,10 +2,12 @@ package sqlite
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"iter"
 	"reflect"
+	"slices"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -24,11 +26,11 @@ func (dialect) DriverName() string {
 
 func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 	if key.IsPrimary() {
-		return sqlfrag.Pair("ALTER TABLE ? ADD PRIMARY KEY (?);", key.T(), sqlbuilder.ColumnCollect(key.Cols()))
+		return sqlfrag.Pair("\nALTER TABLE ? ADD PRIMARY KEY (?);", sqlbuilder.GetKeyTable(key), sqlbuilder.ColumnCollect(key.Cols()))
 	}
 
-	return sqlfrag.Pair("CREATE @index_type @index_name ON @table (@columns);", sqlfrag.NamedArgSet{
-		"table": key.T(),
+	return sqlfrag.Pair("\nCREATE @index_type @index_name ON @table (@columns);", sqlfrag.NamedArgSet{
+		"table": sqlbuilder.GetKeyTable(key),
 		"index_type": func() sqlfrag.Fragment {
 			if key.IsUnique() {
 				return sqlfrag.Const("UNIQUE INDEX")
@@ -46,13 +48,13 @@ func (c *dialect) DropIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 		return nil
 	}
 
-	return sqlfrag.Pair("DROP INDEX IF EXISTS @index;", sqlfrag.NamedArgSet{
+	return sqlfrag.Pair("\nDROP INDEX IF EXISTS @index;", sqlfrag.NamedArgSet{
 		"index": c.indexName(key),
 	})
 }
 
 func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fragment) {
-	exprs = append(exprs, sqlfrag.Pair("CREATE TABLE IF NOT EXISTS @table (@def\n);", sqlfrag.NamedArgSet{
+	exprs = append(exprs, sqlfrag.Pair("\nCREATE TABLE IF NOT EXISTS @table (@def\n);", sqlfrag.NamedArgSet{
 		"table": t,
 		"def": sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
 			return func(yield func(string, []any) bool) {
@@ -60,7 +62,7 @@ func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fr
 
 				idx := 0
 				for col := range t.Cols() {
-					def := col.Def()
+					def := sqlbuilder.GetColumnDef(col)
 
 					// skip deprecated col
 					if def.DeprecatedActions != nil {
@@ -128,7 +130,9 @@ func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fr
 		}),
 	}))
 
-	for key := range t.Keys() {
+	for _, key := range slices.SortedFunc(t.Keys(), func(a sqlbuilder.Key, b sqlbuilder.Key) int {
+		return cmp.Compare(a.Name(), b.Name())
+	}) {
 		if !key.IsPrimary() {
 			exprs = append(exprs, c.AddIndex(key))
 		}
@@ -138,54 +142,57 @@ func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fr
 }
 
 func (c *dialect) DropTable(t sqlbuilder.Table) sqlfrag.Fragment {
-	return sqlfrag.Pair("DROP TABLE IF EXISTS @table;", sqlfrag.NamedArgSet{
+	return sqlfrag.Pair("\nDROP TABLE IF EXISTS @table;", sqlfrag.NamedArgSet{
 		"table": t,
 	})
 }
 
 func (c *dialect) TruncateTable(t sqlbuilder.Table) sqlfrag.Fragment {
-	return sqlfrag.Pair("TRUNCATE TABLE @table;", sqlfrag.NamedArgSet{
+	return sqlfrag.Pair("\nTRUNCATE TABLE @table;", sqlfrag.NamedArgSet{
 		"table": t,
 	})
 }
 
 func (c *dialect) AddColumn(col sqlbuilder.Column) sqlfrag.Fragment {
-	return sqlfrag.Pair("ALTER TABLE @table ADD COLUMN @col @dataType;", sqlfrag.NamedArgSet{
-		"table":    col.T(),
+	return sqlfrag.Pair("\nALTER TABLE @table ADD COLUMN @col @dataType;", sqlfrag.NamedArgSet{
+		"table":    sqlbuilder.GetColumnTable(col),
 		"col":      col,
-		"dataType": c.DataType(col.Def()),
+		"dataType": c.DataType(sqlbuilder.GetColumnDef(col)),
 	})
 }
 
 func (c *dialect) RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlfrag.Fragment {
-	return sqlfrag.Pair("ALTER TABLE @table RENAME COLUMN @oldCol TO @newCol;", sqlfrag.NamedArgSet{
-		"table":  col.T(),
+	return sqlfrag.Pair("\nALTER TABLE @table RENAME COLUMN @oldCol TO @newCol;", sqlfrag.NamedArgSet{
+		"table":  sqlbuilder.GetColumnTable(col),
 		"oldCol": col,
 		"newCol": target,
 	})
 }
 
 func (c *dialect) ModifyColumn(col sqlbuilder.Column, prevCol sqlbuilder.Column) sqlfrag.Fragment {
-	def := col.Def()
+	def := sqlbuilder.GetColumnDef(col)
 
 	// incr id never modified
 	if def.AutoIncrement {
 		return nil
 	}
 
-	prevTmpCol := sqlbuilder.Col("__"+prevCol.Name(), sqlbuilder.ColDef(prevCol.Def())).Of(prevCol.T())
+	prevTmpCol := sqlbuilder.Col(
+		"__"+prevCol.Name(),
+		sqlbuilder.ColDef(sqlbuilder.GetColumnDef(prevCol)),
+	).Of(sqlbuilder.GetColumnTable(prevCol))
 
 	return sqlfrag.JoinValues("",
-		sqlfrag.Pair("ALTER TABLE @table RENAME COLUMN @prevCol TO @tmpCol;", sqlfrag.NamedArgSet{
-			"table":   prevCol.T(),
+		sqlfrag.Pair("\nALTER TABLE @table RENAME COLUMN @prevCol TO @tmpCol;", sqlfrag.NamedArgSet{
+			"table":   sqlbuilder.GetColumnTable(prevCol),
 			"prevCol": prevCol,
 			"tmpCol":  prevTmpCol,
 		}),
 
 		c.AddColumn(col),
 
-		sqlfrag.Pair("UPDATE @table SET @col = @tmpCol;", sqlfrag.NamedArgSet{
-			"table":  col.T(),
+		sqlfrag.Pair("\nUPDATE @table SET @col = @tmpCol;", sqlfrag.NamedArgSet{
+			"table":  sqlbuilder.GetColumnTable(col),
 			"col":    col,
 			"tmpCol": prevTmpCol,
 		}),
@@ -195,8 +202,8 @@ func (c *dialect) ModifyColumn(col sqlbuilder.Column, prevCol sqlbuilder.Column)
 }
 
 func (c *dialect) DropColumn(col sqlbuilder.Column) sqlfrag.Fragment {
-	return sqlfrag.Pair("ALTER TABLE @table DROP COLUMN @col;", sqlfrag.NamedArgSet{
-		"table": col.T(),
+	return sqlfrag.Pair("\nALTER TABLE @table DROP COLUMN @col;", sqlfrag.NamedArgSet{
+		"table": sqlbuilder.GetColumnTable(col),
 		"col":   col,
 	})
 }
@@ -274,7 +281,7 @@ func (c *dialect) dataTypeModify(columnType sqlbuilder.ColumnDef, dataType strin
 }
 
 func (c dialect) indexName(key sqlbuilder.Key) sqlfrag.Fragment {
-	return sqlfrag.Pair(fmt.Sprintf("%s_%s", key.T().TableName(), key.Name()))
+	return sqlfrag.Pair(fmt.Sprintf("%s_%s", sqlbuilder.GetKeyTable(key).TableName(), key.Name()))
 }
 
 func normalizeDefaultValue(defaultValue *string, dataType string) string {

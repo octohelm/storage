@@ -50,7 +50,8 @@ func TestTable_Expr(t *testing.T) {
 					Join(tUserRole).On(AsCond(tUser.(TableCanFragment).Fragment("#ID = ?", tUserRole.(TableCanFragment).Fragment("#UserID")))),
 				),
 			testutil.BeFragment(`
-SELECT * FROM t_user
+SELECT *
+FROM t_user
 JOIN t_user_role ON t_user.f_id = t_user_role.f_user_id
 WHERE t_user.f_id > 1
 `))

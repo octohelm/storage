@@ -1,11 +1,11 @@
 package sqlbuilder
 
 import (
+	"cmp"
 	"context"
-	"iter"
-	"sort"
-
 	"github.com/octohelm/storage/pkg/sqlfrag"
+	"iter"
+	"slices"
 )
 
 type Addition interface {
@@ -22,24 +22,17 @@ const (
 	AdditionGroupBy
 	AdditionCombination
 	AdditionOrderBy
-	AdditionLimit
 	AdditionOnConflict
+	AdditionReturning
+	AdditionLimit
 	AdditionOther
 	AdditionComment
 )
 
 type Additions []Addition
 
-func (additions Additions) Len() int {
-	return len(additions)
-}
-
-func (additions Additions) Less(i, j int) bool {
-	return additions[i].AdditionType() < additions[j].AdditionType()
-}
-
-func (additions Additions) Swap(i, j int) {
-	additions[i], additions[j] = additions[j], additions[i]
+func CompareAddition(a Addition, b Addition) int {
+	return cmp.Compare(a.AdditionType(), b.AdditionType())
 }
 
 func (additions Additions) IsNil() bool {
@@ -47,10 +40,8 @@ func (additions Additions) IsNil() bool {
 }
 
 func (additions Additions) Frag(ctx context.Context) iter.Seq2[string, []any] {
-	sort.Sort(additions)
-
 	return func(yield func(string, []any) bool) {
-		for _, add := range additions {
+		for _, add := range slices.SortedFunc(slices.Values(additions), CompareAddition) {
 			if sqlfrag.IsNil(add) {
 				continue
 			}
@@ -59,8 +50,10 @@ func (additions Additions) Frag(ctx context.Context) iter.Seq2[string, []any] {
 				return
 			}
 
-			if !yield(sqlfrag.All(ctx, add)) {
-				return
+			for q, args := range add.Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
 			}
 		}
 	}

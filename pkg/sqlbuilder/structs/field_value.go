@@ -10,7 +10,7 @@ import (
 	typesx "github.com/octohelm/x/types"
 )
 
-func AllNonZeroFieldValue(ctx context.Context, v any, excludeFields ...string) iter.Seq[*FieldValue] {
+func AllFieldValueOmitZero(ctx context.Context, v any, excludeFields ...string) iter.Seq[*FieldValue] {
 	excludeValues := make(map[string]bool, len(excludeFields))
 
 	for _, fieldName := range excludeFields {

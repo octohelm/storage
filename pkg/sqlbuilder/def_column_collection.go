@@ -68,7 +68,7 @@ type columns struct {
 func (cols *columns) F(name string) (col Column) {
 	for i := range cols.l {
 		c := cols.l[i]
-		if c.MatchName(name) {
+		if MatchColumn(c, name) {
 			return c
 		}
 	}
@@ -78,7 +78,7 @@ func (cols *columns) F(name string) (col Column) {
 func (cols *columns) Col(name string) (col Column) {
 	for i := range cols.l {
 		c := cols.l[i]
-		if c.MatchName(name) {
+		if MatchColumn(c, name) {
 			return c
 		}
 	}

@@ -73,6 +73,9 @@ func (v Org) RuntimeDoc(names ...string) ([]string, bool) {
 	}, true
 }
 
+func (OrgID) RuntimeDoc(names ...string) ([]string, bool) {
+	return []string{}, true
+}
 func (v OrgUser) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
@@ -124,6 +127,9 @@ func (v User) RuntimeDoc(names ...string) ([]string, bool) {
 	}, true
 }
 
+func (UserID) RuntimeDoc(names ...string) ([]string, bool) {
+	return []string{}, true
+}
 func (v UserV2) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {

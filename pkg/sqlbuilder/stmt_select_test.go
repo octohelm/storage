@@ -24,7 +24,8 @@ func TestSelect(t *testing.T) {
 					),
 				),
 			testutil.BeFragment(`
-SELECT DISTINCT * FROM T
+SELECT DISTINCT *
+FROM T
 WHERE f_a = ?`, 1))
 	})
 	t.Run("select simple", func(t *testing.T) {
@@ -38,7 +39,8 @@ WHERE f_a = ?`, 1))
 					Comment("comment"),
 				),
 			testutil.BeFragment(`
-SELECT * FROM T
+SELECT *
+FROM T
 WHERE f_a = ?
 /* comment */
 `, 1,
@@ -53,7 +55,8 @@ WHERE f_a = ?
 					),
 				),
 			testutil.BeFragment(`
-SELECT f_a FROM T
+SELECT f_a
+FROM T
 WHERE f_a = ?`, 1))
 	})
 
@@ -65,7 +68,8 @@ WHERE f_a = ?`, 1))
 				ForUpdate(),
 			),
 			testutil.BeFragment(`
-SELECT * FROM T
+SELECT *
+FROM T
 WHERE f_a = ?
 FOR UPDATE
 `,

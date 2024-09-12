@@ -28,7 +28,7 @@ func (s StmtDelete) From(table Table, additions ...Addition) *StmtDelete {
 
 func (s *StmtDelete) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return func(yield func(string, []any) bool) {
-		if !yield("DELETE FROM ", nil) {
+		if !yield("\nDELETE FROM ", nil) {
 			return
 		}
 

@@ -51,8 +51,10 @@ func (g *groupBy) Frag(ctx context.Context) iter.Seq2[string, []any] {
 				}
 			}
 
-			if !yield(sqlfrag.All(ctx, group)) {
-				return
+			for q, args := range group.Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
 			}
 		}
 
@@ -61,8 +63,10 @@ func (g *groupBy) Frag(ctx context.Context) iter.Seq2[string, []any] {
 				return
 			}
 
-			if !yield(sqlfrag.All(ctx, g.havingCond)) {
-				return
+			for q, args := range g.havingCond.Frag(ctx) {
+				if !yield(q, args) {
+					return
+				}
 			}
 		}
 	}

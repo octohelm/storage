@@ -214,7 +214,7 @@ func (cc columns) colsForMut(t sqlbuilder.Table) sqlbuilder.ColumnCollection {
 		}
 	} else {
 		for col := range t.Cols() {
-			if !col.Def().AutoIncrement {
+			if !sqlbuilder.GetColumnDef(col).AutoIncrement {
 				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
 			}
 		}
@@ -405,7 +405,6 @@ func (c *mutation[T]) insertOrUpdate(ctx context.Context, t sqlbuilder.Table, s 
 			}
 
 			assignments := make([]sqlbuilder.Assignment, len(cols))
-
 			for idx, col := range cols {
 				assignments[idx] = sqlbuilder.ColumnsAndValues(
 					col, col.Fragment("EXCLUDED.?", sqlfrag.Const(col.Name())),
@@ -501,7 +500,7 @@ func (c *mutation[T]) withReturning(t sqlbuilder.Table, additions []sqlbuilder.A
 func toColumnsAndValues(t sqlbuilder.Table, m any, excludeFields ...string) (cols sqlbuilder.ColumnCollection, args []any) {
 	cols = sqlbuilder.Cols()
 
-	for sfv := range structs.AllNonZeroFieldValue(context.Background(), m, excludeFields...) {
+	for sfv := range structs.AllFieldValueOmitZero(context.Background(), m, excludeFields...) {
 		if col := t.F(sfv.Field.FieldName); col != nil {
 			cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
 			args = append(args, sfv.Value.Interface())
@@ -512,7 +511,7 @@ func toColumnsAndValues(t sqlbuilder.Table, m any, excludeFields ...string) (col
 }
 
 func toAssignments(t sqlbuilder.Table, m any, excludeFields ...string) (assignments sqlbuilder.Assignments) {
-	for sfv := range structs.AllNonZeroFieldValue(context.Background(), m, excludeFields...) {
+	for sfv := range structs.AllFieldValueOmitZero(context.Background(), m, excludeFields...) {
 		if col := t.F(sfv.Field.FieldName); col != nil {
 			assignments = append(assignments, sqlbuilder.CastColumn[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))
 		}

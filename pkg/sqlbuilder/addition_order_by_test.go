@@ -28,7 +28,8 @@ func TestOrderBy(t *testing.T) {
 					),
 				),
 			testutil.BeFragment(`
-SELECT * FROM T
+SELECT *
+FROM T
 WHERE f_a = ?
 ORDER BY (f_a) ASC,(f_b) DESC
 `,
