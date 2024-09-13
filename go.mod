@@ -12,7 +12,7 @@ require (
 	github.com/octohelm/x v0.0.0-20240904081416-42a1ee2d28a9
 	github.com/pkg/errors v0.9.1
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e
-	modernc.org/sqlite v1.32.0
+	modernc.org/sqlite v1.33.1
 )
 
 require (
