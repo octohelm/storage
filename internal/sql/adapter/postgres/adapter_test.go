@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"net/url"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/octohelm/storage/internal/sql/adapter"
@@ -17,12 +19,13 @@ func NewAdapter(t testing.TB) adapter.Adapter {
 
 	ctx := testutil.NewContext(t)
 
-	u, _ := url.Parse("postgres://postgres@localhost/migrate_test_v1?sslmode=disable&pool_max_conns=10")
+	u, _ := url.Parse("postgres://postgres@localhost/t_" + strconv.FormatInt(time.Now().Unix(), 10) + "?sslmode=disable&pool_max_conns=10")
 
 	a, err := Open(ctx, u)
 	if err != nil {
 		panic(err)
 	}
+
 	t.Cleanup(func() {
 		a.Close()
 	})

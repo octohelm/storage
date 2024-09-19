@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"fmt"
 	"net/url"
 	"strings"
 	"sync"
@@ -154,7 +153,8 @@ func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, er
 }
 
 func isErrorConflict(err error) bool {
-	if e, ok := dberr.UnwrapAll(err).(*pgconn.PgError); ok {
+	var e *pgconn.PgError
+	if errors.As(dberr.UnwrapAll(err), &e) {
 		if e.Code == "23505" {
 			return true
 		}
@@ -163,7 +163,8 @@ func isErrorConflict(err error) bool {
 }
 
 func isErrorUnknownDatabase(err error) bool {
-	if e, ok := dberr.UnwrapAll(err).(*pgconn.PgError); ok {
+	var e *pgconn.PgError
+	if errors.As(dberr.UnwrapAll(err), &e) {
 		if e.Code == "3D000" {
 			return true
 		}
@@ -180,6 +181,6 @@ func (a *pgAdapter) createDatabase(ctx context.Context, dbName string, dsn url.U
 	}
 	defer adaptor.Close()
 
-	_, err = adaptor.Exec(context.Background(), sqlfrag.Pair(fmt.Sprintf("CREATE DATABASE %s", dbName)))
+	_, err = adaptor.Exec(context.Background(), sqlfrag.Pair("CREATE DATABASE ?;", sqlfrag.Const(dbName)))
 	return err
 }
