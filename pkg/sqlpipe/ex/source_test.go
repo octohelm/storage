@@ -66,7 +66,6 @@ func TestSourceExecutor(t *testing.T) {
 
 			t.Run("then could count", func(t *testing.T) {
 				var count int64
-
 				err := repo.User.CountTo(ctx, &count)
 				testutil.Expect(t, err, testutil.Be[error](nil))
 				testutil.Expect(t, count, testutil.Be[int64](100))

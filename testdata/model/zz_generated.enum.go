@@ -6,14 +6,14 @@ package model
 
 import (
 	bytes "bytes"
-	database_sql_driver "database/sql/driver"
+	driver "database/sql/driver"
 	fmt "fmt"
 
-	github_com_octohelm_storage_pkg_enumeration "github.com/octohelm/storage/pkg/enumeration"
-	github_com_pkg_errors "github.com/pkg/errors"
+	enumeration "github.com/octohelm/storage/pkg/enumeration"
+	pkgerrors "github.com/pkg/errors"
 )
 
-var InvalidGender = github_com_pkg_errors.New("invalid Gender")
+var InvalidGender = pkgerrors.New("invalid Gender")
 
 func (Gender) EnumValues() []any {
 	return []any{
@@ -88,9 +88,9 @@ func (v Gender) Label() string {
 	}
 }
 
-func (v Gender) Value() (database_sql_driver.Value, error) {
+func (v Gender) Value() (driver.Value, error) {
 	offset := 0
-	if o, ok := any(v).(github_com_octohelm_storage_pkg_enumeration.DriverValueOffset); ok {
+	if o, ok := any(v).(enumeration.DriverValueOffset); ok {
 		offset = o.Offset()
 	}
 	return int64(v) + int64(offset), nil
@@ -98,11 +98,11 @@ func (v Gender) Value() (database_sql_driver.Value, error) {
 
 func (v *Gender) Scan(src any) error {
 	offset := 0
-	if o, ok := any(v).(github_com_octohelm_storage_pkg_enumeration.DriverValueOffset); ok {
+	if o, ok := any(v).(enumeration.DriverValueOffset); ok {
 		offset = o.Offset()
 	}
 
-	i, err := github_com_octohelm_storage_pkg_enumeration.ScanIntEnumStringer(src, offset)
+	i, err := enumeration.ScanIntEnumStringer(src, offset)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (v *Gender) Scan(src any) error {
 	return nil
 }
 
-var InvalidGenderExt = github_com_pkg_errors.New("invalid GenderExt")
+var InvalidGenderExt = pkgerrors.New("invalid GenderExt")
 
 func (GenderExt) EnumValues() []any {
 	return []any{

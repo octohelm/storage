@@ -5,53 +5,53 @@ DON'T EDIT THIS FILE
 package aggregate
 
 import (
-	github_com_octohelm_storage_pkg_datatypes "github.com/octohelm/storage/pkg/datatypes"
-	github_com_octohelm_storage_pkg_sqlbuilder "github.com/octohelm/storage/pkg/sqlbuilder"
-	github_com_octohelm_storage_pkg_sqlbuilder_modelscoped "github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
-	github_com_octohelm_storage_testdata_model "github.com/octohelm/storage/testdata/model"
+	datatypes "github.com/octohelm/storage/pkg/datatypes"
+	sqlbuilder "github.com/octohelm/storage/pkg/sqlbuilder"
+	modelscoped "github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
+	model "github.com/octohelm/storage/testdata/model"
 )
 
 func (CountedUser) TableName() string {
 	return "t_counted_user"
 }
 
-func (tableCountedUser) New() github_com_octohelm_storage_pkg_sqlbuilder.Model {
+func (tableCountedUser) New() sqlbuilder.Model {
 	return &CountedUser{}
 }
 
 type tableCountedUser struct {
-	github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.Table[CountedUser]
+	modelscoped.Table[CountedUser]
 
 	I indexesOfCountedUser
 
-	ID        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, github_com_octohelm_storage_testdata_model.UserID]
-	Name      github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, string]
-	Nickname  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, string]
-	Username  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, string]
-	Gender    github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, github_com_octohelm_storage_testdata_model.Gender]
-	Age       github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, int64]
-	CreatedAt github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, github_com_octohelm_storage_pkg_datatypes.Datetime]
-	UpdatedAt github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, int64]
-	DeletedAt github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, int64]
-	Count     github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.TypedColumn[CountedUser, int]
+	ID        modelscoped.TypedColumn[CountedUser, model.UserID]
+	Name      modelscoped.TypedColumn[CountedUser, string]
+	Nickname  modelscoped.TypedColumn[CountedUser, string]
+	Username  modelscoped.TypedColumn[CountedUser, string]
+	Gender    modelscoped.TypedColumn[CountedUser, model.Gender]
+	Age       modelscoped.TypedColumn[CountedUser, int64]
+	CreatedAt modelscoped.TypedColumn[CountedUser, datatypes.Datetime]
+	UpdatedAt modelscoped.TypedColumn[CountedUser, int64]
+	DeletedAt modelscoped.TypedColumn[CountedUser, int64]
+	Count     modelscoped.TypedColumn[CountedUser, int]
 }
 
 type indexesOfCountedUser struct {
 }
 
 var CountedUserT = &tableCountedUser{
-	Table: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser](),
+	Table: modelscoped.FromModel[CountedUser](),
 
-	ID:        github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, github_com_octohelm_storage_testdata_model.UserID](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("ID")),
-	Name:      github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, string](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("Name")),
-	Nickname:  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, string](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("Nickname")),
-	Username:  github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, string](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("Username")),
-	Gender:    github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, github_com_octohelm_storage_testdata_model.Gender](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("Gender")),
-	Age:       github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, int64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("Age")),
-	CreatedAt: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, github_com_octohelm_storage_pkg_datatypes.Datetime](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("CreatedAt")),
-	UpdatedAt: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, int64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("UpdatedAt")),
-	DeletedAt: github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, int64](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("DeletedAt")),
-	Count:     github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.CastTypedColumn[CountedUser, int](github_com_octohelm_storage_pkg_sqlbuilder_modelscoped.FromModel[CountedUser]().F("Count")),
+	ID:        modelscoped.CastTypedColumn[CountedUser, model.UserID](modelscoped.FromModel[CountedUser]().F("ID")),
+	Name:      modelscoped.CastTypedColumn[CountedUser, string](modelscoped.FromModel[CountedUser]().F("Name")),
+	Nickname:  modelscoped.CastTypedColumn[CountedUser, string](modelscoped.FromModel[CountedUser]().F("Nickname")),
+	Username:  modelscoped.CastTypedColumn[CountedUser, string](modelscoped.FromModel[CountedUser]().F("Username")),
+	Gender:    modelscoped.CastTypedColumn[CountedUser, model.Gender](modelscoped.FromModel[CountedUser]().F("Gender")),
+	Age:       modelscoped.CastTypedColumn[CountedUser, int64](modelscoped.FromModel[CountedUser]().F("Age")),
+	CreatedAt: modelscoped.CastTypedColumn[CountedUser, datatypes.Datetime](modelscoped.FromModel[CountedUser]().F("CreatedAt")),
+	UpdatedAt: modelscoped.CastTypedColumn[CountedUser, int64](modelscoped.FromModel[CountedUser]().F("UpdatedAt")),
+	DeletedAt: modelscoped.CastTypedColumn[CountedUser, int64](modelscoped.FromModel[CountedUser]().F("DeletedAt")),
+	Count:     modelscoped.CastTypedColumn[CountedUser, int](modelscoped.FromModel[CountedUser]().F("Count")),
 
 	I: indexesOfCountedUser{},
 }
