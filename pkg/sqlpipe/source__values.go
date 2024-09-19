@@ -2,10 +2,11 @@ package sqlpipe
 
 import (
 	"context"
-	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
-	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 	"iter"
 	"slices"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
 func ValueOmitZero[M Model](value *M, exclude ...modelscoped.Column[M]) Source[M] {

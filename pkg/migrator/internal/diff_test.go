@@ -82,7 +82,6 @@ CREATE UNIQUE INDEX t_user_i_age ON t_user (f_age);
 CREATE UNIQUE INDEX t_user_i_name ON t_user (f_real_name);
 CREATE INDEX t_user_i_nickname ON t_user (f_nickname);
 `))
-
 	})
 
 	t.Run("migrate from v1 to v2", func(t *testing.T) {
@@ -107,5 +106,4 @@ CREATE UNIQUE INDEX t_user_i_age ON t_user (f_age);
 CREATE UNIQUE INDEX t_user_i_name ON t_user (f_real_name);
 `))
 	})
-
 }

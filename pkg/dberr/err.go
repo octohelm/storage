@@ -1,6 +1,9 @@
 package dberr
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 func New(tpe errType, msg string) *SqlError {
 	return &SqlError{
@@ -15,7 +18,7 @@ type SqlError struct {
 }
 
 func (e *SqlError) Error() string {
-	return fmt.Sprintf("Sqlx [%s] %s", e.Type, e.Msg)
+	return fmt.Sprintf("SqlError{%s} %s", e.Type, e.Msg)
 }
 
 type errType string
@@ -30,7 +33,8 @@ func IsErrNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	if sqlErr, ok := UnwrapAll(err).(*SqlError); ok {
+	var sqlErr *SqlError
+	if errors.As(err, &sqlErr) {
 		return sqlErr.Type == ErrTypeNotFound
 	}
 	return false
@@ -40,7 +44,8 @@ func IsErrConflict(err error) bool {
 	if err == nil {
 		return false
 	}
-	if sqlErr, ok := UnwrapAll(err).(*SqlError); ok {
+	var sqlErr *SqlError
+	if errors.As(err, &sqlErr) {
 		return sqlErr.Type == ErrTypeConflict
 	}
 	return false
@@ -50,7 +55,8 @@ func IsErrRolledBack(err error) bool {
 	if err == nil {
 		return false
 	}
-	if sqlErr, ok := UnwrapAll(err).(*SqlError); ok {
+	var sqlErr *SqlError
+	if errors.As(err, &sqlErr) {
 		return sqlErr.Type == ErrTypeRolledBack
 	}
 	return false

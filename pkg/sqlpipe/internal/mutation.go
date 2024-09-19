@@ -2,11 +2,12 @@ package internal
 
 import (
 	"context"
+	"iter"
+	"slices"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	reflectx "github.com/octohelm/x/reflect"
 	"github.com/pkg/errors"
-	"iter"
-	"slices"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"

@@ -17,8 +17,6 @@ type OperateTimeWithDeleted struct {
 	DeletedAt int64 `db:"f_deleted_at,default='0'"`
 }
 
-//var _ dal.ModelWithSoftDelete = &OperateTimeWithDeleted{}
-
 func (v OperateTimeWithDeleted) SoftDeleteFieldAndZeroValue() (string, driver.Value) {
 	return "DeletedAt", int64(v.DeletedAt)
 }

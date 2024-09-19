@@ -3,14 +3,16 @@ package internal
 import (
 	"context"
 	"database/sql/driver"
-	"github.com/octohelm/storage/pkg/dal"
-	"github.com/octohelm/storage/pkg/datatypes"
+	"iter"
+	"time"
+
+	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"github.com/octohelm/storage/pkg/sqlfrag"
+	"github.com/octohelm/storage/pkg/sqltype"
+	sqltypetime "github.com/octohelm/storage/pkg/sqltype/time"
 	"github.com/octohelm/x/reflect"
-	"iter"
-	"time"
 )
 
 func BuildStmt[M sqlbuilder.Model](ctx context.Context, patchers ...StmtPatcher[M]) sqlfrag.Fragment {
@@ -126,7 +128,7 @@ func (s *Builder[M]) PatchWhere(ctx context.Context, where sqlfrag.Fragment) sql
 
 	m := new(M)
 
-	if soft, ok := any(m).(ModelWithSoftDelete); ok {
+	if soft, ok := any(m).(sqltype.WithSoftDelete); ok {
 		t := s.T(ctx, m)
 		f, notDeletedValue := soft.SoftDeleteFieldAndZeroValue()
 
@@ -151,18 +153,18 @@ func (s *Builder[M]) buildDelete(ctx context.Context, mut *Mutation[M]) sqlfrag.
 	}
 
 	if mut.ForDelete == DeleteTypeSoft {
-		if soft, ok := any(m).(ModelWithSoftDelete); ok {
-			if x, ok := any(m).(DeletedAtMarker); ok {
+		if soft, ok := any(m).(sqltype.WithSoftDelete); ok {
+			if x, ok := any(m).(sqltype.DeletedAtMarker); ok {
 				x.MarkDeletedAt()
 			}
 
 			f, _ := soft.SoftDeleteFieldAndZeroValue()
 
 			var softDeleteValue driver.Value
-			if v, ok := ctx.(SoftDeleteValueGetter); ok {
+			if v, ok := ctx.(sqltype.SoftDeleteValueGetter); ok {
 				softDeleteValue = v.GetDeletedAt()
 			} else {
-				softDeleteValue = datatypes.Timestamp(time.Now())
+				softDeleteValue = sqltypetime.Timestamp(time.Now())
 			}
 
 			col := t.F(f)
@@ -216,7 +218,7 @@ func (s *Builder[M]) buildInsert(ctx context.Context, m *Mutation[M]) sqlfrag.Fr
 		values := make([]any, 0)
 
 		for value := range m.Values {
-			if x, ok := any(value).(ModelWithCreationTime); ok {
+			if x, ok := any(value).(sqltype.WithCreationTime); ok {
 				x.MarkCreatedAt()
 			}
 
@@ -261,7 +263,7 @@ func (s *Builder[M]) buildInsert(ctx context.Context, m *Mutation[M]) sqlfrag.Fr
 
 	return sqlbuilder.Insert().Into(t, fixAdditions(additions)...).ValuesCollect(orderedCols, func(yield func(any) bool) {
 		for value := range m.Values {
-			if x, ok := any(value).(ModelWithCreationTime); ok {
+			if x, ok := any(value).(sqltype.WithCreationTime); ok {
 				x.MarkCreatedAt()
 			}
 
@@ -322,7 +324,7 @@ func (s *Builder[M]) T(ctx context.Context, m any) sqlbuilder.Table {
 		m = new(M)
 	}
 
-	sess := dal.SessionFor(ctx, m)
+	sess := session.For(ctx, m)
 	if sess != nil {
 		return sess.T(m)
 	}

@@ -2,10 +2,11 @@ package sqlfrag
 
 import (
 	"context"
-	contextx "github.com/octohelm/x/context"
 	"iter"
 	"slices"
 	"strings"
+
+	contextx "github.com/octohelm/x/context"
 )
 
 func JoinValues(splitter string, fragments ...Fragment) Fragment {
@@ -29,7 +30,6 @@ type joinFragment struct {
 
 func (j *joinFragment) IsNil() bool {
 	return j.fragSeq == nil
-
 }
 
 func (j *joinFragment) Frag(ctx context.Context) iter.Seq2[string, []any] {

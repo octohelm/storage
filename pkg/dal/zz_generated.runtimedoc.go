@@ -14,43 +14,9 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v Database) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-		case "Endpoint":
-			return []string{
-				"Endpoint of database",
-			}, true
-		case "NameOverwrite":
-			return []string{
-				"Overwrite dbname when not empty",
-			}, true
-		case "UsernameOverwrite":
-			return []string{
-				"Overwrite username when not empty",
-			}, true
-		case "PasswordOverwrite":
-			return []string{
-				"Overwrite password when not empty",
-			}, true
-		case "EnableMigrate":
-			return []string{
-				"auto migrate before run",
-			}, true
-
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
 func (DeleteFunc) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 func (OptionFunc) RuntimeDoc(names ...string) ([]string, bool) {
-	return []string{}, true
-}
-func (RecvFunc[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }

@@ -9,8 +9,6 @@ import (
 	compose "github.com/octohelm/storage/pkg/dal/compose"
 	datatypes "github.com/octohelm/storage/pkg/datatypes"
 	filter "github.com/octohelm/storage/pkg/filter"
-	sqlpipe "github.com/octohelm/storage/pkg/sqlpipe"
-	sqlpipefilter "github.com/octohelm/storage/pkg/sqlpipe/filter"
 	model "github.com/octohelm/storage/testdata/model"
 )
 
@@ -19,14 +17,6 @@ type UserByID struct {
 
 	// 按  筛选
 	ID *filter.Filter[model.UserID] `name:"user~id,omitempty" in:"query"`
-}
-
-func (f *UserByID) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *UserByID) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.User] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.UserT.ID, f.ID))
 }
 
 func (f *UserByID) ApplyQuerier(q dal.Querier) dal.Querier {
@@ -40,14 +30,6 @@ type UserByName struct {
 	Name *filter.Filter[string] `name:"user~name,omitempty" in:"query"`
 }
 
-func (f *UserByName) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *UserByName) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.User] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.UserT.Name, f.Name))
-}
-
 func (f *UserByName) ApplyQuerier(q dal.Querier) dal.Querier {
 	return compose.ApplyQuerierFromFilter(q, model.UserT.Name, f.Name)
 }
@@ -57,14 +39,6 @@ type UserByNickname struct {
 
 	// 按  筛选
 	Nickname *filter.Filter[string] `name:"user~nickname,omitempty" in:"query"`
-}
-
-func (f *UserByNickname) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *UserByNickname) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.User] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.UserT.Nickname, f.Nickname))
 }
 
 func (f *UserByNickname) ApplyQuerier(q dal.Querier) dal.Querier {
@@ -78,14 +52,6 @@ type UserByAge struct {
 	Age *filter.Filter[int64] `name:"user~age,omitempty" in:"query"`
 }
 
-func (f *UserByAge) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *UserByAge) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.User] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.UserT.Age, f.Age))
-}
-
 func (f *UserByAge) ApplyQuerier(q dal.Querier) dal.Querier {
 	return compose.ApplyQuerierFromFilter(q, model.UserT.Age, f.Age)
 }
@@ -95,14 +61,6 @@ type UserByCreatedAt struct {
 
 	// 按  筛选
 	CreatedAt *filter.Filter[datatypes.Datetime] `name:"user~createdAt,omitempty" in:"query"`
-}
-
-func (f *UserByCreatedAt) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *UserByCreatedAt) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.User] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.UserT.CreatedAt, f.CreatedAt))
 }
 
 func (f *UserByCreatedAt) ApplyQuerier(q dal.Querier) dal.Querier {
@@ -116,14 +74,6 @@ type UserByDeletedAt struct {
 	DeletedAt *filter.Filter[int64] `name:"user~deletedAt,omitempty" in:"query"`
 }
 
-func (f *UserByDeletedAt) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *UserByDeletedAt) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.User] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.UserT.DeletedAt, f.DeletedAt))
-}
-
 func (f *UserByDeletedAt) ApplyQuerier(q dal.Querier) dal.Querier {
 	return compose.ApplyQuerierFromFilter(q, model.UserT.DeletedAt, f.DeletedAt)
 }
@@ -133,14 +83,6 @@ type OrgByID struct {
 
 	// 按  筛选
 	ID *filter.Filter[model.OrgID] `name:"org~id,omitempty" in:"query"`
-}
-
-func (f *OrgByID) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *OrgByID) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[model.Org] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.OrgT.ID, f.ID))
 }
 
 func (f *OrgByID) ApplyQuerier(q dal.Querier) dal.Querier {
@@ -154,14 +96,6 @@ type OrgByName struct {
 	Name *filter.Filter[string] `name:"org~name,omitempty" in:"query"`
 }
 
-func (f *OrgByName) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *OrgByName) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[model.Org] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.OrgT.Name, f.Name))
-}
-
 func (f *OrgByName) ApplyQuerier(q dal.Querier) dal.Querier {
 	return compose.ApplyQuerierFromFilter(q, model.OrgT.Name, f.Name)
 }
@@ -171,14 +105,6 @@ type OrgByCreatedAt struct {
 
 	// 按  筛选
 	CreatedAt *filter.Filter[datatypes.Datetime] `name:"org~createdAt,omitempty" in:"query"`
-}
-
-func (f *OrgByCreatedAt) OperatorType() sqlpipe.OperatorType {
-	return sqlpipe.OperatorFilter
-}
-
-func (f *OrgByCreatedAt) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[model.Org] {
-	return src.Pipe(sqlpipefilter.AsWhere(model.OrgT.CreatedAt, f.CreatedAt))
 }
 
 func (f *OrgByCreatedAt) ApplyQuerier(q dal.Querier) dal.Querier {

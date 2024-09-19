@@ -2,10 +2,11 @@ package internal
 
 import (
 	"context"
+	"iter"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	"iter"
 )
 
 func WithoutAddition[M sqlpipe.Model](omit func(a sqlbuilder.Addition) bool) sqlpipe.SourceOperator[M] {

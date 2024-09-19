@@ -1,14 +1,14 @@
 package modelscoped
 
 import (
+	"iter"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/internal"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-	"iter"
 )
 
-type M[Model internal.Model] struct {
-}
+type M[Model internal.Model] struct{}
 
 func (M[Model]) Model() *Model {
 	return new(Model)

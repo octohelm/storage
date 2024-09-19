@@ -2,8 +2,9 @@ package sqlbuilder
 
 import (
 	"context"
-	"github.com/octohelm/storage/pkg/sqlfrag"
 	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type ReturningAddition interface {

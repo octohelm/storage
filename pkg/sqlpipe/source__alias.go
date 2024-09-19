@@ -2,9 +2,10 @@ package sqlpipe
 
 import (
 	"context"
+	"iter"
+
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	"iter"
 )
 
 func As[M Model](src Source[M], name string) Source[M] {

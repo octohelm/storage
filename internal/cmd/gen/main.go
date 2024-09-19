@@ -12,6 +12,7 @@ import (
 	_ "github.com/octohelm/gengo/devpkg/runtimedocgen"
 	_ "github.com/octohelm/storage/devpkg/enumgen"
 	_ "github.com/octohelm/storage/devpkg/filtergen"
+	_ "github.com/octohelm/storage/devpkg/filteropgen"
 	_ "github.com/octohelm/storage/devpkg/tablegen"
 )
 
@@ -20,6 +21,7 @@ func main() {
 		Entrypoint: []string{
 			"github.com/octohelm/storage/testdata/model",
 			"github.com/octohelm/storage/testdata/model/filter",
+			"github.com/octohelm/storage/testdata/model/filter/v2",
 			"github.com/octohelm/storage/testdata/model/aggregate",
 			"github.com/octohelm/storage/internal/testutil",
 			"github.com/octohelm/storage/pkg/dal",

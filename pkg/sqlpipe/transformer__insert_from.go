@@ -2,10 +2,11 @@ package sqlpipe
 
 import (
 	"context"
+	"iter"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	"iter"
 )
 
 func InsertFrom[S Model, O Model](src Source[S], cols ...modelscoped.Column[O]) Source[O] {

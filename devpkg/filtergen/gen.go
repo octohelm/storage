@@ -142,15 +142,6 @@ type @ModelTypeName'By@FieldName struct {
 	@FieldName *@filterFilter[@FieldType] ` + "`" + `name:"@domainName~@fieldName,omitempty" in:"query"` + "`" + `
 }
 
-
-func (f *@ModelTypeName'By@FieldName) OperatorType() @sqlpipeOperatorType {
-	return @sqlpipeOperatorFilter
-}
-
-func (f *@ModelTypeName'By@FieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSource[@Type] {
-	return src.Pipe(@sqlpipefilterAsWhere(@Type'T.@FieldName, f.@FieldName))
-}
-
 func (f *@ModelTypeName'By@FieldName) ApplyQuerier(q @dalQuerier) @dalQuerier {
 	return @composeApplyQuerierFromFilter(q, @Type'T.@FieldName, f.@FieldName)
 }
@@ -164,15 +155,9 @@ func (f *@ModelTypeName'By@FieldName) ApplyQuerier(q @dalQuerier) @dalQuerier {
 			"domainName":   gengo.ID(camelcase.LowerKebabCase(domainName)),
 			"fieldName":    gengo.ID(camelcase.LowerCamelCase(fieldName)),
 
-			"dalQuerier":  gengo.ID("github.com/octohelm/storage/pkg/dal.Querier"),
-			"dalMutation": gengo.ID("github.com/octohelm/storage/pkg/dal.Mutation"),
+			"dalQuerier": gengo.ID("github.com/octohelm/storage/pkg/dal.Querier"),
 
 			"composeApplyQuerierFromFilter": gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyQuerierFromFilter"),
-
-			"sqlpipeSource":         gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.Source"),
-			"sqlpipeOperatorType":   gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.OperatorType"),
-			"sqlpipeOperatorFilter": gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.OperatorFilter"),
-			"sqlpipefilterAsWhere":  gengo.ID("github.com/octohelm/storage/pkg/sqlpipe/filter.AsWhere"),
 
 			"composeFrom":  gengo.ID("github.com/octohelm/storage/pkg/dal/compose.From"),
 			"filterFilter": gengo.ID("github.com/octohelm/storage/pkg/filter.Filter"),

@@ -13,3 +13,7 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 	}
 	return nil, false
 }
+
+func (RecvFunc[M]) RuntimeDoc(names ...string) ([]string, bool) {
+	return []string{}, true
+}

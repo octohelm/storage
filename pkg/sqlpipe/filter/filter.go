@@ -2,13 +2,14 @@ package filter
 
 import (
 	"fmt"
+	"iter"
+	"slices"
+
 	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe"
-	"iter"
-	"slices"
 )
 
 func AsWhere[M sqlpipe.Model, T comparable](col modelscoped.TypedColumn[M, T], f *filter.Filter[T]) sqlpipe.SourceOperator[M] {

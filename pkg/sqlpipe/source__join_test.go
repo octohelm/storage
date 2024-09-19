@@ -1,8 +1,9 @@
 package sqlpipe_test
 
 import (
-	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"testing"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"

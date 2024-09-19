@@ -3,16 +3,17 @@ package ex
 import (
 	"cmp"
 	"context"
+	"iter"
+	"slices"
+
 	"github.com/octohelm/storage/internal/sql/scanner"
-	"github.com/octohelm/storage/pkg/dal"
+	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	exiternal "github.com/octohelm/storage/pkg/sqlpipe/ex/internal"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 	"github.com/octohelm/x/ptr"
 	"github.com/pkg/errors"
-	"iter"
-	"slices"
 )
 
 type SourceExecutor[M sqlpipe.Model] interface {
@@ -57,7 +58,7 @@ type Executor[M sqlpipe.Model] struct {
 }
 
 func (e *Executor[M]) Tx(ctx context.Context, do func(ctx context.Context) error) error {
-	return dal.Tx(ctx, *new(M), do)
+	return e.session(ctx).Tx(ctx, do)
 }
 
 func (e *Executor[M]) From(src sqlpipe.Source[M]) SourceExecutor[M] {
@@ -85,9 +86,9 @@ func (e Executor[M]) PipeE(operators ...sqlpipe.SourceOperator[M]) SourceExecuto
 	return &e
 }
 
-func (e *Executor[M]) session(ctx context.Context) dal.Session {
+func (e *Executor[M]) session(ctx context.Context) session.Session {
 	m := new(M)
-	s := dal.SessionFor(ctx, m)
+	s := session.For(ctx, m)
 	if s == nil {
 		panic(errors.Errorf("invalid model %T", m))
 	}
@@ -164,14 +165,14 @@ func (e *Executor[M]) Item(ctx context.Context) iter.Seq2[*M, error] {
 		sqlpipe.DefaultProject[M](internal.ColumnsByStruct(new(M))),
 	)
 
-	x := dal.RecvFunc[M](func(ctx context.Context, recv func(v *M) error) error {
+	x := scanner.RecvFunc[M](func(ctx context.Context, recv func(v *M) error) error {
 		rows, err := s.Adapter().Query(internal.FlagsContext.Inject(ctx, internal.Flags{
 			OptForReturning: ptr.Ptr(true),
 		}), ex)
 		if err != nil {
 			return err
 		}
-		return scanner.Scan(ctx, rows, dal.Recv(recv))
+		return scanner.Scan(ctx, rows, scanner.Recv(recv))
 	})
 
 	return x.Item(ctx)

@@ -2,18 +2,19 @@ package ex
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"github.com/octohelm/storage/pkg/filter"
 	"slices"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/octohelm/storage/internal/testutil"
-	"github.com/octohelm/storage/pkg/dal"
-	"github.com/octohelm/storage/pkg/datatypes"
+	"github.com/octohelm/storage/pkg/filter"
+	"github.com/octohelm/storage/pkg/session"
+	sessiondb "github.com/octohelm/storage/pkg/session/db"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	"github.com/octohelm/storage/testdata/model"
-	modelfilter "github.com/octohelm/storage/testdata/model/filter"
+
+	modelfilter "github.com/octohelm/storage/testdata/model/filter/v2"
 )
 
 type Repo struct {
@@ -27,7 +28,6 @@ func TestSourceExecutor(t *testing.T) {
 		ContextWithDatabase(t, "sqlpipe_crud", ""),
 		ContextWithDatabase(t, "sqlpipe_crud", "postgres://postgres@localhost?sslmode=disable"),
 	} {
-
 		t.Run("batch insert", func(t *testing.T) {
 			values := sqlpipe.Values(slices.Collect(func(yield func(*model.User) bool) {
 				for i := 0; i < 100; i++ {
@@ -143,7 +143,6 @@ func TestSourceExecutor(t *testing.T) {
 			})
 		})
 	}
-
 }
 
 func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Context {
@@ -155,12 +154,12 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	cat.Add(model.OrgT)
 	cat.Add(model.OrgUserT)
 
-	db := &dal.Database{
+	db := &sessiondb.Database{
 		EnableMigrate: true,
 	}
 
 	if endpoint != "" {
-		db.Endpoint = *must(datatypes.ParseEndpoint(endpoint))
+		db.Endpoint = *must(sessiondb.ParseEndpoint(endpoint))
 	}
 
 	db.ApplyCatalog(name, cat)
@@ -174,7 +173,7 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	testutil.Expect(t, err, testutil.Be[error](nil))
 
 	t.Cleanup(func() {
-		a := dal.SessionFor(ctx, name).Adapter()
+		a := session.For(ctx, name).Adapter()
 
 		cat.Range(func(table sqlbuilder.Table, idx int) bool {
 			_, e := a.Exec(ctx, a.Dialect().DropTable(table))

@@ -3,9 +3,10 @@ package sqlbuilder
 import (
 	"cmp"
 	"context"
-	"github.com/octohelm/storage/pkg/sqlfrag"
 	"iter"
 	"slices"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 type Addition interface {

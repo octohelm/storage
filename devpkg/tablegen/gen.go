@@ -1,11 +1,12 @@
 package tablegen
 
 import (
+	"go/types"
+	"reflect"
+
 	"github.com/octohelm/gengo/pkg/gengo"
 	tablegenutil "github.com/octohelm/storage/devpkg/tablegen/util"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-	"go/types"
-	"reflect"
 )
 
 func init() {

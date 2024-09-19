@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"net/url"
-
-	"github.com/octohelm/storage/pkg/sqlfrag"
 
 	"github.com/pkg/errors"
 	"modernc.org/sqlite"
+	"net/url"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
@@ -44,7 +44,8 @@ func (a *sqliteAdapter) Connector() driver.DriverContext {
 		&sqlite.Driver{},
 		a.DriverName(),
 		func(err error) int {
-			if e, ok := dberr.UnwrapAll(err).(*sqlite.Error); ok {
+			var e *sqlite.Error
+			if errors.As(err, &e) {
 				if e.Code() == 2067 {
 					return 0
 				}
@@ -84,7 +85,8 @@ func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter
 }
 
 func isErrorConflict(err error) bool {
-	if e, ok := dberr.UnwrapAll(err).(*sqlite.Error); ok && e.Code() == 2067 {
+	var e *sqlite.Error
+	if errors.As(err, &e) && e.Code() == 2067 {
 		return true
 	}
 	return false

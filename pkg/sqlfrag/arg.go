@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	reflectx "github.com/octohelm/x/reflect"
 	"iter"
 	"reflect"
 	"slices"
 	"strings"
+
+	reflectx "github.com/octohelm/x/reflect"
 )
 
 type NamedArg = sql.NamedArg
@@ -112,7 +113,6 @@ func iterArg(ctx context.Context, v any) iter.Seq2[string, []any] {
 	}
 
 	return func(yield func(string, []any) bool) {
-
 	}
 }
 

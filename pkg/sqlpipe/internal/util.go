@@ -3,11 +3,12 @@ package internal
 import (
 	"context"
 	"fmt"
+	"iter"
+	"slices"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-	"iter"
-	"slices"
 )
 
 func ToString(s sqlfrag.Fragment) string {

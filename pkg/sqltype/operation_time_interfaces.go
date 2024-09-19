@@ -1,16 +1,16 @@
-package internal
+package sqltype
 
 import "database/sql/driver"
 
-type ModelWithCreationTime interface {
+type WithCreationTime interface {
 	MarkCreatedAt()
 }
 
-type ModelWithUpdationTime interface {
+type WithUpdationTime interface {
 	MarkUpdatedAt()
 }
 
-type ModelWithSoftDelete interface {
+type WithSoftDelete interface {
 	SoftDeleteFieldAndZeroValue() (string, driver.Value)
 }
 

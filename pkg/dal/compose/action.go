@@ -2,17 +2,19 @@ package compose
 
 import (
 	"context"
+	"iter"
+
+	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/dal/compose/querierpatcher"
 	dalcomposetarget "github.com/octohelm/storage/pkg/dal/compose/target"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-	"iter"
 )
 
 type Action[M sqlbuilder.Model] struct{}
 
 func (a *Action[M]) Query(patchers ...querierpatcher.Typed[M]) Result[M] {
-	return dal.RecvFunc[M](func(ctx context.Context, recv func(v *M) error) error {
+	return scanner.RecvFunc[M](func(ctx context.Context, recv func(v *M) error) error {
 		q := dal.From(dalcomposetarget.Table[M](ctx))
 
 		return querierpatcher.ApplyToQuerier(q, patchers...).
@@ -29,7 +31,7 @@ func (a *Action[M]) QueryAs(ctx context.Context, patchers ...querierpatcher.Type
 
 func (a *Action[M]) FindOne(ctx context.Context, patchers ...querierpatcher.Typed[M]) *M {
 	i := a.Query(append(patchers, querierpatcher.Limit[M](1))...)
-	for x, _ := range i.Item(ctx) {
+	for x := range i.Item(ctx) {
 		return x
 	}
 	return nil

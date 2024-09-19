@@ -2,9 +2,10 @@ package sqlpipe
 
 import (
 	"context"
+	"iter"
+
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 	"github.com/octohelm/x/ptr"
-	"iter"
 )
 
 type FromOptionFunc[M Model] func(x *sourceFrom[M])

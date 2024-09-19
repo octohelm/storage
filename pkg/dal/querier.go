@@ -3,13 +3,15 @@ package dal
 import (
 	"context"
 	"fmt"
+	"iter"
+	"reflect"
+
 	"github.com/octohelm/storage/internal/sql/scanner"
+	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/pkg/errors"
-	"iter"
-	"reflect"
 )
 
 // Intersect(q Querier) Querier
@@ -415,7 +417,7 @@ var ErrSkipScan = errors.New("scan skip")
 
 type TemporaryTable interface {
 	sqlbuilder.Table
-	TableWrapper
+	session.TableWrapper
 	QuerierPatcher
 }
 

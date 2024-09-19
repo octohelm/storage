@@ -2,8 +2,9 @@ package sqlpipe
 
 import (
 	"context"
-	"github.com/octohelm/x/ptr"
 	"iter"
+
+	"github.com/octohelm/x/ptr"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
@@ -36,8 +37,8 @@ func WhereInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedColu
 			return col.V(func(col sqlbuilder.Column) sqlfrag.Fragment {
 				s := source.Pipe(Select(colSelect))
 
-				var q = ""
-				for query, _ := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
+				q := ""
+				for query := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
 					OptWhereRequired: ptr.Ptr(true),
 				})) {
 					if query != "" {
@@ -62,8 +63,8 @@ func WhereNotInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedC
 			return col.V(func(col sqlbuilder.Column) sqlfrag.Fragment {
 				s := source.Pipe(Select(colSelect))
 
-				var q = ""
-				for query, _ := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
+				q := ""
+				for query := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
 					OptWhereRequired: ptr.Ptr(true),
 				})) {
 					if query != "" {

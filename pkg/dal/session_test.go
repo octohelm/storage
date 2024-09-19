@@ -9,9 +9,9 @@ import (
 	"github.com/octohelm/storage/internal/testutil"
 	"github.com/octohelm/storage/pkg/dal"
 	"github.com/octohelm/storage/pkg/dal/compose"
-	"github.com/octohelm/storage/pkg/datatypes"
 	"github.com/octohelm/storage/pkg/dberr"
 	"github.com/octohelm/storage/pkg/filter"
+	sessiondb "github.com/octohelm/storage/pkg/session/db"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/testdata/model"
 )
@@ -401,7 +401,7 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	}
 
 	if endpoint != "" {
-		db.Endpoint = *must(datatypes.ParseEndpoint(endpoint))
+		db.Endpoint = *must(sessiondb.ParseEndpoint(endpoint))
 	}
 
 	db.ApplyCatalog(name, cat)
