@@ -233,6 +233,10 @@ func (s *Builder[M]) buildInsert(ctx context.Context, m *Mutation[M]) sqlfrag.Fr
 			break
 		}
 
+		if len(values) == 0 {
+			return sqlfrag.Empty()
+		}
+
 		return sqlbuilder.Insert().Into(t, fixAdditions(additions)...).Values(orderedCols, values...)
 	}
 
