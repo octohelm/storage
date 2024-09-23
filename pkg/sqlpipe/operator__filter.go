@@ -38,7 +38,7 @@ func WhereInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedColu
 				s := source.Pipe(Select(colSelect))
 
 				q := ""
-				for query := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
+				for query, _ := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
 					OptWhereRequired: ptr.Ptr(true),
 				})) {
 					if query != "" {
@@ -64,7 +64,7 @@ func WhereNotInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedC
 				s := source.Pipe(Select(colSelect))
 
 				q := ""
-				for query := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
+				for query, _ := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
 					OptWhereRequired: ptr.Ptr(true),
 				})) {
 					if query != "" {

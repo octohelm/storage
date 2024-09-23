@@ -309,9 +309,10 @@ func (s *Builder[M]) buildSelect(ctx context.Context) sqlfrag.Fragment {
 	} else {
 		if w := s.PatchWhere(ctx, nil); !sqlfrag.IsNil(w) {
 			additions = append(additions, sqlbuilder.Where(w))
-		}
-		if s.WhereRequired() {
-			return sqlfrag.Empty()
+		} else {
+			if s.WhereRequired() {
+				return sqlfrag.Empty()
+			}
 		}
 	}
 

@@ -45,17 +45,41 @@ WHERE f_id IN (
 `, "name", int64(0)))
 	})
 
-	t.Run("should not build when where empty", func(t *testing.T) {
+	t.Run("should where not soft deleted", func(t *testing.T) {
 		src := sqlpipe.FromAll[model.User]().Pipe(
 			sqlpipe.WhereInSelectFrom(
 				model.UserT.ID, model.OrgUserT.UserID,
 				sqlpipe.From[model.OrgUser]().Pipe(
 					sqlpipe.WhereInSelectFrom(
 						model.OrgUserT.OrgID, model.OrgT.ID,
-						sqlpipe.From[model.Org]().Pipe(
-							&modelfilter.OrgByName{},
-						),
+						sqlpipe.From[model.Org](),
 					),
+				),
+			),
+		)
+
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+SELECT *
+FROM t_user
+WHERE f_id IN (
+	SELECT f_user_id
+	FROM t_org_user
+	WHERE f_org_id IN (
+		SELECT f_id
+		FROM t_org
+		WHERE f_deleted_at = ?
+	)
+)
+`, int64(0)))
+	})
+
+	t.Run("should not build when where empty", func(t *testing.T) {
+		src := sqlpipe.FromAll[model.User]().Pipe(
+			sqlpipe.WhereInSelectFrom(
+				model.UserT.ID,
+				model.OrgUserT.UserID,
+				sqlpipe.From[model.OrgUser]().Pipe(
+					&modelfilter.OrgUserByOrgID{},
 				),
 			),
 		)

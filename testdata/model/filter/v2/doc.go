@@ -8,4 +8,5 @@ import (
 type filterOf struct {
 	model.User
 	model.Org
+	model.OrgUser
 }

@@ -128,3 +128,42 @@ func (f *OrgByCreatedAt) OperatorType() sqlpipe.OperatorType {
 func (f *OrgByCreatedAt) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[model.Org] {
 	return src.Pipe(sqlpipefilter.AsWhere(model.OrgT.CreatedAt, f.CreatedAt))
 }
+
+type OrgUserByID struct {
+	// 按  筛选
+	ID *filter.Filter[uint64] `name:"org-user~id,omitempty" in:"query"`
+}
+
+func (f *OrgUserByID) OperatorType() sqlpipe.OperatorType {
+	return sqlpipe.OperatorFilter
+}
+
+func (f *OrgUserByID) Next(src sqlpipe.Source[model.OrgUser]) sqlpipe.Source[model.OrgUser] {
+	return src.Pipe(sqlpipefilter.AsWhere(model.OrgUserT.ID, f.ID))
+}
+
+type OrgUserByUserID struct {
+	// 按  筛选
+	UserID *filter.Filter[model.UserID] `name:"org-user~userId,omitempty" in:"query"`
+}
+
+func (f *OrgUserByUserID) OperatorType() sqlpipe.OperatorType {
+	return sqlpipe.OperatorFilter
+}
+
+func (f *OrgUserByUserID) Next(src sqlpipe.Source[model.OrgUser]) sqlpipe.Source[model.OrgUser] {
+	return src.Pipe(sqlpipefilter.AsWhere(model.OrgUserT.UserID, f.UserID))
+}
+
+type OrgUserByOrgID struct {
+	// 按  筛选
+	OrgID *filter.Filter[model.OrgID] `name:"org-user~orgId,omitempty" in:"query"`
+}
+
+func (f *OrgUserByOrgID) OperatorType() sqlpipe.OperatorType {
+	return sqlpipe.OperatorFilter
+}
+
+func (f *OrgUserByOrgID) Next(src sqlpipe.Source[model.OrgUser]) sqlpipe.Source[model.OrgUser] {
+	return src.Pipe(sqlpipefilter.AsWhere(model.OrgUserT.OrgID, f.OrgID))
+}
