@@ -6,6 +6,10 @@ import (
 
 type Array[T any] []T
 
+func (v Array[T]) IsZero() bool {
+	return len(v) == 0
+}
+
 func (Array[T]) DataType(driverName string) string {
 	return "text"
 }

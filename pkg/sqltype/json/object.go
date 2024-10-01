@@ -13,8 +13,8 @@ type Object[T any] struct {
 	Data *T `json:",inline"`
 }
 
-func (v *Object[T]) IsZero() bool {
-	return v == nil || v.Data == nil
+func (v Object[T]) IsZero() bool {
+	return v.Data == nil
 }
 
 func (v *Object[T]) OneOf() []any {
