@@ -3,6 +3,7 @@ package ex
 import (
 	"cmp"
 	"context"
+	"fmt"
 	"iter"
 	"slices"
 
@@ -13,7 +14,6 @@ import (
 	exiternal "github.com/octohelm/storage/pkg/sqlpipe/ex/internal"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 	"github.com/octohelm/x/ptr"
-	"github.com/pkg/errors"
 )
 
 type SourceExecutor[M sqlpipe.Model] interface {
@@ -90,7 +90,7 @@ func (e *Executor[M]) session(ctx context.Context) session.Session {
 	m := new(M)
 	s := session.For(ctx, m)
 	if s == nil {
-		panic(errors.Errorf("invalid model %T", m))
+		panic(fmt.Errorf("invalid model %T", m))
 	}
 	return s
 }

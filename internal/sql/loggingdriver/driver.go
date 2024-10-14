@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/go-courier/logr"
-	"github.com/pkg/errors"
 )
 
 type ErrorLevel func(error error) int
@@ -61,7 +60,7 @@ func (c *loggerConnector) Driver() driver.Driver {
 func (c *loggerConnector) Open(dsn string) (driver.Conn, error) {
 	conn, err := c.driver.Open(dsn)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to open connection")
+		return nil, fmt.Errorf("failed to open connection: %w", err)
 	}
 	return &loggerConn{Conn: conn, opt: c.opt}, nil
 }
@@ -98,9 +97,9 @@ func (c *loggerConn) QueryContext(ctx context.Context, query string, args []driv
 		l := logger.WithValues("driver", c.opt.name, "sql", q)
 		if err != nil {
 			if c.opt.ErrorLevel(err) > 0 {
-				l.Error(errors.Wrapf(err, "query failed"))
+				l.Error(fmt.Errorf("query failed: %w", err))
 			} else {
-				l.Warn(errors.Wrapf(err, "query failed"))
+				l.Warn(fmt.Errorf("query failed: %w", err))
 			}
 		} else {
 			l.WithValues("cost", cost().String()).Debug("")
@@ -122,9 +121,9 @@ func (c *loggerConn) ExecContext(ctx context.Context, query string, args []drive
 		l := logger.WithValues("driver", c.opt.name, "sql", q)
 		if err != nil {
 			if c.opt.ErrorLevel(err) > 0 {
-				l.Error(errors.Wrap(err, "exec failed"))
+				l.Error(fmt.Errorf("exec failed: %w", err))
 			} else {
-				l.Warn(errors.Wrapf(err, "exec failed"))
+				l.Warn(fmt.Errorf("exec failed: %w", err))
 			}
 		} else {
 			l.WithValues("cost", cost().String()).Debug("")
@@ -173,7 +172,7 @@ func (c *loggerConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver
 	// don't pass ctx into real driver to avoid connect discount
 	tx, err := c.Conn.(driver.ConnBeginTx).BeginTx(ctx, opts)
 	if err != nil {
-		logger.Error(errors.Wrap(err, "failed to begin transaction"))
+		logger.Error(fmt.Errorf("failed to begin transaction: %w", err))
 		return nil, err
 	}
 

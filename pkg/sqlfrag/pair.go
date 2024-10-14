@@ -3,10 +3,9 @@ package sqlfrag
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"iter"
 	"text/scanner"
-
-	"github.com/pkg/errors"
 )
 
 func Pair(query string, args ...any) Fragment {
@@ -97,7 +96,7 @@ func (p *pair) Frag(ctx context.Context) iter.Seq2[string, []any] {
 							}
 						}
 					} else {
-						panic(errors.Errorf("missing named arg `%s`", name))
+						panic(fmt.Errorf("missing named arg `%s`", name))
 					}
 				}
 			case '?':
@@ -111,7 +110,7 @@ func (p *pair) Frag(ctx context.Context) iter.Seq2[string, []any] {
 
 				arg, ok := p.arg(argIndex)
 				if !ok {
-					panic(errors.Errorf("missing arg %d of %s", argIndex, p.query))
+					panic(fmt.Errorf("missing arg %d of %s", argIndex, p.query))
 				}
 
 				for q, args := range iterArg(ctx, arg) {

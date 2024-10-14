@@ -7,7 +7,7 @@ import (
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 
-	"github.com/pkg/errors"
+	"errors"
 )
 
 var UpdateNeedLimitByWhere = errors.New("no where limit for update")

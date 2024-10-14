@@ -6,7 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"errors"
 	"modernc.org/sqlite"
 	"net/url"
 
@@ -57,7 +57,7 @@ func (a *sqliteAdapter) Connector() driver.DriverContext {
 
 func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 	if a.DriverName() != dsn.Scheme {
-		return nil, errors.Errorf("invalid schema %s", dsn)
+		return nil, fmt.Errorf("invalid schema %s", dsn)
 	}
 
 	dbUri := dsn.Path + "?" + dsn.Query().Encode()
@@ -69,7 +69,7 @@ func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter
 
 	conn, err := connector.OpenConnector(dbUri)
 	if err != nil {
-		return nil, errors.Wrapf(err, "connect failed with %s", dsn.Path)
+		return nil, fmt.Errorf("connect failed with %s: %w", dsn.Path, err)
 	}
 
 	db := sql.OpenDB(conn)

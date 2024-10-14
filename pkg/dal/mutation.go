@@ -3,11 +3,10 @@ package dal
 import (
 	"context"
 	"database/sql/driver"
+	"fmt"
 	"iter"
 	"slices"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/datatypes"
@@ -22,7 +21,7 @@ import (
 // use Insert InsertNonZero InsertValues Update Delete instead
 func Prepare[T sqlbuilder.Model](v *T) MutationDeprecated[T] {
 	if _, ok := any(v).(sqlbuilder.Table); ok {
-		panic(errors.Errorf("Prepare should be some data struct, but got %T", v))
+		panic(fmt.Errorf("prepare should be some data struct, but got %T", v))
 	}
 
 	if m, ok := any(v).(ModelWithCreationTime); ok {

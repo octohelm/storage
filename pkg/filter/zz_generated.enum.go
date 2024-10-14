@@ -7,13 +7,13 @@ package filter
 import (
 	bytes "bytes"
 	driver "database/sql/driver"
+	errors "errors"
 	fmt "fmt"
 
 	enumeration "github.com/octohelm/storage/pkg/enumeration"
-	pkgerrors "github.com/pkg/errors"
 )
 
-var InvalidOp = pkgerrors.New("invalid Op")
+var InvalidOp = errors.New("invalid Op")
 
 func (Op) EnumValues() []any {
 	return []any{

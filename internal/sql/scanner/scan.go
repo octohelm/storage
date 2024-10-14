@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/pkg/errors"
+	"errors"
 
 	"github.com/octohelm/storage/pkg/dberr"
 )

@@ -7,13 +7,13 @@ package model
 import (
 	bytes "bytes"
 	driver "database/sql/driver"
+	errors "errors"
 	fmt "fmt"
 
 	enumeration "github.com/octohelm/storage/pkg/enumeration"
-	pkgerrors "github.com/pkg/errors"
 )
 
-var InvalidGender = pkgerrors.New("invalid Gender")
+var InvalidGender = errors.New("invalid Gender")
 
 func (Gender) EnumValues() []any {
 	return []any{
@@ -110,7 +110,7 @@ func (v *Gender) Scan(src any) error {
 	return nil
 }
 
-var InvalidGenderExt = pkgerrors.New("invalid GenderExt")
+var InvalidGenderExt = errors.New("invalid GenderExt")
 
 func (GenderExt) EnumValues() []any {
 	return []any{

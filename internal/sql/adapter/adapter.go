@@ -3,10 +3,9 @@ package adapter
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/url"
 	"sync"
-
-	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
@@ -70,7 +69,7 @@ func Open(ctx context.Context, dsn string) (a Adapter, err error) {
 	})
 
 	if a == nil && err == nil {
-		return nil, errors.Errorf("missing adapter for %s", u.Scheme)
+		return nil, fmt.Errorf("missing adapter for %s", u.Scheme)
 	}
 
 	return

@@ -7,7 +7,6 @@ import (
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	contextx "github.com/octohelm/x/context"
-	"github.com/pkg/errors"
 )
 
 type Session interface {
@@ -77,7 +76,7 @@ func For(ctx context.Context, nameOrTable any) Session {
 func MustFor(ctx context.Context, nameOrTable any) Session {
 	s := For(ctx, nameOrTable)
 	if s == nil {
-		panic(errors.Errorf("invalid section target %#v", nameOrTable))
+		panic(fmt.Errorf("invalid section target %#v", nameOrTable))
 	}
 	return s
 }

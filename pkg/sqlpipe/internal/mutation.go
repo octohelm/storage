@@ -5,9 +5,9 @@ import (
 	"iter"
 	"slices"
 
+	"errors"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	reflectx "github.com/octohelm/x/reflect"
-	"github.com/pkg/errors"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"

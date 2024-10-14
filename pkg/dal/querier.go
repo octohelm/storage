@@ -6,12 +6,12 @@ import (
 	"iter"
 	"reflect"
 
+	"errors"
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-	"github.com/pkg/errors"
 )
 
 // Intersect(q Querier) Querier

@@ -60,7 +60,7 @@ func (@Type) EnumValues() []any {
 `,
 
 		"Type":      gengo.ID(tpeObj),
-		"errorsNew": gengo.ID("github.com/pkg/errors.New"),
+		"errorsNew": gengo.ID("errors.New"),
 		"constValues": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
 			return gengo.Snippet{
 				gengo.T:     "@ConstName,",
@@ -152,7 +152,7 @@ func (@Type) EnumValues() []any {
 `,
 
 		"Type":      gengo.ID(tpeObj.Name()),
-		"errorsNew": gengo.ID("github.com/pkg/errors.New"),
+		"errorsNew": gengo.ID("errors.New"),
 		"constValues": gengo.MapSnippet(options, func(o Option) gengo.Snippet {
 			return gengo.Snippet{
 				gengo.T:     "@ConstName,",

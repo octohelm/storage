@@ -4,19 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"net/url"
 	"strings"
 	"sync"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 
+	"errors"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
 	"github.com/octohelm/storage/pkg/dberr"
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -85,7 +86,7 @@ var notRuntimeParams = map[string]struct{}{
 
 func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 	if a.DriverName() != dsn.Scheme {
-		return nil, errors.Errorf("invalid schema %s", dsn)
+		return nil, fmt.Errorf("invalid schema %s", dsn)
 	}
 
 	connParams := url.Values{}
