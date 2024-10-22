@@ -5,7 +5,7 @@ go 1.23.2
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-courier/logr v0.3.0
+	github.com/go-courier/logr v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/octohelm/gengo v0.0.0-20241012094456-5253b77480d8
