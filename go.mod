@@ -5,10 +5,10 @@ go 1.23.2
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-courier/logr v0.3.0
+	github.com/go-courier/logr v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
-	github.com/octohelm/gengo v0.0.0-20241012094456-5253b77480d8
+	github.com/octohelm/gengo v0.0.0-20241023040556-a66fecda6cd6
 	github.com/octohelm/x v0.0.0-20241011014327-0fcf864c84d6
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	modernc.org/sqlite v1.33.1

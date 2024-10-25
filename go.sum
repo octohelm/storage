@@ -7,6 +7,8 @@ github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkp
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/go-courier/logr v0.3.0 h1:0VEQB1b53EmYQ+ZehrIgD8l2IO+WX7TY+CqzlykIFmo=
 github.com/go-courier/logr v0.3.0/go.mod h1:OI7f/JCFZ1ZMD5qG3bIJr5WMNnGzd24+II1D9D9w5x4=
+github.com/go-courier/logr v0.3.1 h1:RcHM7qpO8OpuV+zFvJMXtJEspTnnYmT6uGiAomwb8X8=
+github.com/go-courier/logr v0.3.1/go.mod h1:NQWi+TSv0rS1RfyWHv7MNEI5cNy9NR6k1n8R24uHgdY=
 github.com/go-logr/logr v1.4.2 h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=
 github.com/go-logr/logr v1.4.2/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
 github.com/go-task/slim-sprig/v3 v3.0.0 h1:sUs3vkvUymDpBKi3qH1YSqBQk9+9D/8M2mN1vB6EwHI=
@@ -34,6 +36,8 @@ github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdh
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/octohelm/gengo v0.0.0-20241012094456-5253b77480d8 h1:WPJ8YfODECdm5pRBInociDWoLOxjDDkhqJR0tJGopcQ=
 github.com/octohelm/gengo v0.0.0-20241012094456-5253b77480d8/go.mod h1:FHblXBtM1jpvw/iRTZIlB5ihDrbFwxfixpyvnyKE9Fc=
+github.com/octohelm/gengo v0.0.0-20241023040556-a66fecda6cd6 h1:xsDe0CBcK1CW+dcQdH5mQuVBBScQ1vDbh+cYpVDI7AQ=
+github.com/octohelm/gengo v0.0.0-20241023040556-a66fecda6cd6/go.mod h1:aviWG2Mi3alkrLA0G/UtypdM05btKHuLTabGkEmzjWI=
 github.com/octohelm/x v0.0.0-20241011014327-0fcf864c84d6 h1:4royPn66/B49ftj5Jh7ZWuJ8A2B/2l0UTQ6EFLf29Vk=
 github.com/octohelm/x v0.0.0-20241011014327-0fcf864c84d6/go.mod h1:c8k4TZNwZXVCclWxFU8dm67PQ98APzKW3f5JJykQ2uo=
 github.com/onsi/ginkgo/v2 v2.20.1 h1:YlVIbqct+ZmnEph770q9Q7NVAz4wwIiVNahee6JyUzo=

@@ -2,6 +2,7 @@ package compose
 
 import (
 	"golang.org/x/exp/maps"
+	"iter"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
@@ -18,6 +19,18 @@ func (m OneToMulti[ID, Record]) IsZero() bool {
 
 func (m OneToMulti[ID, Record]) Keys() []ID {
 	return maps.Keys(m)
+}
+
+func (m OneToMulti[ID, Record]) Records(id ID) iter.Seq[*Record] {
+	return func(yield func(*Record) bool) {
+		if list, ok := m[id]; ok {
+			for _, x := range list {
+				if !yield(x) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func (m OneToMulti[ID, Record]) FillWith(id ID, do func(p *Record)) {
@@ -49,5 +62,15 @@ func (m OneToOne[ID, Record]) AsInKeys() sqlbuilder.ColumnValuer[ID] {
 func (m OneToOne[ID, Record]) FillWith(id ID, do func(p *Record)) {
 	if x, ok := m[id]; ok {
 		do(x)
+	}
+}
+
+func (m OneToOne[ID, Record]) Records(id ID) iter.Seq[*Record] {
+	return func(yield func(*Record) bool) {
+		if x, ok := m[id]; ok {
+			if !yield(x) {
+				return
+			}
+		}
 	}
 }
