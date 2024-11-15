@@ -15,7 +15,7 @@ import (
 type UserByID struct {
 	compose.From[model.User]
 
-	// 按  筛选
+	// 用户ID
 	ID *filter.Filter[model.UserID] `name:"user~id,omitempty" in:"query"`
 }
 
@@ -26,7 +26,7 @@ func (f *UserByID) ApplyQuerier(q dal.Querier) dal.Querier {
 type UserByName struct {
 	compose.From[model.User]
 
-	// 按 姓名 筛选
+	// 姓名
 	Name *filter.Filter[string] `name:"user~name,omitempty" in:"query"`
 }
 
@@ -37,7 +37,7 @@ func (f *UserByName) ApplyQuerier(q dal.Querier) dal.Querier {
 type UserByNickname struct {
 	compose.From[model.User]
 
-	// 按  筛选
+	// 昵称
 	Nickname *filter.Filter[string] `name:"user~nickname,omitempty" in:"query"`
 }
 
@@ -48,7 +48,7 @@ func (f *UserByNickname) ApplyQuerier(q dal.Querier) dal.Querier {
 type UserByAge struct {
 	compose.From[model.User]
 
-	// 按  筛选
+	// 年龄
 	Age *filter.Filter[int64] `name:"user~age,omitempty" in:"query"`
 }
 
@@ -59,7 +59,6 @@ func (f *UserByAge) ApplyQuerier(q dal.Querier) dal.Querier {
 type UserByCreatedAt struct {
 	compose.From[model.User]
 
-	// 按  筛选
 	CreatedAt *filter.Filter[datatypes.Datetime] `name:"user~createdAt,omitempty" in:"query"`
 }
 
@@ -70,7 +69,6 @@ func (f *UserByCreatedAt) ApplyQuerier(q dal.Querier) dal.Querier {
 type UserByDeletedAt struct {
 	compose.From[model.User]
 
-	// 按  筛选
 	DeletedAt *filter.Filter[int64] `name:"user~deletedAt,omitempty" in:"query"`
 }
 
@@ -81,7 +79,6 @@ func (f *UserByDeletedAt) ApplyQuerier(q dal.Querier) dal.Querier {
 type OrgByID struct {
 	compose.From[model.Org]
 
-	// 按  筛选
 	ID *filter.Filter[model.OrgID] `name:"org~id,omitempty" in:"query"`
 }
 
@@ -92,7 +89,6 @@ func (f *OrgByID) ApplyQuerier(q dal.Querier) dal.Querier {
 type OrgByName struct {
 	compose.From[model.Org]
 
-	// 按  筛选
 	Name *filter.Filter[string] `name:"org~name,omitempty" in:"query"`
 }
 
@@ -103,7 +99,6 @@ func (f *OrgByName) ApplyQuerier(q dal.Querier) dal.Querier {
 type OrgByCreatedAt struct {
 	compose.From[model.Org]
 
-	// 按  筛选
 	CreatedAt *filter.Filter[datatypes.Datetime] `name:"org~createdAt,omitempty" in:"query"`
 }
 

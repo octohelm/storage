@@ -66,8 +66,8 @@ type fieldWalker struct {
 }
 
 var (
-	typeModel    = reflect.TypeOf((*internal.Model)(nil)).Elem()
-	driverValuer = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
+	typeModel    = reflect.TypeFor[internal.Model]()
+	driverValuer = reflect.TypeFor[driver.Valuer]()
 )
 
 func (w *fieldWalker) allStructField(ctx context.Context, tpe typesx.Type) iter.Seq[*Field] {

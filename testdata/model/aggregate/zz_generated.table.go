@@ -24,16 +24,26 @@ type tableCountedUser struct {
 
 	I indexesOfCountedUser
 
-	ID        modelscoped.TypedColumn[CountedUser, model.UserID]
-	Name      modelscoped.TypedColumn[CountedUser, string]
-	Nickname  modelscoped.TypedColumn[CountedUser, string]
-	Username  modelscoped.TypedColumn[CountedUser, string]
-	Gender    modelscoped.TypedColumn[CountedUser, model.Gender]
-	Age       modelscoped.TypedColumn[CountedUser, int64]
+	// 用户ID
+	ID modelscoped.TypedColumn[CountedUser, model.UserID]
+	// 姓名
+	Name modelscoped.TypedColumn[CountedUser, string]
+	// 昵称
+	Nickname modelscoped.TypedColumn[CountedUser, string]
+	// 用户名
+	Username modelscoped.TypedColumn[CountedUser, string]
+
+	Gender modelscoped.TypedColumn[CountedUser, model.Gender]
+	// 年龄
+	Age modelscoped.TypedColumn[CountedUser, int64]
+
 	CreatedAt modelscoped.TypedColumn[CountedUser, datatypes.Datetime]
+
 	UpdatedAt modelscoped.TypedColumn[CountedUser, int64]
+
 	DeletedAt modelscoped.TypedColumn[CountedUser, int64]
-	Count     modelscoped.TypedColumn[CountedUser, int]
+
+	Count modelscoped.TypedColumn[CountedUser, int]
 }
 
 type indexesOfCountedUser struct {

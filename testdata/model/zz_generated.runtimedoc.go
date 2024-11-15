@@ -5,11 +5,19 @@ DON'T EDIT THIS FILE
 package model
 
 // nolint:deadcode,unused
-func runtimeDoc(v any, names ...string) ([]string, bool) {
+func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
 		RuntimeDoc(names ...string) ([]string, bool)
 	}); ok {
-		return c.RuntimeDoc(names...)
+		doc, ok := c.RuntimeDoc(names...)
+		if ok {
+			if prefix != "" && len(doc) > 0 {
+				doc[0] = prefix + doc[0]
+				return doc, true
+			}
+
+			return doc, true
+		}
 	}
 	return nil, false
 }
@@ -17,12 +25,16 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 func (Gender) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (GenderExt) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (v OperateTime) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
+		case "CreatedAt":
+			return []string{}, true
 		case "UpdatedAt":
 			return []string{}, true
 
@@ -36,13 +48,11 @@ func (v OperateTime) RuntimeDoc(names ...string) ([]string, bool) {
 func (v OperateTimeWithDeleted) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
-		case "OperateTime":
-			return []string{}, true
 		case "DeletedAt":
 			return []string{}, true
 
 		}
-		if doc, ok := runtimeDoc(v.OperateTime, names...); ok {
+		if doc, ok := runtimeDoc(v.OperateTime, "", names...); ok {
 			return doc, ok
 		}
 
@@ -58,11 +68,9 @@ func (v Org) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{}, true
 		case "Name":
 			return []string{}, true
-		case "OperateTimeWithDeleted":
-			return []string{}, true
 
 		}
-		if doc, ok := runtimeDoc(v.OperateTimeWithDeleted, names...); ok {
+		if doc, ok := runtimeDoc(v.OperateTimeWithDeleted, "", names...); ok {
 			return doc, ok
 		}
 
@@ -76,6 +84,7 @@ func (v Org) RuntimeDoc(names ...string) ([]string, bool) {
 func (OrgID) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (v OrgUser) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
@@ -98,25 +107,30 @@ func (v OrgUser) RuntimeDoc(names ...string) ([]string, bool) {
 func (v User) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
-		case "ID":
-			return []string{}, true
 		case "Name":
 			return []string{
 				"姓名",
 			}, true
 		case "Nickname":
-			return []string{}, true
+			return []string{
+				"昵称",
+			}, true
 		case "Username":
-			return []string{}, true
+			return []string{
+				"用户名",
+			}, true
 		case "Gender":
 			return []string{}, true
 		case "Age":
-			return []string{}, true
-		case "OperateTimeWithDeleted":
-			return []string{}, true
+			return []string{
+				"年龄",
+			}, true
 
 		}
-		if doc, ok := runtimeDoc(v.OperateTimeWithDeleted, names...); ok {
+		if doc, ok := runtimeDoc(v.Resource, "用户", names...); ok {
+			return doc, ok
+		}
+		if doc, ok := runtimeDoc(v.OperateTimeWithDeleted, "", names...); ok {
 			return doc, ok
 		}
 
@@ -130,6 +144,7 @@ func (v User) RuntimeDoc(names ...string) ([]string, bool) {
 func (UserID) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (v UserV2) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {

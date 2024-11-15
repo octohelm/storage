@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"go/types"
+	"reflect"
 	"strings"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
@@ -38,18 +39,42 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 	}
 
 	t := sqlbuilder.T(tableName)
+	base := typesx.FromTType(named)
 
-	for p := range structs.AllStructField(context.Background(), typesx.FromTType(named)) {
+	getDoc := func(sf *typesx.TStructField) (map[string][]string, []string) {
+		if pkg := sf.Pkg(); pkg != nil && pkg.Path() != "" {
+			return c.Package(pkg.Path()).Doc(sf.Pos())
+		}
+		return c.Package(named.Obj().Pkg().Path()).Doc(sf.Pos())
+	}
+
+	for p := range structs.AllStructField(context.Background(), base) {
 		def := sqlbuilder.ColumnDef{}
 
 		if tsf, ok := p.Field.(*typesx.TStructField); ok {
-			var tags map[string][]string
-			var doc []string
+			tags, doc := getDoc(tsf)
+			prefix := ""
 
-			if pkgPath := p.Field.PkgPath(); pkgPath != "" {
-				tags, doc = c.Package(pkgPath).Doc(tsf.Pos())
-			} else {
-				tags, doc = c.Package(named.Obj().Pkg().Path()).Doc(tsf.Pos())
+			// embedded generics struct
+			if len(p.Loc) > 1 {
+				var ft typesx.Type = base
+
+				for _, i := range p.Loc[0 : len(p.Loc)-1] {
+					f := ft.Field(i).(*typesx.TStructField)
+
+					if _, doc := getDoc(f); len(doc) > 0 {
+						prefix += doc[0]
+					}
+
+					ft = f.Type()
+					for ft.Kind() == reflect.Ptr {
+						ft = ft.Elem()
+					}
+				}
+			}
+
+			if prefix != "" && len(doc) > 0 {
+				doc[0] = prefix + doc[0]
 			}
 
 			def.Type = p.Type
@@ -64,6 +89,7 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 		}
 
 		col := sqlbuilder.Col(p.Name, sqlbuilder.ColField(p.FieldName), sqlbuilder.ColDef(def))
+
 		t.(sqlbuilder.ColumnCollectionManger).AddCol(col)
 	}
 

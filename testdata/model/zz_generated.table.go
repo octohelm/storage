@@ -45,10 +45,14 @@ type tableOrg struct {
 
 	I indexesOfOrg
 
-	ID        modelscoped.TypedColumn[Org, OrgID]
-	Name      modelscoped.TypedColumn[Org, string]
+	ID modelscoped.TypedColumn[Org, OrgID]
+
+	Name modelscoped.TypedColumn[Org, string]
+
 	CreatedAt modelscoped.TypedColumn[Org, datatypes.Datetime]
+
 	UpdatedAt modelscoped.TypedColumn[Org, int64]
+
 	DeletedAt modelscoped.TypedColumn[Org, int64]
 }
 
@@ -100,9 +104,11 @@ type tableOrgUser struct {
 
 	I indexesOfOrgUser
 
-	ID     modelscoped.TypedColumn[OrgUser, uint64]
+	ID modelscoped.TypedColumn[OrgUser, uint64]
+
 	UserID modelscoped.TypedColumn[OrgUser, UserID]
-	OrgID  modelscoped.TypedColumn[OrgUser, OrgID]
+
+	OrgID modelscoped.TypedColumn[OrgUser, OrgID]
 }
 
 type indexesOfOrgUser struct {
@@ -166,14 +172,23 @@ type tableUser struct {
 
 	I indexesOfUser
 
-	ID        modelscoped.TypedColumn[User, UserID]
-	Name      modelscoped.TypedColumn[User, string]
-	Nickname  modelscoped.TypedColumn[User, string]
-	Username  modelscoped.TypedColumn[User, string]
-	Gender    modelscoped.TypedColumn[User, Gender]
-	Age       modelscoped.TypedColumn[User, int64]
+	// 用户ID
+	ID modelscoped.TypedColumn[User, UserID]
+	// 姓名
+	Name modelscoped.TypedColumn[User, string]
+	// 昵称
+	Nickname modelscoped.TypedColumn[User, string]
+	// 用户名
+	Username modelscoped.TypedColumn[User, string]
+
+	Gender modelscoped.TypedColumn[User, Gender]
+	// 年龄
+	Age modelscoped.TypedColumn[User, int64]
+
 	CreatedAt modelscoped.TypedColumn[User, datatypes.Datetime]
+
 	UpdatedAt modelscoped.TypedColumn[User, int64]
+
 	DeletedAt modelscoped.TypedColumn[User, int64]
 }
 

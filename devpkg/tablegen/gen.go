@@ -110,11 +110,13 @@ var @Type'T = &table@Type{
 				if def := sqlbuilder.GetColumnDef(col); def.DeprecatedActions == nil {
 					sw.Render(gengo.Snippet{
 						gengo.T: `
+@fieldComment
 @FieldName @modelScopedTypedColumn[@Type, @FieldType]
 `,
-						"Type":      gengo.ID(named.Obj()),
-						"FieldName": gengo.ID(col.FieldName()),
-						"FieldType": gengo.ID(def.Type.String()),
+						"Type":         gengo.ID(named.Obj()),
+						"FieldName":    gengo.ID(col.FieldName()),
+						"FieldType":    gengo.ID(def.Type.String()),
+						"fieldComment": gengo.Comment(def.Comment),
 
 						"modelScopedTypedColumn": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.TypedColumn"),
 					})

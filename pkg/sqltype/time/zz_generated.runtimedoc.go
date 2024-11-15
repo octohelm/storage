@@ -5,11 +5,19 @@ DON'T EDIT THIS FILE
 package time
 
 // nolint:deadcode,unused
-func runtimeDoc(v any, names ...string) ([]string, bool) {
+func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
 		RuntimeDoc(names ...string) ([]string, bool)
 	}); ok {
-		return c.RuntimeDoc(names...)
+		doc, ok := c.RuntimeDoc(names...)
+		if ok {
+			if prefix != "" && len(doc) > 0 {
+				doc[0] = prefix + doc[0]
+				return doc, true
+			}
+
+			return doc, true
+		}
 	}
 	return nil, false
 }
@@ -17,6 +25,10 @@ func runtimeDoc(v any, names ...string) ([]string, bool) {
 func (v CreationTime) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
+		case "CreatedAt":
+			return []string{
+				"创建时间",
+			}, true
 
 		}
 
@@ -28,11 +40,13 @@ func (v CreationTime) RuntimeDoc(names ...string) ([]string, bool) {
 func (v CreationUpdationDeletionTime) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
-		case "CreationUpdationTime":
-			return []string{}, true
+		case "DeletedAt":
+			return []string{
+				"删除时间",
+			}, true
 
 		}
-		if doc, ok := runtimeDoc(v.CreationUpdationTime, names...); ok {
+		if doc, ok := runtimeDoc(v.CreationUpdationTime, "", names...); ok {
 			return doc, ok
 		}
 
@@ -44,11 +58,13 @@ func (v CreationUpdationDeletionTime) RuntimeDoc(names ...string) ([]string, boo
 func (v CreationUpdationTime) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
-		case "CreationTime":
-			return []string{}, true
+		case "UpdatedAt":
+			return []string{
+				"更新时间",
+			}, true
 
 		}
-		if doc, ok := runtimeDoc(v.CreationTime, names...); ok {
+		if doc, ok := runtimeDoc(v.CreationTime, "", names...); ok {
 			return doc, ok
 		}
 

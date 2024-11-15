@@ -5,11 +5,19 @@ DON'T EDIT THIS FILE
 package internal
 
 // nolint:deadcode,unused
-func runtimeDoc(v any, names ...string) ([]string, bool) {
+func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
 		RuntimeDoc(names ...string) ([]string, bool)
 	}); ok {
-		return c.RuntimeDoc(names...)
+		doc, ok := c.RuntimeDoc(names...)
+		if ok {
+			if prefix != "" && len(doc) > 0 {
+				doc[0] = prefix + doc[0]
+				return doc, true
+			}
+
+			return doc, true
+		}
 	}
 	return nil, false
 }
@@ -25,11 +33,9 @@ func (v Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{}, true
 		case "DefaultProjects":
 			return []string{}, true
-		case "Flags":
-			return []string{}, true
 
 		}
-		if doc, ok := runtimeDoc(v.Flags, names...); ok {
+		if doc, ok := runtimeDoc(v.Flags, "", names...); ok {
 			return doc, ok
 		}
 
@@ -41,6 +47,7 @@ func (v Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 func (DeleteType) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (v Flags) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
@@ -88,11 +95,9 @@ func (v Mutation[M]) RuntimeDoc(names ...string) ([]string, bool) {
 func (v Seed) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
-		case "Flags":
-			return []string{}, true
 
 		}
-		if doc, ok := runtimeDoc(v.Flags, names...); ok {
+		if doc, ok := runtimeDoc(v.Flags, "", names...); ok {
 			return doc, ok
 		}
 

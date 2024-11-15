@@ -5,11 +5,19 @@ DON'T EDIT THIS FILE
 package directive
 
 // nolint:deadcode,unused
-func runtimeDoc(v any, names ...string) ([]string, bool) {
+func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
 		RuntimeDoc(names ...string) ([]string, bool)
 	}); ok {
-		return c.RuntimeDoc(names...)
+		doc, ok := c.RuntimeDoc(names...)
+		if ok {
+			if prefix != "" && len(doc) > 0 {
+				doc[0] = prefix + doc[0]
+				return doc, true
+			}
+
+			return doc, true
+		}
 	}
 	return nil, false
 }
@@ -58,12 +66,15 @@ func (v ErrUnsupportedDirective) RuntimeDoc(names ...string) ([]string, bool) {
 func (Kind) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (Newer) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (RawValue) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
+
 func (UnmarshalerFunc) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }

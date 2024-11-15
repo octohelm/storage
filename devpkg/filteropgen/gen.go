@@ -79,12 +79,9 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 		f := t.F(fieldName)
 		fieldType := sqlbuilder.GetColumnDef(f).Type
 
-		fieldComment := fmt.Sprintf("按 %s 筛选", func() string {
+		fieldComment := fmt.Sprintf("%s", func() string {
 			if comment := sqlbuilder.GetColumnDef(f).Comment; comment != "" {
 				return comment
-			}
-			if list := sqlbuilder.GetColumnDef(f).Description; len(list) > 0 {
-				return list[0]
 			}
 			return ""
 		}())
