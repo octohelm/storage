@@ -11,7 +11,7 @@ require (
 	github.com/octohelm/gengo v0.0.0-20241115071734-9f4b1461bafa
 	github.com/octohelm/x v0.0.0-20241115085849-6402f8916ad3
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
-	modernc.org/sqlite v1.33.1
+	modernc.org/sqlite v1.34.1
 )
 
 require (
