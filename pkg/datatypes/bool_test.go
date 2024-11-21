@@ -1,7 +1,7 @@
 package datatypes
 
 import (
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 	"testing"
 
 	"github.com/octohelm/storage/internal/testutil"

@@ -2,8 +2,8 @@ package datatypes
 
 import (
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
+	"github.com/go-json-experiment/json"
 )
 
 func JSONScan(dbValue any, value any) error {

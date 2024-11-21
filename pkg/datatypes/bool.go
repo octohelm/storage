@@ -1,7 +1,7 @@
 package datatypes
 
 import (
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 )
 
 type Bool int
@@ -13,8 +13,8 @@ const (
 )
 
 var _ interface {
-	json.Unmarshaler
-	json.Marshaler
+	json.UnmarshalerV1
+	json.UnmarshalerV1
 } = (*Bool)(nil)
 
 func (Bool) OpenAPISchemaType() []string {

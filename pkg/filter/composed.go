@@ -2,7 +2,7 @@ package filter
 
 import (
 	"bytes"
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 	"go/ast"
 	"reflect"
 	"strings"

@@ -2,7 +2,7 @@ package directive
 
 import (
 	"bytes"
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 	"strings"
 )
 

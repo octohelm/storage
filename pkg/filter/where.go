@@ -2,7 +2,7 @@ package filter
 
 import (
 	"bytes"
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 	"slices"
 
 	"github.com/octohelm/storage/pkg/filter/internal/directive"

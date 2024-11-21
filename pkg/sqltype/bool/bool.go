@@ -1,6 +1,6 @@
 package bool
 
-import "encoding/json"
+import "github.com/go-json-experiment/json"
 
 type Bool int
 
@@ -25,8 +25,8 @@ func (b Bool) Bool() bool {
 }
 
 var _ interface {
-	json.Unmarshaler
-	json.Marshaler
+	json.UnmarshalerV1
+	json.MarshalerV1
 } = (*Bool)(nil)
 
 func (Bool) OpenAPISchemaType() []string {

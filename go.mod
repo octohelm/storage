@@ -6,10 +6,12 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-courier/logr v0.3.1
+	github.com/go-json-experiment/json v0.0.0-20241121013241-b5f849ce0b59
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
+	github.com/octohelm/enumeration v0.0.0-20241121070632-2cd7179b161c
 	github.com/octohelm/gengo v0.0.0-20241115071734-9f4b1461bafa
-	github.com/octohelm/x v0.0.0-20241115085849-6402f8916ad3
+	github.com/octohelm/x v0.0.0-20241121081042-36f16bcf18a1
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
 	modernc.org/sqlite v1.34.1
 )
@@ -22,7 +24,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
-	github.com/octohelm/enumeration v0.0.0-20241121070632-2cd7179b161c // indirect
 	github.com/onsi/gomega v1.35.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	golang.org/x/crypto v0.29.0 // indirect

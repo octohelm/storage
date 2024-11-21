@@ -2,7 +2,9 @@ package json
 
 import (
 	"database/sql/driver"
-	"encoding/json"
+
+	"github.com/go-json-experiment/json"
+	jsonv1 "github.com/go-json-experiment/json/v1"
 )
 
 func ObjectOf[T any](data *T) Object[T] {
@@ -33,7 +35,7 @@ func (v Object[T]) As(a *T) {
 
 func (v *Object[T]) UnmarshalJSON(data []byte) error {
 	t := new(T)
-	if err := json.Unmarshal(data, t); err != nil {
+	if err := json.Unmarshal(data, t, jsonv1.OmitEmptyWithLegacyDefinition(true)); err != nil {
 		return err
 	}
 	*v = Object[T]{
@@ -43,7 +45,7 @@ func (v *Object[T]) UnmarshalJSON(data []byte) error {
 }
 
 func (v Object[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.Data)
+	return json.Marshal(v.Data, jsonv1.OmitEmptyWithLegacyDefinition(true))
 }
 
 func (Object[T]) DataType(driverName string) string {
