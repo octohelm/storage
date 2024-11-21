@@ -32,6 +32,8 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdhx/f4=
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
+github.com/octohelm/enumeration v0.0.0-20241121070632-2cd7179b161c h1:NrIvGZ3YdX5LhxvnSVc3Beap2nQOyo2HCQAUbL9+19g=
+github.com/octohelm/enumeration v0.0.0-20241121070632-2cd7179b161c/go.mod h1:09o5QRqS9Z7P/PzUiInOzut5OErC6ysZR3afP+NFFoY=
 github.com/octohelm/gengo v0.0.0-20241115071734-9f4b1461bafa h1:Qez9GuFhfQpzIMBHTykCvaaKR1m2ERTGl7ibw+PQ9jk=
 github.com/octohelm/gengo v0.0.0-20241115071734-9f4b1461bafa/go.mod h1:nEqtfNURVc62wke+9WrK+ojgzujzjrcrjhOg415Hghw=
 github.com/octohelm/x v0.0.0-20241115085849-6402f8916ad3 h1:43P4uBxFSDtw3yhQPzUvTrkgobIrXiAw9llSvibnBTc=

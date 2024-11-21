@@ -9,8 +9,8 @@ import (
 
 	"github.com/octohelm/gengo/pkg/gengo"
 
+	_ "github.com/octohelm/enumeration/devpkg/enumgen"
 	_ "github.com/octohelm/gengo/devpkg/runtimedocgen"
-	_ "github.com/octohelm/storage/devpkg/enumgen"
 	_ "github.com/octohelm/storage/devpkg/filtergen"
 	_ "github.com/octohelm/storage/devpkg/filteropgen"
 	_ "github.com/octohelm/storage/devpkg/tablegen"

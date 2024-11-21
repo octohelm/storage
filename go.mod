@@ -22,6 +22,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/octohelm/enumeration v0.0.0-20241121070632-2cd7179b161c // indirect
 	github.com/onsi/gomega v1.35.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	golang.org/x/crypto v0.29.0 // indirect

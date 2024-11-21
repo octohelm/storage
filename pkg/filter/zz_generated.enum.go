@@ -10,7 +10,8 @@ import (
 	errors "errors"
 	fmt "fmt"
 
-	enumeration "github.com/octohelm/storage/pkg/enumeration"
+	enumeration "github.com/octohelm/enumeration/pkg/enumeration"
+	pkgscanner "github.com/octohelm/enumeration/pkg/scanner"
 )
 
 var InvalidOp = errors.New("invalid Op")
@@ -76,6 +77,10 @@ func ParseOpFromString(s string) (Op, error) {
 		}
 		return OP_UNKNOWN, InvalidOp
 	}
+}
+
+func (v Op) IsZero() bool {
+	return v == OP_UNKNOWN
 }
 
 func (v Op) String() string {
@@ -214,7 +219,7 @@ func (v *Op) Scan(src any) error {
 		offset = o.Offset()
 	}
 
-	i, err := enumeration.ScanIntEnumStringer(src, offset)
+	i, err := pkgscanner.ScanIntEnumStringer(src, offset)
 	if err != nil {
 		return err
 	}

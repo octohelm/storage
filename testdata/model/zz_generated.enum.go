@@ -10,7 +10,8 @@ import (
 	errors "errors"
 	fmt "fmt"
 
-	enumeration "github.com/octohelm/storage/pkg/enumeration"
+	enumeration "github.com/octohelm/enumeration/pkg/enumeration"
+	pkgscanner "github.com/octohelm/enumeration/pkg/scanner"
 )
 
 var InvalidGender = errors.New("invalid Gender")
@@ -48,6 +49,10 @@ func ParseGenderFromString(s string) (Gender, error) {
 		}
 		return GENDER_UNKNOWN, InvalidGender
 	}
+}
+
+func (v Gender) IsZero() bool {
+	return v == GENDER_UNKNOWN
 }
 
 func (v Gender) String() string {
@@ -102,7 +107,7 @@ func (v *Gender) Scan(src any) error {
 		offset = o.Offset()
 	}
 
-	i, err := enumeration.ScanIntEnumStringer(src, offset)
+	i, err := pkgscanner.ScanIntEnumStringer(src, offset)
 	if err != nil {
 		return err
 	}
