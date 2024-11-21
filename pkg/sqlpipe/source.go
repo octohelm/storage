@@ -41,7 +41,7 @@ func (fn *operatorFunc[M]) Next(src Source[M]) Source[M] {
 	return fn.next(src)
 }
 
-func Pipe[M Model, Operator interface{ SourceOperator[M] }](src Source[M], operators ...Operator) Source[M] {
+func Pipe[M Model](src Source[M], operators ...SourceOperator[M]) Source[M] {
 	for _, o := range operators {
 		src = o.Next(src)
 	}

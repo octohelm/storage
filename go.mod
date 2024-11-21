@@ -11,7 +11,7 @@ require (
 	github.com/octohelm/gengo v0.0.0-20241115071734-9f4b1461bafa
 	github.com/octohelm/x v0.0.0-20241115085849-6402f8916ad3
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f
-	modernc.org/sqlite v1.33.1
+	modernc.org/sqlite v1.34.1
 )
 
 require (
@@ -31,7 +31,7 @@ require (
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/tools v0.27.0 // indirect
 	modernc.org/gc/v3 v3.0.0-20241004144649-1aea3fae8852 // indirect
-	modernc.org/libc v1.61.0 // indirect
+	modernc.org/libc v1.61.2 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
