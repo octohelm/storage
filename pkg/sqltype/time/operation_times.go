@@ -15,7 +15,9 @@ type CreationTime struct {
 }
 
 func (times *CreationTime) MarkCreatedAt() {
-	times.CreatedAt = Timestamp(time.Now())
+	if times.CreatedAt.IsZero() {
+		times.CreatedAt = Timestamp(time.Now())
+	}
 }
 
 var _ sqltype.WithUpdationTime = &CreationUpdationTime{}
@@ -27,7 +29,9 @@ type CreationUpdationTime struct {
 }
 
 func (times *CreationUpdationTime) MarkUpdatedAt() {
-	times.UpdatedAt = Timestamp(time.Now())
+	if times.UpdatedAt.IsZero() {
+		times.UpdatedAt = Timestamp(time.Now())
+	}
 }
 
 func (times *CreationUpdationTime) MarkCreatedAt() {
