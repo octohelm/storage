@@ -8,30 +8,43 @@ import (
 	"github.com/octohelm/x/ptr"
 )
 
-type FromOptionFunc[M Model] func(x *sourceFrom[M])
+type FromPatcher[M Model] interface {
+	ApplyToFrom(s SourceCanPatcher[M])
+}
 
-func FromAll[M Model](opts ...FromOptionFunc[M]) Source[M] {
+type SourceCanPatcher[M Model] interface {
+	AddPatchers(patchers ...internal.StmtPatcher[M])
+}
+
+func FromAll[M Model](patchers ...FromPatcher[M]) Source[M] {
 	s := &sourceFrom[M]{}
 	s.OptIncludesAll = ptr.Ptr(true)
 
-	for _, o := range opts {
-		o(s)
+	for _, patcher := range patchers {
+		patcher.ApplyToFrom(s)
 	}
+
 	return s
 }
 
-func From[M Model](opts ...FromOptionFunc[M]) Source[M] {
+func From[M Model](patchers ...FromPatcher[M]) Source[M] {
 	s := &sourceFrom[M]{}
-	for _, o := range opts {
-		o(s)
+
+	for _, patcher := range patchers {
+		patcher.ApplyToFrom(s)
 	}
+
 	return s
 }
 
 type sourceFrom[M Model] struct {
 	internal.Seed
-
+	
 	patchers []internal.StmtPatcher[M]
+}
+
+func (s *sourceFrom[M]) AddPatchers(patchers ...internal.StmtPatcher[M]) {
+	s.patchers = append(s.patchers, patchers...)
 }
 
 func (s *sourceFrom[M]) String() string {

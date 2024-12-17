@@ -7,6 +7,7 @@ const (
 	OperatorSort
 	OperatorLimit
 	OperatorOnConflict
+	OperatorJoin
 	OperatorProject
 	OperatorCommit
 	OperatorSetting

@@ -20,22 +20,37 @@ type OrgUser struct {
 }
 
 func TestSourceFromWithJoin(t *testing.T) {
-	orgUser := sqlpipe.FromAll[OrgUser](
-		sqlpipe.JoinOn[OrgUser](model.OrgUserT.UserID, model.UserT.ID),
-		sqlpipe.JoinOn[OrgUser](model.OrgUserT.OrgID, model.OrgT.ID),
-	)
-
 	t.Run("exec", func(t *testing.T) {
+		orgUser := sqlpipe.FromAll[OrgUser](
+			sqlpipe.JoinOn[OrgUser](
+				model.OrgUserT.UserID,
+				model.UserT.ID,
+			),
+			sqlpipe.JoinOn[OrgUser](
+				model.OrgUserT.OrgID,
+				model.OrgT.ID,
+				sqlpipe.Where(model.OrgT.ID, sqlbuilder.Neq(model.OrgID(0))),
+			),
+		)
+
 		testingx.Expect[sqlfrag.Fragment](t, orgUser, testutil.BeFragment(`
 SELECT *
 FROM t_org_user
 JOIN t_user ON t_org_user.f_user_id = t_user.f_id
-JOIN t_org ON t_org_user.f_org_id = t_org.f_id
-`))
+JOIN t_org ON (t_org_user.f_org_id = t_org.f_id) AND ((t_org.f_id <> ?) AND (t_org.f_deleted_at = ?))
+`, model.OrgID(0), int64(0)))
 	})
 
 	t.Run("then where", func(t *testing.T) {
-		filtered := orgUser.Pipe(
+		filtered := sqlpipe.FromAll[OrgUser]().Pipe(
+			sqlpipe.JoinOn[OrgUser](
+				model.OrgUserT.UserID,
+				model.UserT.ID,
+			),
+			sqlpipe.JoinOn[OrgUser](
+				model.OrgUserT.OrgID,
+				model.OrgT.ID,
+			),
 			sqlpipe.CastWhere[OrgUser](model.UserT.Name, sqlbuilder.Eq("x")),
 			sqlpipe.CastOrWhere[OrgUser](model.OrgT.Name, sqlbuilder.Neq("x")),
 		)
@@ -43,8 +58,8 @@ JOIN t_org ON t_org_user.f_org_id = t_org.f_id
 		testingx.Expect[sqlfrag.Fragment](t, filtered, testutil.BeFragment(`
 SELECT *
 FROM t_org_user
-JOIN t_user ON t_org_user.f_user_id = t_user.f_id
 JOIN t_org ON t_org_user.f_org_id = t_org.f_id
+JOIN t_user ON t_org_user.f_user_id = t_user.f_id
 WHERE (t_user.f_name = ?) OR (t_org.f_name <> ?)
 `, "x", "x"))
 	})

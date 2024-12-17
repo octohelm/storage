@@ -19,8 +19,8 @@ func (u *Embed[M]) GetFlags(ctx context.Context) internal.Flags {
 	src := u.Underlying
 
 	for {
-		if u, ok := src.(interface{ Unwrap() Source[M] }); ok {
-			src = u.Unwrap()
+		if s, ok := src.(interface{ Unwrap() Source[M] }); ok {
+			src = s.Unwrap()
 
 			continue
 		}

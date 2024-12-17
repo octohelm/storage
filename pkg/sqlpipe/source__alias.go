@@ -8,12 +8,16 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
-func As[M Model](src Source[M], name string) Source[M] {
+func As[M Model](src Source[M], name string, opts ...FromPatcher[M]) Source[M] {
 	s := &sourceAlias[M]{
 		embed: Embed[M]{
 			Underlying: src,
 		},
 		name: name,
+	}
+
+	for _, p := range opts {
+		p.ApplyToFrom(s)
 	}
 
 	s.Flags = s.embed.GetFlags(context.Background())
@@ -23,9 +27,13 @@ func As[M Model](src Source[M], name string) Source[M] {
 
 type sourceAlias[M Model] struct {
 	internal.Seed
+	embed    Embed[M]
+	name     string
+	patchers []internal.StmtPatcher[M]
+}
 
-	embed Embed[M]
-	name  string
+func (s *sourceAlias[M]) AddPatchers(patchers ...internal.StmtPatcher[M]) {
+	s.patchers = append(s.patchers, patchers...)
 }
 
 func (s *sourceAlias[M]) Pipe(operators ...SourceOperator[M]) Source[M] {
@@ -45,7 +53,9 @@ func (s *sourceAlias[M]) String() string {
 }
 
 func (s *sourceAlias[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
-	stmt := internal.BuildStmt(ctx, s.embed.Underlying)
+	stmt := internal.BuildStmt(ctx, append([]internal.StmtPatcher[M]{
+		s.embed.Underlying,
+	}, s.patchers...)...)
 
 	return b.WithFlags(s.GetFlags(ctx)).WithSource(
 		sqlfrag.Pair("? AS ?",

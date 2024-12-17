@@ -146,10 +146,6 @@ type whereBuilder struct {
 	b  func(ctx context.Context) sqlfrag.Fragment
 }
 
-func (s *filteredSource[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
-	return internal.CollectStmt(ctx, s)
-}
-
 func (s *filteredSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
 	var w sqlfrag.Fragment
 
@@ -188,6 +184,10 @@ func (s filteredSource[M]) with(op FilterOp, b func(ctx context.Context) sqlfrag
 	})
 
 	return &s
+}
+
+func (s *filteredSource[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return internal.CollectStmt(ctx, s)
 }
 
 func (s *filteredSource[M]) Pipe(operators ...SourceOperator[M]) Source[M] {
