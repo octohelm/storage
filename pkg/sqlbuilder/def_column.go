@@ -196,7 +196,7 @@ func (c *column[T]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			return sqlfrag.Pair("?.? AS ?",
 				c.table,
 				sqlfrag.Const(c.name),
-				sqlfrag.Pair(fmt.Sprintf("%s__%s", c.table.TableName(), c.name)),
+				sqlfrag.Pair(sqlfrag.SafeProjected(c.table.TableName(), c.name)),
 			).Frag(ctx)
 		}
 

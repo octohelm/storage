@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 	"reflect"
 	"strings"
 
@@ -50,7 +51,7 @@ func scanTo(ctx context.Context, rows *sql.Rows, v interface{}) error {
 
 		for sf := range structs.AllFieldValue(ctx, v) {
 			if sf.TableName != "" {
-				if i, ok := columnIndexes[sf.TableName+"__"+sf.Field.Name]; ok && i > -1 {
+				if i, ok := columnIndexes[sqlfrag.SafeProjected(sf.TableName, sf.Field.Name)]; ok && i > -1 {
 					dest[i] = nullable.NewNullIgnoreScanner(sf.Value.Addr().Interface())
 				}
 			}

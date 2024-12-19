@@ -16,8 +16,8 @@ type NullIgnoreScanner struct {
 }
 
 func (scanner *NullIgnoreScanner) Scan(src interface{}) error {
-	if scanner, ok := scanner.dest.(sql.Scanner); ok {
-		return scanner.Scan(src)
+	if s, ok := scanner.dest.(sql.Scanner); ok {
+		return s.Scan(src)
 	}
 	if src == nil {
 		return nil

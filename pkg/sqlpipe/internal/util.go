@@ -29,7 +29,7 @@ func ColumnsByStruct(v any) sqlfrag.Fragment {
 				}
 
 				if fieldValue.TableName != "" {
-					if !yield(fmt.Sprintf("%s.%s AS %s__%s", fieldValue.TableName, fieldValue.Field.Name, fieldValue.TableName, fieldValue.Field.Name), nil) {
+					if !yield(fmt.Sprintf("%s.%s AS %s", fieldValue.TableName, fieldValue.Field.Name, sqlfrag.SafeProjected(fieldValue.TableName, fieldValue.Field.Name)), nil) {
 						return
 					}
 				} else {
