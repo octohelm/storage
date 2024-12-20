@@ -3,6 +3,8 @@ package sqlfrag
 import (
 	"crypto/sha1"
 	"fmt"
+	"github.com/octohelm/x/slices"
+	"strings"
 	"sync"
 )
 
@@ -21,12 +23,21 @@ type aliases struct {
 }
 
 func (a *aliases) Safe(name string) string {
-	v, _ := a.m.LoadOrStore(name, func() string {
+	v, _ := a.m.LoadOrStore(name, sync.OnceValue(func() string {
 		if len(name) < 32 {
 			return name
 		}
 		hashed := fmt.Sprintf("%x", sha1.Sum([]byte(name)))
-		return name[0:16] + hashed[0:8]
-	})
+
+		return strings.Join(slices.Map(strings.Split(name, "_"), func(p string) string {
+			if p == "t" {
+				return "t_"
+			}
+			if len(p) > 0 {
+				return p[0:1]
+			}
+			return p
+		}), "") + "_" + hashed[0:8]
+	}))
 	return v.(func() string)()
 }
