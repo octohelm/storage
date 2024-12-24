@@ -157,6 +157,10 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 		name := key.Name()
 
 		if key.IsPrimary() {
+			if prevKey := currentTable.K(name); prevKey == nil {
+				// prev key not exists, could create
+				d.migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
+			}
 			// pkey could not change
 			continue
 		}

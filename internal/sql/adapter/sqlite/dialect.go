@@ -26,7 +26,7 @@ func (dialect) DriverName() string {
 
 func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 	if key.IsPrimary() {
-		return sqlfrag.Pair("\nALTER TABLE ? ADD PRIMARY KEY (?);", sqlbuilder.GetKeyTable(key), sqlbuilder.ColumnCollect(key.Cols()))
+		return nil
 	}
 
 	return sqlfrag.Pair("\nCREATE @index_type @index_name ON @table (@columns);", sqlfrag.NamedArgSet{

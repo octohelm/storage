@@ -127,7 +127,7 @@ func (k *key) IsUnique() bool {
 }
 
 func (k *key) IsPrimary() bool {
-	return k.isUnique && k.name == "primary" || strings.HasSuffix(k.name, "pkey")
+	return k.isUnique && (k.name == "primary" || strings.HasSuffix(k.name, "pkey"))
 }
 
 func (k *key) Cols() iter.Seq[Column] {

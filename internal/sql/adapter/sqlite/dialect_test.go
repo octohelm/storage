@@ -61,7 +61,7 @@ func TestSqliteDialect(t *testing.T) {
 		},
 		"AddPrimaryKey": {
 			c.AddIndex(table.K("PRIMARY")),
-			sqlfrag.Pair( /* language=sqlite */ "ALTER TABLE t ADD PRIMARY KEY (f_id);"),
+			sqlfrag.Pair( /* language=sqlite */ ""),
 		},
 		"DropIndex": {
 			c.DropIndex(table.K("I_name")),

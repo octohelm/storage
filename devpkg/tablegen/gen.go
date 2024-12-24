@@ -268,7 +268,7 @@ func (@Type) TableName() string {
 	if len(primary) > 0 {
 		c.Render(gengo.Snippet{
 			gengo.T: `
-func (@Type) Primary() []string {
+func (@Type) PrimaryKey() []string {
 	return @primary
 }
 

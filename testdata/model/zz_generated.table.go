@@ -14,7 +14,7 @@ func (Org) TableName() string {
 	return "t_org"
 }
 
-func (Org) Primary() []string {
+func (Org) PrimaryKey() []string {
 	return []string{
 		"ID",
 	}
@@ -80,7 +80,7 @@ func (OrgUser) TableName() string {
 	return "t_org_user"
 }
 
-func (OrgUser) Primary() []string {
+func (OrgUser) PrimaryKey() []string {
 	return []string{
 		"ID",
 	}
@@ -133,7 +133,7 @@ func (User) TableName() string {
 	return "t_user"
 }
 
-func (User) Primary() []string {
+func (User) PrimaryKey() []string {
 	return []string{
 		"ID",
 	}
