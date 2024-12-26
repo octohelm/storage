@@ -49,6 +49,8 @@ func (v ColumnDef) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{}, true
 		case "Relation":
 			return []string{}, true
+		case "StructTag":
+			return []string{}, true
 
 		}
 

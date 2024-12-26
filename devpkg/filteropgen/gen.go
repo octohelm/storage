@@ -77,20 +77,30 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 
 	for _, fieldName := range indexedFields {
 		f := t.F(fieldName)
-		fieldType := sqlbuilder.GetColumnDef(f).Type
+
+		def := sqlbuilder.GetColumnDef(f)
+		fieldType := def.Type
 
 		fieldComment := fmt.Sprintf("%s", func() string {
-			if comment := sqlbuilder.GetColumnDef(f).Comment; comment != "" {
+			if comment := def.Comment; comment != "" {
 				return comment
 			}
 			return ""
 		}())
 
+		domainFieldName := camelcase.LowerCamelCase(fieldName)
+
+		if jsonTag, ok := def.StructTag.Lookup("json"); ok {
+			if jsonTag != "-" && jsonTag != "" {
+				domainFieldName = strings.SplitN(jsonTag, ",", 2)[0]
+			}
+		}
+
 		c.Render(gengo.Snippet{
 			gengo.T: `
 type @ModelTypeName'By@FieldName struct {
 	@fieldComment
-	@FieldName *@filterFilter[@FieldType] ` + "`" + `name:"@domainName~@fieldName,omitempty" in:"query"` + "`" + `
+	@FieldName *@filterFilter[@FieldType] ` + "`" + `name:"@domainName~@domainFieldName,omitzero" in:"query"` + "`" + `
 }
 
 
@@ -105,11 +115,11 @@ func (f *@ModelTypeName'By@FieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSo
 			"ModelTypeName": gengo.ID(named.Obj().Name()),
 			"Type":          gengo.ID(named.Obj()),
 
-			"FieldName":    gengo.ID(fieldName),
-			"FieldType":    gengo.ID(fieldType.String()),
-			"fieldComment": gengo.Comment(fieldComment),
-			"domainName":   gengo.ID(camelcase.LowerKebabCase(domainName)),
-			"fieldName":    gengo.ID(camelcase.LowerCamelCase(fieldName)),
+			"FieldName":       gengo.ID(fieldName),
+			"FieldType":       gengo.ID(fieldType.String()),
+			"fieldComment":    gengo.Comment(fieldComment),
+			"domainName":      gengo.ID(camelcase.LowerKebabCase(domainName)),
+			"domainFieldName": gengo.ID(domainFieldName),
 
 			"sqlpipeSource":         gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.Source"),
 			"sqlpipeOperatorType":   gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.OperatorType"),

@@ -49,7 +49,7 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 	}
 
 	for p := range structs.AllStructField(context.Background(), base) {
-		def := sqlbuilder.ColumnDef{}
+		def := p.ColumnType
 
 		if tsf, ok := p.Field.(*typesx.TStructField); ok {
 			tags, doc := getDoc(tsf)

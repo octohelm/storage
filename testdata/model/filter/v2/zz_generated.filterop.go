@@ -14,7 +14,7 @@ import (
 
 type UserByID struct {
 	// 用户ID
-	ID *filter.Filter[model.UserID] `name:"user~id,omitempty" in:"query"`
+	ID *filter.Filter[model.UserID] `name:"user~id,omitzero" in:"query"`
 }
 
 func (f *UserByID) OperatorType() sqlpipe.OperatorType {
@@ -27,7 +27,7 @@ func (f *UserByID) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.Use
 
 type UserByName struct {
 	// 姓名
-	Name *filter.Filter[string] `name:"user~name,omitempty" in:"query"`
+	Name *filter.Filter[string] `name:"user~name,omitzero" in:"query"`
 }
 
 func (f *UserByName) OperatorType() sqlpipe.OperatorType {
@@ -40,7 +40,7 @@ func (f *UserByName) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.U
 
 type UserByNickname struct {
 	// 昵称
-	Nickname *filter.Filter[string] `name:"user~nickname,omitempty" in:"query"`
+	Nickname *filter.Filter[string] `name:"user~nickname,omitzero" in:"query"`
 }
 
 func (f *UserByNickname) OperatorType() sqlpipe.OperatorType {
@@ -53,7 +53,7 @@ func (f *UserByNickname) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[mod
 
 type UserByAge struct {
 	// 年龄
-	Age *filter.Filter[int64] `name:"user~age,omitempty" in:"query"`
+	Age *filter.Filter[int64] `name:"user~age,omitzero" in:"query"`
 }
 
 func (f *UserByAge) OperatorType() sqlpipe.OperatorType {
@@ -65,7 +65,7 @@ func (f *UserByAge) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.Us
 }
 
 type UserByCreatedAt struct {
-	CreatedAt *filter.Filter[datatypes.Datetime] `name:"user~createdAt,omitempty" in:"query"`
+	CreatedAt *filter.Filter[datatypes.Datetime] `name:"user~createdAt,omitzero" in:"query"`
 }
 
 func (f *UserByCreatedAt) OperatorType() sqlpipe.OperatorType {
@@ -77,7 +77,7 @@ func (f *UserByCreatedAt) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[mo
 }
 
 type UserByDeletedAt struct {
-	DeletedAt *filter.Filter[int64] `name:"user~deletedAt,omitempty" in:"query"`
+	DeletedAt *filter.Filter[int64] `name:"user~deletedAt,omitzero" in:"query"`
 }
 
 func (f *UserByDeletedAt) OperatorType() sqlpipe.OperatorType {
@@ -89,7 +89,7 @@ func (f *UserByDeletedAt) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[mo
 }
 
 type OrgByID struct {
-	ID *filter.Filter[model.OrgID] `name:"org~id,omitempty" in:"query"`
+	ID *filter.Filter[model.OrgID] `name:"org~id,omitzero" in:"query"`
 }
 
 func (f *OrgByID) OperatorType() sqlpipe.OperatorType {
@@ -101,7 +101,7 @@ func (f *OrgByID) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[model.Org] 
 }
 
 type OrgByName struct {
-	Name *filter.Filter[string] `name:"org~name,omitempty" in:"query"`
+	Name *filter.Filter[string] `name:"org~name,omitzero" in:"query"`
 }
 
 func (f *OrgByName) OperatorType() sqlpipe.OperatorType {
@@ -113,7 +113,7 @@ func (f *OrgByName) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[model.Org
 }
 
 type OrgByCreatedAt struct {
-	CreatedAt *filter.Filter[datatypes.Datetime] `name:"org~createdAt,omitempty" in:"query"`
+	CreatedAt *filter.Filter[datatypes.Datetime] `name:"org~createdAt,omitzero" in:"query"`
 }
 
 func (f *OrgByCreatedAt) OperatorType() sqlpipe.OperatorType {
@@ -125,7 +125,7 @@ func (f *OrgByCreatedAt) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[mode
 }
 
 type OrgUserByID struct {
-	ID *filter.Filter[uint64] `name:"org-user~id,omitempty" in:"query"`
+	ID *filter.Filter[uint64] `name:"org-user~id,omitzero" in:"query"`
 }
 
 func (f *OrgUserByID) OperatorType() sqlpipe.OperatorType {
@@ -137,7 +137,7 @@ func (f *OrgUserByID) Next(src sqlpipe.Source[model.OrgUser]) sqlpipe.Source[mod
 }
 
 type OrgUserByUserID struct {
-	UserID *filter.Filter[model.UserID] `name:"org-user~userId,omitempty" in:"query"`
+	UserID *filter.Filter[model.UserID] `name:"org-user~userID,omitzero" in:"query"`
 }
 
 func (f *OrgUserByUserID) OperatorType() sqlpipe.OperatorType {
@@ -149,7 +149,7 @@ func (f *OrgUserByUserID) Next(src sqlpipe.Source[model.OrgUser]) sqlpipe.Source
 }
 
 type OrgUserByOrgID struct {
-	OrgID *filter.Filter[model.OrgID] `name:"org-user~orgId,omitempty" in:"query"`
+	OrgID *filter.Filter[model.OrgID] `name:"org-user~orgID,omitzero" in:"query"`
 }
 
 func (f *OrgUserByOrgID) OperatorType() sqlpipe.OperatorType {

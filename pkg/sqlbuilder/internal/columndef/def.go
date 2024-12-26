@@ -2,14 +2,17 @@ package columndef
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
 	typex "github.com/octohelm/x/types"
 )
 
-func FromTypeAndTag(typ typex.Type, nameAndFlags string) *ColumnDef {
-	ct := &ColumnDef{}
+func FromTypeAndTag(typ typex.Type, nameAndFlags string, st reflect.StructTag) *ColumnDef {
+	ct := &ColumnDef{
+		StructTag: st,
+	}
 	ct.Type = typex.Deref(typ)
 
 	if strings.Contains(nameAndFlags, ",") {
@@ -73,6 +76,7 @@ type ColumnDef struct {
 	Comment           string
 	Description       []string
 	Relation          []string
+	StructTag         reflect.StructTag
 }
 
 type DeprecatedActions struct {

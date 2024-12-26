@@ -135,6 +135,8 @@ func (w *fieldWalker) allStructField(ctx context.Context, tpe typesx.Type) iter.
 			}
 
 			p := &Field{}
+			p.ColumnType = *columndef.FromTypeAndTag(f.Type(), string(tagDB), f.Tag())
+
 			p.FieldName = f.Name()
 			p.Type = f.Type()
 			p.Field = f
@@ -146,8 +148,6 @@ func (w *fieldWalker) allStructField(ctx context.Context, tpe typesx.Type) iter.
 
 			p.ModelLoc = make([]int, len(modelLoc))
 			copy(p.ModelLoc, modelLoc)
-
-			p.ColumnType = *columndef.FromTypeAndTag(p.Type, string(tagDB))
 
 			if !yield(p) {
 				return

@@ -12,7 +12,6 @@ import (
 	"github.com/octohelm/storage/internal/sql/adapter/sqlite"
 	"github.com/octohelm/storage/pkg/migrator/internal"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/testdata/model"
 	testingx "github.com/octohelm/x/testing"
@@ -89,8 +88,6 @@ CREATE INDEX t_user_i_nickname ON t_user (f_nickname);
 		userv2 := sqlbuilder.TableFromModel(&model.UserV2{})
 
 		actions := internal.Diff(d.Dialect(), userv1, userv2)
-
-		fmt.Println(sqlfrag.Collect(context.Background(), actions))
 
 		testingx.Expect(t, actions, testutil.BeFragment(`
 DROP INDEX IF EXISTS t_user_i_age;

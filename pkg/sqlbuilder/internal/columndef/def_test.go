@@ -39,7 +39,7 @@ func TestColumnTypeFromTypeAndTag(t *testing.T) {
 
 	for tagValue, ct := range cases {
 		t.Run(tagValue, func(t *testing.T) {
-			testingx.Expect(t, FromTypeAndTag(ct.Type, tagValue), testingx.Equal(ct))
+			testingx.Expect(t, FromTypeAndTag(ct.Type, tagValue, ""), testingx.Equal(ct))
 		})
 	}
 }
