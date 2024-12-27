@@ -178,10 +178,16 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 			d.migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
 		} else {
 			if !key.IsPrimary() {
-				indexDef, _ := sqlfrag.Collect(context.Background(), sqlbuilder.ColumnCollect(key.Cols()))
-				prevIndexDef, _ := sqlfrag.Collect(context.Background(), sqlbuilder.ColumnCollect(prevKey.Cols()))
+				currentIndexDef, _ := sqlfrag.Collect(context.Background(), sqlbuilder.ColumnCollect(
+					slices.Values(slices.SortedFunc(key.Cols(), func(column1 sqlbuilder.Column, column2 sqlbuilder.Column) int {
+						return cmp.Compare(column1.Name(), column2.Name())
+					})),
+				))
+				prevIndexDef, _ := sqlfrag.Collect(context.Background(), sqlbuilder.ColumnCollect(slices.Values(slices.SortedFunc(prevKey.Cols(), func(column1 sqlbuilder.Column, column2 sqlbuilder.Column) int {
+					return cmp.Compare(column1.Name(), column2.Name())
+				}))))
 
-				if !strings.EqualFold(indexDef, prevIndexDef) {
+				if !strings.EqualFold(currentIndexDef, prevIndexDef) {
 					d.migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
 					d.migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
 				}
@@ -209,7 +215,9 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 
 		if nextTable.K(key.Name()) == nil {
 			// drop index not exists
-			d.migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
+			if !key.IsPrimary() {
+				d.migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
+			}
 		}
 	}
 

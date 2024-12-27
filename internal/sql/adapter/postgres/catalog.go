@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 	"regexp"
 	"strings"
 	textscanner "text/scanner"
@@ -77,13 +78,34 @@ func catalog(ctx context.Context, a adapter.Adapter, dbName string) (*sqlbuilder
 		if err != nil {
 			return nil, err
 		}
-
 		if err := scanner.Scan(ctx, rows, &indexList); err != nil {
 			return nil, err
 		}
 
+		{
+			rows, err := a.Query(
+				ctx,
+				sqlfrag.Pair(`
+SELECT connamespace::regnamespace    AS schemaname,
+       conrelid::regclass        AS tablename,
+       conname                   AS indexname,
+       pg_get_constraintdef(oid) AS indexdef
+FROM pg_constraint
+WHERE connamespace = ?::regnamespace
+ORDER BY conrelid::regclass::text, contype DESC;
+`, tableSchema,
+				))
+			if err != nil {
+				return nil, err
+			}
+			if err := scanner.Scan(ctx, rows, &indexList); err != nil {
+				return nil, err
+			}
+		}
+
 		for _, idxSchema := range indexList {
 			t := cat.Table(idxSchema.TABLE_NAME)
+
 			t.(sqlbuilder.KeyCollectionManager).AddKey(idxSchema.ToKey(t))
 		}
 	}
@@ -136,7 +158,9 @@ func (columnSchema *columnSchema) ToColumn() sqlbuilder.Column {
 
 	// numeric type
 	if columnSchema.NUMERIC_PRECISION > 0 {
-		def.Length = columnSchema.NUMERIC_PRECISION
+		if columnSchema.NUMERIC_PRECISION != 53 {
+			def.Length = columnSchema.NUMERIC_PRECISION
+		}
 		def.Decimal = columnSchema.NUMERIC_SCALE
 	} else {
 		def.Length = columnSchema.CHARACTER_MAXIMUM_LENGTH
@@ -161,14 +185,28 @@ func (indexSchema) TableName() string {
 }
 
 func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
-	name := strings.ToLower(idxSchema.INDEX_NAME[len(table.TableName())+1:])
-	method := strings.ToUpper(reUsing.FindString(idxSchema.INDEX_DEF)[6:])
 	isUnique := strings.Contains(idxSchema.INDEX_DEF, "UNIQUE")
+	method := ""
+	name := ""
+
+	// (f_id,)
+	colParts := ""
+
+	if strings.HasPrefix(idxSchema.INDEX_DEF, "PRIMARY KEY") {
+		isUnique = true
+		name = "PRIMARY"
+		colParts = idxSchema.INDEX_DEF[len("PRIMARY KEY"):]
+	} else {
+		name = strings.ToLower(idxSchema.INDEX_NAME[len(table.TableName())+1:])
+		method = strings.ToUpper(reUsing.FindString(idxSchema.INDEX_DEF)[6:])
+		// USING
+		colParts = strings.TrimSpace(reUsing.Split(idxSchema.INDEX_DEF, 2)[1])
+	}
 
 	colNameAndOptions := make([]string, 0)
 
 	s := &textscanner.Scanner{}
-	s.Init(bytes.NewBufferString(strings.TrimSpace(reUsing.Split(idxSchema.INDEX_DEF, 2)[1])))
+	s.Init(bytes.NewBufferString(colParts))
 
 	parts := make([]string, 0)
 
@@ -190,7 +228,6 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 		}
 		parts = append(parts, part)
 	}
-
 	if isUnique {
 		return sqlbuilder.UniqueIndex(name, nil, sqlbuilder.IndexUsing(method), sqlbuilder.IndexColNameAndOptions(colNameAndOptions...))
 	}
