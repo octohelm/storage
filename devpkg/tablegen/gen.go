@@ -240,16 +240,16 @@ func (g *tableGen) generateIndexInterfaces(c gengo.Context, t sqlbuilder.Table, 
 		keyDef := key.(sqlbuilder.KeyDef)
 
 		if key.IsPrimary() {
-			primary = keyDef.ColNameAndOptions()
+			primary = keyDef.FieldNameAndOptions()
 		} else {
 			n := key.Name()
 			if method := keyDef.Method(); method != "" {
 				n = n + "/" + method
 			}
 			if key.IsUnique() {
-				uniqueIndexes[n] = keyDef.ColNameAndOptions()
+				uniqueIndexes[n] = keyDef.FieldNameAndOptions()
 			} else {
-				indexes[n] = keyDef.ColNameAndOptions()
+				indexes[n] = keyDef.FieldNameAndOptions()
 			}
 		}
 	}

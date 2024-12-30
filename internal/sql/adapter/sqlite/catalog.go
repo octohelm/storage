@@ -84,9 +84,9 @@ func (a *sqliteAdapter) Catalog(ctx context.Context) (*sqlbuilder.Tables, error)
 			var key sqlbuilder.Key
 
 			if isUnique {
-				key = sqlbuilder.UniqueIndex(indexName, nil, sqlbuilder.IndexColNameAndOptions(indexColNameAndOptions...))
+				key = sqlbuilder.UniqueIndex(indexName, nil, sqlbuilder.IndexFieldNameAndOptions(indexColNameAndOptions...))
 			} else {
-				key = sqlbuilder.Index(indexName, nil, sqlbuilder.IndexColNameAndOptions(indexColNameAndOptions...))
+				key = sqlbuilder.Index(indexName, nil, sqlbuilder.IndexFieldNameAndOptions(indexColNameAndOptions...))
 			}
 
 			table.(sqlbuilder.KeyCollectionManager).AddKey(key)

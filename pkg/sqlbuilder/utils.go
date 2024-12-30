@@ -111,9 +111,9 @@ func scanDefToTable(tab *table, i any) {
 
 	if primaryKeyHook, ok := i.(WithPrimaryKey); ok {
 		tab.KeyCollection.(KeyCollectionManager).AddKey((&key{
-			name:              "primary",
-			isUnique:          true,
-			colNameAndOptions: primaryKeyHook.PrimaryKey(),
+			name:                "primary",
+			isUnique:            true,
+			fieldNameAndOptions: primaryKeyHook.PrimaryKey(),
 		}).Of(tab))
 	}
 
@@ -122,10 +122,10 @@ func scanDefToTable(tab *table, i any) {
 			indexName, method := ResolveIndexNameAndMethod(indexNameAndMethod)
 
 			tab.KeyCollection.(KeyCollectionManager).AddKey((&key{
-				name:              indexName,
-				method:            method,
-				isUnique:          true,
-				colNameAndOptions: fieldNames,
+				name:                indexName,
+				method:              method,
+				isUnique:            true,
+				fieldNameAndOptions: fieldNames,
 			}).Of(tab))
 		}
 	}
@@ -134,9 +134,9 @@ func scanDefToTable(tab *table, i any) {
 		for indexNameAndMethod, fieldNames := range indexesHook.Indexes() {
 			indexName, method := ResolveIndexNameAndMethod(indexNameAndMethod)
 			tab.KeyCollection.(KeyCollectionManager).AddKey((&key{
-				name:              indexName,
-				method:            method,
-				colNameAndOptions: fieldNames,
+				name:                indexName,
+				method:              method,
+				fieldNameAndOptions: fieldNames,
 			}).Of(tab))
 		}
 	}
@@ -173,16 +173,16 @@ func ParseIndexDefine(def string) *IndexDefine {
 		def = def[i+1:]
 	}
 
-	d.ColNameAndOptions = strings.Split(strings.TrimSpace(def), " ")
+	d.FieldNameAndOptions = strings.Split(strings.TrimSpace(def), " ")
 
 	return &d
 }
 
 type IndexDefine struct {
-	Kind              string
-	Name              string
-	Method            string
-	ColNameAndOptions []string
+	Kind                string
+	Name                string
+	Method              string
+	FieldNameAndOptions []string
 }
 
 func (i IndexDefine) ID() string {

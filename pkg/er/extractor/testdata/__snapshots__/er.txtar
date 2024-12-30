@@ -1,0 +1,149 @@
+-- er.json --
+{
+  "name": "test",
+  "tables": {
+    "t_org": {
+      "columns": {
+        "f_created_at": {
+          "type": "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
+        },
+        "f_deleted_at": {
+          "type": "BIGINT NOT NULL DEFAULT '0'"
+        },
+        "f_id": {
+          "type": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL"
+        },
+        "f_name": {
+          "type": "TEXT NOT NULL DEFAULT ''"
+        },
+        "f_updated_at": {
+          "type": "BIGINT NOT NULL DEFAULT '0'"
+        }
+      },
+      "constraints": {
+        "i_created_at": {
+          "columnNames": [
+            "f_created_at"
+          ]
+        },
+        "i_name": {
+          "columnNames": [
+            "f_name"
+          ],
+          "unique": true
+        },
+        "primary": {
+          "columnNames": [
+            "f_id"
+          ],
+          "primary": true,
+          "unique": true
+        }
+      },
+      "title": "Org"
+    },
+    "t_org_user": {
+      "columns": {
+        "f_id": {
+          "type": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL"
+        },
+        "f_org_id": {
+          "of": "t_org.f_id",
+          "type": "UNSIGNED BIG INT NOT NULL"
+        },
+        "f_user_id": {
+          "of": "t_user.f_id",
+          "type": "UNSIGNED BIG INT NOT NULL"
+        }
+      },
+      "constraints": {
+        "i_org_usr": {
+          "columnNames": [
+            "f_user_id",
+            "f_org_id"
+          ],
+          "unique": true
+        },
+        "primary": {
+          "columnNames": [
+            "f_id"
+          ],
+          "primary": true,
+          "unique": true
+        }
+      },
+      "title": "OrgUser"
+    },
+    "t_user": {
+      "columns": {
+        "f_age": {
+          "title": "年龄",
+          "type": "BIGINT NOT NULL DEFAULT '0'"
+        },
+        "f_created_at": {
+          "type": "timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
+        },
+        "f_deleted_at": {
+          "type": "BIGINT NOT NULL DEFAULT '0'"
+        },
+        "f_gender": {
+          "type": "INTEGER NOT NULL DEFAULT '0'"
+        },
+        "f_id": {
+          "description": "生成 ID",
+          "title": "用户ID",
+          "type": "INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL"
+        },
+        "f_name": {
+          "title": "姓名",
+          "type": "TEXT NOT NULL DEFAULT ''"
+        },
+        "f_nickname": {
+          "title": "昵称",
+          "type": "TEXT NOT NULL DEFAULT ''"
+        },
+        "f_updated_at": {
+          "type": "BIGINT NOT NULL DEFAULT '0'"
+        },
+        "f_username": {
+          "title": "用户名",
+          "type": "TEXT NOT NULL DEFAULT ''"
+        }
+      },
+      "constraints": {
+        "i_age": {
+          "columnNames": [
+            "f_age",
+            "f_deleted_at"
+          ],
+          "unique": true
+        },
+        "i_created_at": {
+          "columnNames": [
+            "f_created_at"
+          ]
+        },
+        "i_name": {
+          "columnNames": [
+            "f_name",
+            "f_deleted_at"
+          ],
+          "unique": true
+        },
+        "i_nickname": {
+          "columnNames": [
+            "f_nickname"
+          ]
+        },
+        "primary": {
+          "columnNames": [
+            "f_id"
+          ],
+          "primary": true,
+          "unique": true
+        }
+      },
+      "title": "User"
+    }
+  }
+}

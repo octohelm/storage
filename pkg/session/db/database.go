@@ -97,6 +97,14 @@ func (d *Database) InjectContext(ctx context.Context) context.Context {
 	return session.InjectContext(ctx, session.New(d.db, d.name))
 }
 
+func (d *Database) Session() session.Session {
+	return session.New(d.db, d.name)
+}
+
+func (d *Database) Tables() *sqlbuilder.Tables {
+	return d.tables
+}
+
 func (d *Database) Run(ctx context.Context) error {
 	if d.EnableMigrate == false {
 		return nil

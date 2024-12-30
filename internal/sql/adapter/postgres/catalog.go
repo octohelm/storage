@@ -229,7 +229,7 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 		parts = append(parts, part)
 	}
 	if isUnique {
-		return sqlbuilder.UniqueIndex(name, nil, sqlbuilder.IndexUsing(method), sqlbuilder.IndexColNameAndOptions(colNameAndOptions...))
+		return sqlbuilder.UniqueIndex(name, nil, sqlbuilder.IndexUsing(method), sqlbuilder.IndexFieldNameAndOptions(colNameAndOptions...))
 	}
-	return sqlbuilder.Index(name, nil, sqlbuilder.IndexUsing(method), sqlbuilder.IndexColNameAndOptions(colNameAndOptions...))
+	return sqlbuilder.Index(name, nil, sqlbuilder.IndexUsing(method), sqlbuilder.IndexFieldNameAndOptions(colNameAndOptions...))
 }

@@ -138,7 +138,7 @@ func BenchmarkTableFieldsFor(b *testing.B) {
 //			Kind:              "index",
 //			Name:              "i_xxx",
 //			Method:            "BTREE",
-//			ColNameAndOptions: []string{"Name"},
+//			FieldNameAndOptions: []string{"Name"},
 //		}))
 //	})
 //
@@ -148,7 +148,7 @@ func BenchmarkTableFieldsFor(b *testing.B) {
 //
 //		testingx.Expect(t, i, testingx.Equal(&IndexDefine{
 //			Kind:              "primary",
-//			ColNameAndOptions: []string{"ID", "Name"},
+//			FieldNameAndOptions: []string{"ID", "Name"},
 //		}))
 //	})
 //
@@ -159,7 +159,7 @@ func BenchmarkTableFieldsFor(b *testing.B) {
 //			Kind:   "index",
 //			Name:   "i_xxx",
 //			Method: "GIST",
-//			ColNameAndOptions: []string{
+//			FieldNameAndOptions: []string{
 //				"Test/gist_trgm_ops",
 //			},
 //		}))

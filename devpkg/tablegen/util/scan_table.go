@@ -100,11 +100,11 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 
 			switch def.Kind {
 			case "primary":
-				key = sqlbuilder.PrimaryKey(nil, sqlbuilder.IndexColNameAndOptions(def.ColNameAndOptions...))
+				key = sqlbuilder.PrimaryKey(nil, sqlbuilder.IndexFieldNameAndOptions(def.FieldNameAndOptions...))
 			case "index":
-				key = sqlbuilder.Index(def.Name, nil, sqlbuilder.IndexUsing(def.Method), sqlbuilder.IndexColNameAndOptions(def.ColNameAndOptions...))
+				key = sqlbuilder.Index(def.Name, nil, sqlbuilder.IndexUsing(def.Method), sqlbuilder.IndexFieldNameAndOptions(def.FieldNameAndOptions...))
 			case "unique_index":
-				key = sqlbuilder.UniqueIndex(def.Name, nil, sqlbuilder.IndexUsing(def.Method), sqlbuilder.IndexColNameAndOptions(def.ColNameAndOptions...))
+				key = sqlbuilder.UniqueIndex(def.Name, nil, sqlbuilder.IndexUsing(def.Method), sqlbuilder.IndexFieldNameAndOptions(def.FieldNameAndOptions...))
 			}
 
 			if key != nil {

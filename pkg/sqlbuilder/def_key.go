@@ -31,9 +31,9 @@ func IndexUsing(method string) IndexOptionFunc {
 	}
 }
 
-func IndexColNameAndOptions(colNameAndOptions ...string) IndexOptionFunc {
+func IndexFieldNameAndOptions(colNameAndOptions ...string) IndexOptionFunc {
 	return func(k *key) {
-		k.colNameAndOptions = colNameAndOptions
+		k.fieldNameAndOptions = colNameAndOptions
 	}
 }
 
@@ -44,7 +44,7 @@ func Index(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key
 
 	if columns != nil {
 		for col := range columns.Cols() {
-			k.colNameAndOptions = append(k.colNameAndOptions, col.Name())
+			k.fieldNameAndOptions = append(k.fieldNameAndOptions, col.Name())
 		}
 	}
 
@@ -77,15 +77,22 @@ type Key interface {
 
 type KeyDef interface {
 	Method() string
-	ColNameAndOptions() []string
+	FieldNameAndOptions() []string
+}
+
+func GetKeyDef(col Key) KeyDef {
+	if keyDef, ok := col.(KeyDef); ok {
+		return keyDef
+	}
+	return nil
 }
 
 type key struct {
-	table             Table
-	name              string
-	isUnique          bool
-	method            string
-	colNameAndOptions []string
+	table               Table
+	name                string
+	isUnique            bool
+	method              string
+	fieldNameAndOptions []string
 }
 
 func (k *key) IsNil() bool {
@@ -104,17 +111,17 @@ func (k *key) Method() string {
 	return k.method
 }
 
-func (k *key) ColNameAndOptions() []string {
-	return k.colNameAndOptions
+func (k *key) FieldNameAndOptions() []string {
+	return k.fieldNameAndOptions
 }
 
 func (k key) Of(table Table) Key {
 	return &key{
-		table:             table,
-		name:              k.name,
-		isUnique:          k.isUnique,
-		method:            k.method,
-		colNameAndOptions: k.colNameAndOptions,
+		table:               table,
+		name:                k.name,
+		isUnique:            k.isUnique,
+		method:              k.method,
+		fieldNameAndOptions: k.fieldNameAndOptions,
 	}
 }
 
@@ -131,13 +138,13 @@ func (k *key) IsPrimary() bool {
 }
 
 func (k *key) Cols() iter.Seq[Column] {
-	if len(k.colNameAndOptions) == 0 {
+	if len(k.fieldNameAndOptions) == 0 {
 		panic(fmt.Errorf("invalid key %s of %s, missing cols", k.name, k.table.TableName()))
 	}
 
 	return func(yield func(Column) bool) {
 		names := map[string]bool{}
-		for _, colNameAndOptions := range k.colNameAndOptions {
+		for _, colNameAndOptions := range k.fieldNameAndOptions {
 			names[strings.Split(colNameAndOptions, "/")[0]] = true
 		}
 
