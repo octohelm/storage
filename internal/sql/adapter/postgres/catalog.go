@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/octohelm/storage/pkg/sqlfrag"
 	"regexp"
 	"strings"
 	textscanner "text/scanner"
@@ -12,6 +11,7 @@ import (
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func (a *pgAdapter) Catalog(ctx context.Context) (*sqlbuilder.Tables, error) {

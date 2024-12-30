@@ -18,6 +18,7 @@ type actionType int
 const (
 	dropTableIndex actionType = iota
 	dropTableColumn
+	keepTableColumn
 	renameTableColumn
 	modifyTableColumn
 	addTableColumn
@@ -45,8 +46,8 @@ type diff struct {
 	dialect adapter.Dialect
 	actions []*Action
 
-	changedIndexes map[string]bool
-	changedColumns map[string]actionType
+	indexes map[string]bool
+	columns map[string]actionType
 }
 
 func (d *diff) IsNil() bool {
@@ -71,10 +72,10 @@ func (d *diff) migrate(typ actionType, name string, fragments ...sqlfrag.Fragmen
 		case dropTableIndex, addTableIndex:
 			// record once to avoid duplicated action
 			changed := fmt.Sprintf("%d/%s", typ, name)
-			if _, ok := d.changedIndexes[changed]; ok {
+			if _, ok := d.indexes[changed]; ok {
 				return
 			} else {
-				d.changedIndexes[changed] = true
+				d.indexes[changed] = true
 			}
 		default:
 
@@ -90,9 +91,9 @@ func (d *diff) migrate(typ actionType, name string, fragments ...sqlfrag.Fragmen
 
 func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlbuilder.Table) sqlfrag.Fragment {
 	d := &diff{
-		dialect:        dialect,
-		changedIndexes: make(map[string]bool),
-		changedColumns: make(map[string]actionType),
+		dialect: dialect,
+		indexes: make(map[string]bool),
+		columns: make(map[string]actionType),
 	}
 
 	// create nextTable
@@ -104,22 +105,26 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 	// diff columns
 	for nextCol := range nextTable.Cols() {
 		if currentCol := currentTable.F(nextCol.Name()); currentCol != nil {
-			if nextCol != nil {
+			if !nextCol.IsNil() {
 				if deprecatedActions := sqlbuilder.GetColumnDef(nextCol).DeprecatedActions; deprecatedActions != nil {
 					renameTo := deprecatedActions.RenameTo
 					if renameTo != "" {
 						if prevCol := currentTable.F(renameTo); prevCol != nil {
-							d.changedColumns[prevCol.Name()] = dropTableColumn
+							d.columns[prevCol.Name()] = dropTableColumn
 							d.migrate(dropTableColumn, prevCol.Name(), dialect.DropColumn(prevCol))
 						}
+
 						targetCol := nextTable.F(renameTo)
 						if targetCol == nil {
 							panic(fmt.Errorf("col `%s` is not declared", renameTo))
 						}
+						d.columns[renameTo] = renameTableColumn
 						d.migrate(renameTableColumn, nextCol.Name(), dialect.RenameColumn(nextCol, targetCol))
 						currentTable.(sqlbuilder.ColumnCollectionManger).AddCol(targetCol)
 						continue
 					}
+
+					// drop deprecated column
 					d.migrate(dropTableColumn, nextCol.Name(), dialect.DropColumn(nextCol))
 					continue
 				}
@@ -128,18 +133,17 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 				currentColType, _ := sqlfrag.Collect(context.Background(), dialect.DataType(sqlbuilder.GetColumnDef(nextCol)))
 
 				if !strings.EqualFold(prevColType, currentColType) {
-					d.changedColumns[nextCol.Name()] = modifyTableColumn
+					d.columns[nextCol.Name()] = modifyTableColumn
 					d.migrate(modifyTableColumn, nextCol.Name(), dialect.ModifyColumn(nextCol, currentCol))
 				}
+
+				d.columns[nextCol.Name()] = keepTableColumn
+
 				continue
 			}
 
-			d.changedColumns[nextCol.Name()] = dropTableColumn
+			d.columns[nextCol.Name()] = dropTableColumn
 			d.migrate(dropTableColumn, nextCol.Name(), dialect.DropColumn(nextCol))
-		}
-
-		if sqlbuilder.GetColumnDef(nextCol).DeprecatedActions == nil {
-			d.migrate(addTableColumn, nextCol.Name(), dialect.AddColumn(nextCol))
 		}
 	}
 
@@ -148,8 +152,17 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 		// when need to drop real data col, must declare deprecated for migrate
 		if strings.HasPrefix(col.Name(), "__") && nextTable.F(col.Name()) == nil {
 			// drop column
-			d.changedColumns[col.Name()] = dropTableColumn
+			d.columns[col.Name()] = dropTableColumn
 			d.migrate(dropTableColumn, col.Name(), dialect.DropColumn(col))
+		}
+	}
+
+	// added new columns
+	for nextCol := range nextTable.Cols() {
+		if sqlbuilder.GetColumnDef(nextCol).DeprecatedActions == nil {
+			if _, changed := d.columns[nextCol.Name()]; !changed {
+				d.migrate(addTableColumn, nextCol.Name(), dialect.AddColumn(nextCol))
+			}
 		}
 	}
 
@@ -166,7 +179,7 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 		}
 
 		for col := range key.Cols() {
-			if tpe, ok := d.changedColumns[col.Name()]; ok && tpe == modifyTableColumn {
+			if tpe, ok := d.columns[col.Name()]; ok && tpe == modifyTableColumn {
 				// always re index when col type modified
 				d.migrate(dropTableIndex, key.Name(), dialect.DropIndex(key))
 				d.migrate(addTableIndex, key.Name(), dialect.AddIndex(key))
@@ -200,7 +213,7 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 		colDropped := false
 
 		for col := range key.Cols() {
-			if tpe, ok := d.changedColumns[col.Name()]; ok && tpe == dropTableColumn {
+			if tpe, ok := d.columns[col.Name()]; ok && tpe == dropTableColumn {
 				colDropped = true
 				break
 			}
