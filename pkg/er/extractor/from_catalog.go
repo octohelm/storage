@@ -13,10 +13,11 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tables) *er.Database {
-	erd := &er.Database{
-		Name:   s.Name(),
-		Tables: make(map[string]*er.Table),
+func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tables) *er.OrderedDatabase {
+	erd := &er.OrderedDatabase{
+		Head: er.Head{
+			Name: s.Name(),
+		},
 	}
 
 	c := &collector{
@@ -25,17 +26,16 @@ func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tabl
 	}
 
 	for t := range c.tables(ctx, tables) {
-		erd.Tables[t.Name] = t
+		erd.Tables.Set(t.Name, t)
 	}
 
-	for _, t := range erd.Tables {
-		for _, col := range t.Columns {
+	for _, t := range erd.Tables.KeyValues() {
+		for _, col := range t.Columns.KeyValues() {
 			if of, ok := c.primaries[col.GoType]; ok {
 				if !strings.HasPrefix(of, t.Name+".") {
 					col.Of = of
 				}
 			}
-
 		}
 	}
 
@@ -48,15 +48,13 @@ type collector struct {
 	primaries map[string]string
 }
 
-func (c *collector) tables(ctx context.Context, tables *sqlbuilder.Tables) iter.Seq[*er.Table] {
-	return func(yield func(*er.Table) bool) {
+func (c *collector) tables(ctx context.Context, tables *sqlbuilder.Tables) iter.Seq[*er.OrderedTable] {
+	return func(yield func(*er.OrderedTable) bool) {
 		for table := range tables.Range {
-			t := &er.Table{
+			t := &er.OrderedTable{
 				Head: er.Head{
 					Name: table.TableName(),
 				},
-				Columns:     make(map[string]*er.Column),
-				Constraints: make(map[string]*er.Constraint),
 			}
 
 			v, ok := table.(interface{ New() sqlbuilder.Model })
@@ -66,11 +64,11 @@ func (c *collector) tables(ctx context.Context, tables *sqlbuilder.Tables) iter.
 			m := v.New()
 
 			for col := range c.columns(ctx, table, m) {
-				t.Columns[col.Name] = col
+				t.Columns.Set(col.Name, col)
 			}
 
 			for cc := range c.constraints(ctx, table, m) {
-				t.Constraints[cc.Name] = cc
+				t.Constraints.Set(cc.Name, cc)
 			}
 
 			c.mayCollectRuntimeDoc(m, &t.Head)
@@ -82,15 +80,15 @@ func (c *collector) tables(ctx context.Context, tables *sqlbuilder.Tables) iter.
 	}
 }
 
-func (c *collector) columns(ctx context.Context, table sqlbuilder.Table, m sqlbuilder.Model) iter.Seq[*er.Column] {
-	return func(yield func(*er.Column) bool) {
+func (c *collector) columns(ctx context.Context, table sqlbuilder.Table, m sqlbuilder.Model) iter.Seq[*er.OrderedColumn] {
+	return func(yield func(*er.OrderedColumn) bool) {
 		for col := range table.Cols() {
 			def := sqlbuilder.GetColumnDef(col)
 			if def.DeprecatedActions != nil {
 				continue
 			}
 
-			c2 := &er.Column{
+			c2 := &er.OrderedColumn{
 				Head: er.Head{
 					Name: col.Name(),
 				},
@@ -112,14 +110,14 @@ func (c *collector) columns(ctx context.Context, table sqlbuilder.Table, m sqlbu
 	}
 }
 
-func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m sqlbuilder.Model) iter.Seq[*er.Constraint] {
-	return func(yield func(*er.Constraint) bool) {
+func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m sqlbuilder.Model) iter.Seq[*er.OrderedConstraint] {
+	return func(yield func(*er.OrderedConstraint) bool) {
 		for key := range table.Keys() {
 			if key.IsNil() {
 				continue
 			}
 
-			c2 := &er.Constraint{
+			c2 := &er.OrderedConstraint{
 				Head: er.Head{
 					Name: key.Name(),
 				},

@@ -1,6 +1,5 @@
 -- er.json --
 {
-  "name": "test",
   "tables": {
     "t_org": {
       "columns": {

@@ -1,19 +1,16 @@
 package er
 
-type Database struct {
-	Name   string            `json:"name"`
-	Tables map[string]*Table `json:"tables"`
-}
-
-func (d *Database) Er() *Database {
-	return d
-}
-
 type Head struct {
 	Name string `json:"-"`
 
 	Title       string `json:"title,omitzero"`
 	Description string `json:"description,omitzero"`
+}
+
+type Database struct {
+	Head
+
+	Tables map[string]*Table `json:"tables"`
 }
 
 type Table struct {
@@ -25,9 +22,11 @@ type Table struct {
 
 type Column struct {
 	Head
-	Type   string `json:"type"`
+
+	Type string `json:"type"`
+	Of   string `json:"of,omitzero"`
+
 	GoType string `json:"-"`
-	Of     string `json:"of,omitzero"`
 }
 
 type Constraint struct {
