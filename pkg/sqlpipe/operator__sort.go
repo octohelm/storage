@@ -2,6 +2,7 @@ package sqlpipe
 
 import (
 	"context"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 	"iter"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -9,27 +10,27 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
-func CastAscSort[M Model, U Model](col modelscoped.Column[U]) SourceOperator[M] {
+func CastAscSort[M Model, U Model](col modelscoped.Column[U], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
-		return newSortedSource(src, sqlbuilder.AscOrder(col))
+		return newSortedSource(src, sqlbuilder.AscOrder(col, ex...))
 	})
 }
 
-func CastDescSort[M Model, U Model](col modelscoped.Column[U]) SourceOperator[M] {
+func CastDescSort[M Model, U Model](col modelscoped.Column[U], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
-		return newSortedSource(src, sqlbuilder.DescOrder(col))
+		return newSortedSource(src, sqlbuilder.DescOrder(col, ex...))
 	})
 }
 
-func AscSort[M Model](col modelscoped.Column[M]) SourceOperator[M] {
+func AscSort[M Model](col modelscoped.Column[M], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
-		return newSortedSource(src, sqlbuilder.AscOrder(col))
+		return newSortedSource(src, sqlbuilder.AscOrder(col, ex...))
 	})
 }
 
-func DescSort[M Model](col modelscoped.Column[M]) SourceOperator[M] {
+func DescSort[M Model](col modelscoped.Column[M], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
-		return newSortedSource(src, sqlbuilder.DescOrder(col))
+		return newSortedSource(src, sqlbuilder.DescOrder(col, ex...))
 	})
 }
 

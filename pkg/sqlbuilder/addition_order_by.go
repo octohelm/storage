@@ -49,12 +49,20 @@ func (o *orderBy) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
-func AscOrder(target sqlfrag.Fragment) Order {
-	return &order{target: target, typ: "ASC"}
+func NullsFirst() sqlfrag.Fragment {
+	return sqlfrag.Pair(" NULLS FIRST")
 }
 
-func DescOrder(target sqlfrag.Fragment) Order {
-	return &order{target: target, typ: "DESC"}
+func NullsLast() sqlfrag.Fragment {
+	return sqlfrag.Pair(" NULLS LAST")
+}
+
+func AscOrder(target sqlfrag.Fragment, ex ...sqlfrag.Fragment) Order {
+	return &order{target: target, typ: "ASC", ex: ex}
+}
+
+func DescOrder(target sqlfrag.Fragment, ex ...sqlfrag.Fragment) Order {
+	return &order{target: target, typ: "DESC", ex: ex}
 }
 
 type Order interface {
@@ -66,6 +74,7 @@ type Order interface {
 type order struct {
 	target sqlfrag.Fragment
 	typ    string
+	ex     []sqlfrag.Fragment
 }
 
 func (o *order) orderType() string {
@@ -87,6 +96,19 @@ func (o *order) Frag(ctx context.Context) iter.Seq2[string, []any] {
 		if o.typ != "" {
 			if !yield(" "+o.typ, nil) {
 				return
+			}
+		}
+
+		if o.ex != nil {
+			for _, x := range o.ex {
+				if x.IsNil() {
+					continue
+				}
+				for q, args := range x.Frag(ctx) {
+					if !yield(q, args) {
+						return
+					}
+				}
 			}
 		}
 	}
