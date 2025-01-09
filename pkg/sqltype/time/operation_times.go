@@ -20,23 +20,27 @@ func (times *CreationTime) MarkCreatedAt() {
 	}
 }
 
-var _ sqltype.WithUpdationTime = &CreationUpdationTime{}
+var _ sqltype.WithModificationTime = &CreationUpdationTime{}
 
-type CreationUpdationTime struct {
+type CreationUpdationTime = CreationModificationTime
+type CreationModificationTime struct {
 	CreationTime
 	// 更新时间
 	UpdatedAt Timestamp `db:"f_updated_at,default='0'" json:"updatedAt"`
 }
 
-func (times *CreationUpdationTime) MarkUpdatedAt() {
+func (times *CreationUpdationTime) MarkModifiedAt() {
 	if times.UpdatedAt.IsZero() {
 		times.UpdatedAt = Timestamp(time.Now())
 	}
 }
 
 func (times *CreationUpdationTime) MarkCreatedAt() {
-	times.MarkUpdatedAt()
-	times.CreatedAt = times.UpdatedAt
+	times.MarkModifiedAt()
+
+	if times.CreatedAt.IsZero() {
+		times.CreatedAt = times.UpdatedAt
+	}
 }
 
 var _ sqltype.WithSoftDelete = &CreationUpdationDeletionTime{}
@@ -52,6 +56,7 @@ func (CreationUpdationDeletionTime) SoftDeleteFieldAndZeroValue() (string, drive
 }
 
 func (times *CreationUpdationDeletionTime) MarkDeletedAt() {
-	times.MarkUpdatedAt()
+	times.MarkModifiedAt()
+
 	times.DeletedAt = times.UpdatedAt
 }

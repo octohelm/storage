@@ -6,8 +6,8 @@ type WithCreationTime interface {
 	MarkCreatedAt()
 }
 
-type WithUpdationTime interface {
-	MarkUpdatedAt()
+type WithModificationTime interface {
+	MarkModifiedAt()
 }
 
 type WithSoftDelete interface {
