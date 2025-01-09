@@ -3,6 +3,7 @@ package extractor
 import (
 	"context"
 	"fmt"
+	"github.com/octohelm/storage/pkg/dal"
 	"iter"
 	"slices"
 	"strings"
@@ -21,8 +22,8 @@ func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tabl
 	}
 
 	c := &collector{
-		s:         s,
-		primaries: make(map[string]string),
+		s:       s,
+		uniques: make(map[string]string),
 	}
 
 	for t := range c.tables(ctx, tables) {
@@ -31,7 +32,7 @@ func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tabl
 
 	for _, t := range erd.Tables.KeyValues() {
 		for _, col := range t.Columns.KeyValues() {
-			if of, ok := c.primaries[col.GoType]; ok {
+			if of, ok := c.uniques[col.GoType]; ok {
 				if !strings.HasPrefix(of, t.Name+".") {
 					col.Of = of
 				}
@@ -45,7 +46,7 @@ func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tabl
 type collector struct {
 	s session.Session
 
-	primaries map[string]string
+	uniques map[string]string
 }
 
 func (c *collector) tables(ctx context.Context, tables *sqlbuilder.Tables) iter.Seq[*er.OrderedTable] {
@@ -111,6 +112,11 @@ func (c *collector) columns(ctx context.Context, table sqlbuilder.Table, m sqlbu
 }
 
 func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m sqlbuilder.Model) iter.Seq[*er.OrderedConstraint] {
+	softDeletedField := ""
+	if x, ok := m.(dal.ModelWithSoftDelete); ok {
+		softDeletedField, _ = x.SoftDeleteFieldAndZeroValue()
+	}
+
 	return func(yield func(*er.OrderedConstraint) bool) {
 		for key := range table.Keys() {
 			if key.IsNil() {
@@ -130,14 +136,26 @@ func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m s
 				c2.Method = keyDef.Method()
 			}
 
-			for col := range key.Cols() {
-				if c2.Primary {
-					if strings.Contains(col.Name(), "f_id") {
-						def := sqlbuilder.GetColumnDef(col)
-						c.primaries[def.Type.String()] = fmt.Sprintf("%s.%s", table.TableName(), col.Name())
+			if c2.Unique {
+				cols := make([]sqlbuilder.Column, 0)
+
+				for col := range key.Cols() {
+					if softDeletedField != "" {
+						if col.FieldName() == softDeletedField {
+							continue
+						}
 					}
+
+					cols = append(cols, col)
 				}
 
+				if len(cols) == 1 {
+					def := sqlbuilder.GetColumnDef(cols[0])
+					c.uniques[def.Type.String()] = fmt.Sprintf("%s.%s", table.TableName(), cols[0].Name())
+				}
+			}
+
+			for col := range key.Cols() {
 				cn := er.ConstraintColumnName{
 					Name: col.Name(),
 				}
