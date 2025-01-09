@@ -64,6 +64,11 @@ type field[K string, V any] struct {
 	value V
 }
 
+var _ interface {
+	json.UnmarshalerFrom
+	json.MarshalerTo
+} = &record[string, string]{}
+
 func (p *record[K, V]) initOnce() {
 	if !p.created {
 		p.created = true
@@ -115,7 +120,7 @@ func (r *record[K, V]) Get(k K) (V, bool) {
 	return *new(V), false
 }
 
-func (m *record[K, V]) UnmarshalJSONV2(d *jsontext.Decoder, options json.Options) error {
+func (m *record[K, V]) UnmarshalJSONFrom(d *jsontext.Decoder, options json.Options) error {
 	t, err := d.ReadToken()
 	if err != nil {
 		if err == io.EOF {
@@ -168,7 +173,7 @@ func (m *record[K, V]) UnmarshalJSONV2(d *jsontext.Decoder, options json.Options
 	return nil
 }
 
-func (p record[K, V]) MarshalJSONV2(encoder *jsontext.Encoder, options json.Options) error {
+func (p record[K, V]) MarshalJSONTo(encoder *jsontext.Encoder, options json.Options) error {
 	if err := encoder.WriteToken(jsontext.ObjectStart); err != nil {
 		return err
 	}

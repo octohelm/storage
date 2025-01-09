@@ -13,8 +13,8 @@ const (
 )
 
 var _ interface {
-	json.UnmarshalerV1
-	json.UnmarshalerV1
+	json.Unmarshaler
+	json.Marshaler
 } = (*Bool)(nil)
 
 func (Bool) OpenAPISchemaType() []string {

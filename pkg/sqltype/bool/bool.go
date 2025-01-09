@@ -25,8 +25,8 @@ func (b Bool) Bool() bool {
 }
 
 var _ interface {
-	json.UnmarshalerV1
-	json.MarshalerV1
+	json.Unmarshaler
+	json.Marshaler
 } = (*Bool)(nil)
 
 func (Bool) OpenAPISchemaType() []string {
