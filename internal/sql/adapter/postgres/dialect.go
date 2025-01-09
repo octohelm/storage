@@ -38,7 +38,7 @@ func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 
 	keyDef := key.(sqlbuilder.KeyDef)
 
-	return sqlfrag.Pair("\nCREATE @index_type @index_name ON @table @index_method (@columns);", sqlfrag.NamedArgSet{
+	return sqlfrag.Pair("\nCREATE @index_type @index_name ON @table @index_method (@columnAndOptions);", sqlfrag.NamedArgSet{
 		"table": sqlbuilder.GetKeyTable(key),
 		"index_type": func() sqlfrag.Fragment {
 			if key.IsUnique() {
@@ -56,7 +56,7 @@ func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 			}
 			return sqlfrag.Empty()
 		}(),
-		"columns": sqlbuilder.ColumnCollect(key.Cols()),
+		"columnAndOptions": sqlbuilder.AsKeyColumnsTableDef(key),
 	})
 }
 
@@ -172,7 +172,7 @@ func (c *dialect) ModifyColumn(col sqlbuilder.Column, prev sqlbuilder.Column) sq
 	dbDataType := c.dataType(def.Type, def)
 	prevDbDataType := c.dataType(prevDef.Type, prevDef)
 
-	actions := []sqlfrag.Fragment{}
+	actions := make([]sqlfrag.Fragment, 0)
 
 	if dbDataType != prevDbDataType {
 		actions = append(actions, sqlfrag.Pair(

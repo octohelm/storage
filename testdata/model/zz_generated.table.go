@@ -155,7 +155,7 @@ func (User) UniqueIndexes() sqlbuilder.Indexes {
 func (User) Indexes() sqlbuilder.Indexes {
 	return sqlbuilder.Indexes{
 		"i_created_at": []string{
-			"CreatedAt",
+			"CreatedAt,desc",
 		},
 		"i_nickname": []string{
 			"Nickname",
@@ -180,7 +180,7 @@ type tableUser struct {
 	Nickname modelscoped.TypedColumn[User, string]
 	// 用户名
 	Username modelscoped.TypedColumn[User, string]
-
+	// 性别
 	Gender modelscoped.TypedColumn[User, Gender]
 	// 年龄
 	Age modelscoped.TypedColumn[User, int64]

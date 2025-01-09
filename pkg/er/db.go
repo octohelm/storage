@@ -32,8 +32,13 @@ type Column struct {
 type Constraint struct {
 	Head
 
-	ColumnNames []string `json:"columnNames"`
-	Method      string   `json:"method,omitzero"`
-	Unique      bool     `json:"unique,omitzero"`
-	Primary     bool     `json:"primary,omitzero"`
+	ColumnNames []ConstraintColumnName `json:"columnNames"`
+	Method      string                 `json:"method,omitzero"`
+	Unique      bool                   `json:"unique,omitzero"`
+	Primary     bool                   `json:"primary,omitzero"`
+}
+
+type ConstraintColumnName struct {
+	Name    string   `json:"name"`
+	Options []string `json:"options,omitzero"`
 }

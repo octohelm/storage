@@ -8,7 +8,7 @@ import "github.com/octohelm/storage/testdata/model/resource"
 // @def unique_index i_name Name DeletedAt
 // @def unique_index i_age Age DeletedAt
 // @def index i_nickname Nickname
-// @def index i_created_at CreatedAt
+// @def index i_created_at CreatedAt,desc
 type User struct {
 	// 用户
 	resource.Resource[UserID]
@@ -19,7 +19,8 @@ type User struct {
 	Nickname string `db:"f_nickname,size=255,default=''"`
 	// 用户名
 	Username string `db:"f_username,default=''"`
-	Gender   Gender `db:"f_gender,default='0'"`
+	// 性别
+	Gender Gender `db:"f_gender,default='0'"`
 	// 年龄
 	Age int64 `db:"f_age,default='0'"`
 

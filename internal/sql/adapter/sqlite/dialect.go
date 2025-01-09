@@ -29,7 +29,7 @@ func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 		return nil
 	}
 
-	return sqlfrag.Pair("\nCREATE @index_type @index_name ON @table (@columns);", sqlfrag.NamedArgSet{
+	return sqlfrag.Pair("\nCREATE @index_type @index_name ON @table (@columnAndOptions);", sqlfrag.NamedArgSet{
 		"table": sqlbuilder.GetKeyTable(key),
 		"index_type": func() sqlfrag.Fragment {
 			if key.IsUnique() {
@@ -37,8 +37,8 @@ func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 			}
 			return sqlfrag.Const("INDEX")
 		}(),
-		"index_name": c.indexName(key),
-		"columns":    sqlbuilder.ColumnCollect(key.Cols()),
+		"index_name":       c.indexName(key),
+		"columnAndOptions": sqlbuilder.AsKeyColumnsTableDef(key),
 	})
 }
 

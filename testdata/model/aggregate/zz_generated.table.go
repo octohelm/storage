@@ -32,7 +32,7 @@ type tableCountedUser struct {
 	Nickname modelscoped.TypedColumn[CountedUser, string]
 	// 用户名
 	Username modelscoped.TypedColumn[CountedUser, string]
-
+	// 性别
 	Gender modelscoped.TypedColumn[CountedUser, model.Gender]
 	// 年龄
 	Age modelscoped.TypedColumn[CountedUser, int64]

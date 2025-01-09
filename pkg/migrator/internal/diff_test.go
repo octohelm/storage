@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS t_user (
 	f_deleted_at BIGINT NOT NULL DEFAULT '0'
 );
 CREATE UNIQUE INDEX t_user_i_age ON t_user (f_age,f_deleted_at);
-CREATE INDEX t_user_i_created_at ON t_user (f_created_at);
+CREATE INDEX t_user_i_created_at ON t_user (f_created_at DESC);
 CREATE UNIQUE INDEX t_user_i_name ON t_user (f_name,f_deleted_at);
 CREATE INDEX t_user_i_nickname ON t_user (f_nickname);
 `))

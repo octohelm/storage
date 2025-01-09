@@ -81,12 +81,17 @@ func (a *sqliteAdapter) Catalog(ctx context.Context) (*sqlbuilder.Tables, error)
 				",",
 			)
 
+			colNameAndOptions := make([]sqlbuilder.FieldNameAndOption, len(indexColNameAndOptions))
+			for i, c := range indexColNameAndOptions {
+				colNameAndOptions[i] = sqlbuilder.FieldNameAndOption(strings.ReplaceAll(c, " ", ","))
+			}
+
 			var key sqlbuilder.Key
 
 			if isUnique {
-				key = sqlbuilder.UniqueIndex(indexName, nil, sqlbuilder.IndexFieldNameAndOptions(indexColNameAndOptions...))
+				key = sqlbuilder.UniqueIndex(indexName, nil, sqlbuilder.IndexFieldNameAndOptions(colNameAndOptions...))
 			} else {
-				key = sqlbuilder.Index(indexName, nil, sqlbuilder.IndexFieldNameAndOptions(indexColNameAndOptions...))
+				key = sqlbuilder.Index(indexName, nil, sqlbuilder.IndexFieldNameAndOptions(colNameAndOptions...))
 			}
 
 			table.(sqlbuilder.KeyCollectionManager).AddKey(key)

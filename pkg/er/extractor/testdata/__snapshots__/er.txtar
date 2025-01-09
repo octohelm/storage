@@ -22,18 +22,24 @@
       "constraints": {
         "i_created_at": {
           "columnNames": [
-            "f_created_at"
+            {
+              "name": "f_created_at"
+            }
           ]
         },
         "i_name": {
           "columnNames": [
-            "f_name"
+            {
+              "name": "f_name"
+            }
           ],
           "unique": true
         },
         "primary": {
           "columnNames": [
-            "f_id"
+            {
+              "name": "f_id"
+            }
           ],
           "primary": true,
           "unique": true
@@ -58,14 +64,20 @@
       "constraints": {
         "i_org_usr": {
           "columnNames": [
-            "f_user_id",
-            "f_org_id"
+            {
+              "name": "f_user_id"
+            },
+            {
+              "name": "f_org_id"
+            }
           ],
           "unique": true
         },
         "primary": {
           "columnNames": [
-            "f_id"
+            {
+              "name": "f_id"
+            }
           ],
           "primary": true,
           "unique": true
@@ -86,6 +98,7 @@
           "type": "BIGINT NOT NULL DEFAULT '0'"
         },
         "f_gender": {
+          "title": "性别",
           "type": "INTEGER NOT NULL DEFAULT '0'"
         },
         "f_id": {
@@ -112,31 +125,48 @@
       "constraints": {
         "i_age": {
           "columnNames": [
-            "f_age",
-            "f_deleted_at"
+            {
+              "name": "f_age"
+            },
+            {
+              "name": "f_deleted_at"
+            }
           ],
           "unique": true
         },
         "i_created_at": {
           "columnNames": [
-            "f_created_at"
+            {
+              "name": "f_created_at",
+              "options": [
+                "DESC"
+              ]
+            }
           ]
         },
         "i_name": {
           "columnNames": [
-            "f_name",
-            "f_deleted_at"
+            {
+              "name": "f_name"
+            },
+            {
+              "name": "f_deleted_at"
+            }
           ],
           "unique": true
         },
         "i_nickname": {
           "columnNames": [
-            "f_nickname"
+            {
+              "name": "f_nickname"
+            }
           ]
         },
         "primary": {
           "columnNames": [
-            "f_id"
+            {
+              "name": "f_id"
+            }
           ],
           "primary": true,
           "unique": true

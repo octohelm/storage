@@ -203,7 +203,7 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 		colParts = strings.TrimSpace(reUsing.Split(idxSchema.INDEX_DEF, 2)[1])
 	}
 
-	colNameAndOptions := make([]string, 0)
+	colNameAndOptions := make([]sqlbuilder.FieldNameAndOption, 0)
 
 	s := &textscanner.Scanner{}
 	s.Init(bytes.NewBufferString(colParts))
@@ -219,9 +219,9 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 		case ",", ")":
 			colNameAndOption := parts[0]
 			if len(parts) > 1 {
-				colNameAndOption += "/" + parts[1]
+				colNameAndOption += "," + strings.ReplaceAll(parts[1], " ", ",")
 			}
-			colNameAndOptions = append(colNameAndOptions, colNameAndOption)
+			colNameAndOptions = append(colNameAndOptions, sqlbuilder.FieldNameAndOption(colNameAndOption))
 			// reset
 			parts = make([]string, 0)
 			continue

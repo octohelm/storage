@@ -236,20 +236,28 @@ func (g *tableGen) generateIndexInterfaces(c gengo.Context, t sqlbuilder.Table, 
 	indexes := sqlbuilder.Indexes{}
 	uniqueIndexes := sqlbuilder.Indexes{}
 
+	toStringSlice := func(options []sqlbuilder.FieldNameAndOption) []string {
+		values := make([]string, 0, len(options))
+		for _, o := range options {
+			values = append(values, string(o))
+		}
+		return values
+	}
+
 	for key := range t.Keys() {
 		keyDef := key.(sqlbuilder.KeyDef)
 
 		if key.IsPrimary() {
-			primary = keyDef.FieldNameAndOptions()
+			primary = toStringSlice(keyDef.FieldNameAndOptions())
 		} else {
 			n := key.Name()
 			if method := keyDef.Method(); method != "" {
-				n = n + "/" + method
+				n = n + "," + method
 			}
 			if key.IsUnique() {
-				uniqueIndexes[n] = keyDef.FieldNameAndOptions()
+				uniqueIndexes[n] = toStringSlice(keyDef.FieldNameAndOptions())
 			} else {
-				indexes[n] = keyDef.FieldNameAndOptions()
+				indexes[n] = toStringSlice(keyDef.FieldNameAndOptions())
 			}
 		}
 	}

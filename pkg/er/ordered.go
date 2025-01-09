@@ -47,10 +47,10 @@ type OrderedColumn struct {
 type OrderedConstraint struct {
 	Head
 
-	ColumnNames []string `json:"columnNames"`
-	Method      string   `json:"method,omitzero"`
-	Unique      bool     `json:"unique,omitzero"`
-	Primary     bool     `json:"primary,omitzero"`
+	ColumnNames []ConstraintColumnName `json:"columnNames"`
+	Method      string                 `json:"method,omitzero"`
+	Unique      bool                   `json:"unique,omitzero"`
+	Primary     bool                   `json:"primary,omitzero"`
 }
 
 type record[K string, V any] struct {

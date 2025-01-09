@@ -113,37 +113,37 @@ func scanDefToTable(tab *table, i any) {
 		tab.KeyCollection.(KeyCollectionManager).AddKey((&key{
 			name:                "primary",
 			isUnique:            true,
-			fieldNameAndOptions: primaryKeyHook.PrimaryKey(),
+			fieldNameAndOptions: FieldNameAndOptionFromStringSlice(primaryKeyHook.PrimaryKey()),
 		}).Of(tab))
 	}
 
 	if uniqueIndexesHook, ok := i.(WithUniqueIndexes); ok {
 		for indexNameAndMethod, fieldNames := range uniqueIndexesHook.UniqueIndexes() {
-			indexName, method := ResolveIndexNameAndMethod(indexNameAndMethod)
+			indexName, method := resolveIndexNameAndMethod(indexNameAndMethod)
 
 			tab.KeyCollection.(KeyCollectionManager).AddKey((&key{
 				name:                indexName,
 				method:              method,
 				isUnique:            true,
-				fieldNameAndOptions: fieldNames,
+				fieldNameAndOptions: FieldNameAndOptionFromStringSlice(fieldNames),
 			}).Of(tab))
 		}
 	}
 
 	if indexesHook, ok := i.(WithIndexes); ok {
 		for indexNameAndMethod, fieldNames := range indexesHook.Indexes() {
-			indexName, method := ResolveIndexNameAndMethod(indexNameAndMethod)
+			indexName, method := resolveIndexNameAndMethod(indexNameAndMethod)
 			tab.KeyCollection.(KeyCollectionManager).AddKey((&key{
 				name:                indexName,
 				method:              method,
-				fieldNameAndOptions: fieldNames,
+				fieldNameAndOptions: FieldNameAndOptionFromStringSlice(fieldNames),
 			}).Of(tab))
 		}
 	}
 }
 
-func ResolveIndexNameAndMethod(n string) (name string, method string) {
-	nameAndMethod := strings.Split(n, "/")
+func resolveIndexNameAndMethod(n string) (name string, method string) {
+	nameAndMethod := strings.Split(n, ",")
 	name = strings.ToLower(nameAndMethod[0])
 	if len(nameAndMethod) > 1 {
 		method = nameAndMethod[1]
@@ -152,8 +152,8 @@ func ResolveIndexNameAndMethod(n string) (name string, method string) {
 }
 
 // ParseIndexDefine
-// @def index i_xxx/BTREE Name
-// @def index i_xxx/GIST TEST/gist_trgm_ops
+// @def index i_xxx,BTREE Name
+// @def index i_xxx,GIST TEST,gist_trgm_ops
 func ParseIndexDefine(def string) *IndexDefine {
 	d := IndexDefine{}
 
@@ -164,7 +164,7 @@ func ParseIndexDefine(def string) *IndexDefine {
 			if d.Kind == "" {
 				d.Kind = part
 			} else if d.Name == "" && d.Kind != "primary" {
-				d.Name, d.Method = ResolveIndexNameAndMethod(part)
+				d.Name, d.Method = resolveIndexNameAndMethod(part)
 			} else {
 				break
 			}
@@ -173,7 +173,7 @@ func ParseIndexDefine(def string) *IndexDefine {
 		def = def[i+1:]
 	}
 
-	d.FieldNameAndOptions = strings.Split(strings.TrimSpace(def), " ")
+	d.FieldNameAndOptions = FieldNameAndOptionFromStringSlice(strings.Split(strings.TrimSpace(def), " "))
 
 	return &d
 }
@@ -182,12 +182,46 @@ type IndexDefine struct {
 	Kind                string
 	Name                string
 	Method              string
-	FieldNameAndOptions []string
+	FieldNameAndOptions []FieldNameAndOption
 }
 
 func (i IndexDefine) ID() string {
 	if i.Method != "" {
-		return i.Name + "/" + i.Method
+		return i.Name + "," + i.Method
 	}
 	return i.Name
+}
+
+func FieldNameAndOptionFromStringSlice(slices []string) []FieldNameAndOption {
+	fields := make([]FieldNameAndOption, 0, len(slices))
+
+	for _, s := range slices {
+		if s == "" {
+			continue
+		}
+		fields = append(fields, FieldNameAndOption(s))
+	}
+
+	return fields
+}
+
+// {FieldName}[,DESC][,NULLS][,FIRST]
+type FieldNameAndOption string
+
+func (x FieldNameAndOption) Name() string {
+	s := string(x)
+	i := strings.Index(s, ",")
+	if i > 0 {
+		return s[0:i]
+	}
+	return s
+}
+
+func (x FieldNameAndOption) Options() []string {
+	s := string(x)
+	i := strings.Index(s, ",")
+	if i > 0 {
+		return strings.Split(strings.ToUpper(s[i+1:]), ",")
+	}
+	return nil
 }

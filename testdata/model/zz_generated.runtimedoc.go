@@ -120,7 +120,9 @@ func (v User) RuntimeDoc(names ...string) ([]string, bool) {
 				"用户名",
 			}, true
 		case "Gender":
-			return []string{}, true
+			return []string{
+				"性别",
+			}, true
 		case "Age":
 			return []string{
 				"年龄",

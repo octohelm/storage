@@ -138,7 +138,17 @@ func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m s
 					}
 				}
 
-				c2.ColumnNames = append(c2.ColumnNames, col.Name())
+				cn := er.ConstraintColumnName{
+					Name: col.Name(),
+				}
+
+				for _, o := range keyDef.FieldNameAndOptions() {
+					if name := o.Name(); name == col.Name() || name == col.FieldName() {
+						cn.Options = o.Options()
+					}
+				}
+
+				c2.ColumnNames = append(c2.ColumnNames, cn)
 			}
 
 			if !yield(c2) {

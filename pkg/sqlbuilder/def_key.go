@@ -31,7 +31,7 @@ func IndexUsing(method string) IndexOptionFunc {
 	}
 }
 
-func IndexFieldNameAndOptions(colNameAndOptions ...string) IndexOptionFunc {
+func IndexFieldNameAndOptions(colNameAndOptions ...FieldNameAndOption) IndexOptionFunc {
 	return func(k *key) {
 		k.fieldNameAndOptions = colNameAndOptions
 	}
@@ -44,7 +44,7 @@ func Index(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key
 
 	if columns != nil {
 		for col := range columns.Cols() {
-			k.fieldNameAndOptions = append(k.fieldNameAndOptions, col.Name())
+			k.fieldNameAndOptions = append(k.fieldNameAndOptions, FieldNameAndOption(col.Name()))
 		}
 	}
 
@@ -77,7 +77,7 @@ type Key interface {
 
 type KeyDef interface {
 	Method() string
-	FieldNameAndOptions() []string
+	FieldNameAndOptions() []FieldNameAndOption
 }
 
 func GetKeyDef(col Key) KeyDef {
@@ -87,12 +87,57 @@ func GetKeyDef(col Key) KeyDef {
 	return nil
 }
 
+func AsKeyColumnsTableDef(key Key) sqlfrag.Fragment {
+	keyDef := GetKeyDef(key)
+	cc := ColumnCollect(key.Cols())
+
+	return sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
+		return func(yield func(string, []any) bool) {
+			for i, fo := range keyDef.FieldNameAndOptions() {
+				if i > 0 {
+					if !yield(",", nil) {
+						return
+					}
+				}
+
+				if c := cc.F(fo.Name()); c != nil {
+					if !yield(c.Name(), nil) {
+						return
+					}
+
+					if options := fo.Options(); len(options) > 0 {
+						if !yield(" "+strings.Join(options, " "), nil) {
+							return
+						}
+						return
+					}
+
+					continue
+				}
+
+				if c := cc.Col(fo.Name()); c != nil {
+					if !yield(c.Name(), nil) {
+						return
+					}
+
+					if options := fo.Options(); len(options) > 0 {
+						if !yield(" "+strings.Join(options, " "), nil) {
+							return
+						}
+						return
+					}
+				}
+			}
+		}
+	})
+}
+
 type key struct {
 	table               Table
 	name                string
 	isUnique            bool
 	method              string
-	fieldNameAndOptions []string
+	fieldNameAndOptions []FieldNameAndOption
 }
 
 func (k *key) IsNil() bool {
@@ -111,7 +156,7 @@ func (k *key) Method() string {
 	return k.method
 }
 
-func (k *key) FieldNameAndOptions() []string {
+func (k *key) FieldNameAndOptions() []FieldNameAndOption {
 	return k.fieldNameAndOptions
 }
 
@@ -144,8 +189,8 @@ func (k *key) Cols() iter.Seq[Column] {
 
 	return func(yield func(Column) bool) {
 		names := map[string]bool{}
-		for _, colNameAndOptions := range k.fieldNameAndOptions {
-			names[strings.Split(colNameAndOptions, "/")[0]] = true
+		for _, colNameAndOption := range k.fieldNameAndOptions {
+			names[colNameAndOption.Name()] = true
 		}
 
 		for c := range k.table.Cols() {
