@@ -90,10 +90,15 @@ func GetKeyDef(col Key) KeyDef {
 func AsKeyColumnsTableDef(key Key) sqlfrag.Fragment {
 	keyDef := GetKeyDef(key)
 	cc := ColumnCollect(key.Cols())
+	fieldNameAndOptions := keyDef.FieldNameAndOptions()
+
+	if len(fieldNameAndOptions) == 0 {
+		panic(fmt.Errorf("invalid key %s, missing cols", key))
+	}
 
 	return sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
 		return func(yield func(string, []any) bool) {
-			for i, fo := range keyDef.FieldNameAndOptions() {
+			for i, fo := range fieldNameAndOptions {
 				if i > 0 {
 					if !yield(",", nil) {
 						return
@@ -126,7 +131,11 @@ func AsKeyColumnsTableDef(key Key) sqlfrag.Fragment {
 						}
 						return
 					}
+
+					continue
 				}
+
+				panic(fmt.Errorf("invalid key %s, unknown %s", key, fo.Name()))
 			}
 		}
 	})
@@ -174,6 +183,13 @@ func (k *key) Name() string {
 	return k.name
 }
 
+func (k *key) String() string {
+	if k.table != nil {
+		return fmt.Sprintf("%s.%s", k.table.TableName(), k.name)
+	}
+	return k.name
+}
+
 func (k *key) IsUnique() bool {
 	return k.isUnique
 }
@@ -184,7 +200,7 @@ func (k *key) IsPrimary() bool {
 
 func (k *key) Cols() iter.Seq[Column] {
 	if len(k.fieldNameAndOptions) == 0 {
-		panic(fmt.Errorf("invalid key %s of %s, missing cols", k.name, k.table.TableName()))
+		panic(fmt.Errorf("invalid key %s, missing cols", k))
 	}
 
 	return func(yield func(Column) bool) {
