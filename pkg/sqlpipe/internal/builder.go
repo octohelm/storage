@@ -267,8 +267,10 @@ func (s *Builder[M]) buildInsert(ctx context.Context, m *Mutation[M]) sqlfrag.Fr
 
 	return sqlbuilder.Insert().Into(t, fixAdditions(additions)...).ValuesCollect(orderedCols, func(yield func(any) bool) {
 		for value := range m.Values {
-			if x, ok := any(value).(sqltype.WithCreationTime); ok {
-				x.MarkCreatedAt()
+			if canSetModification, ok := any(value).(sqltype.WithModificationTime); ok {
+				canSetModification.MarkModifiedAt()
+			} else if canSetCreationTime, ok := any(value).(sqltype.WithCreationTime); ok {
+				canSetCreationTime.MarkCreatedAt()
 			}
 
 			for sfv := range structs.AllFieldValue(ctx, value) {

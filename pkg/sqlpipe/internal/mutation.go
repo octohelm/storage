@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"github.com/octohelm/storage/pkg/sqltype"
 	"iter"
 	"slices"
 
@@ -79,7 +80,17 @@ func (m *Mutation[M]) PrepareAssignments(ctx context.Context, t sqlbuilder.Table
 		return slices.Values(m.Assignments)
 	}
 
-	values := slices.Collect(m.Values)
+	values := slices.Collect(func(yield func(*M) bool) {
+		for value := range m.Values {
+			if x, ok := any(value).(sqltype.WithModificationTime); ok {
+				x.MarkModifiedAt()
+			}
+
+			if !yield(value) {
+				return
+			}
+		}
+	})
 	if len(values) == 0 {
 		panic(errors.New("assigment required at least one value"))
 	}
