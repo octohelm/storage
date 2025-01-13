@@ -349,10 +349,6 @@ func TestMultipleTxLockedWithSqlite(t *testing.T) {
 	ctx := ContextWithDatabase(t, "sql_test", "")
 
 	t.Run("concurrent insert && query", func(t *testing.T) {
-		usr2 := &model.User{
-			Name:     "test",
-			Nickname: "test",
-		}
 
 		wg := &sync.WaitGroup{}
 
@@ -360,6 +356,11 @@ func TestMultipleTxLockedWithSqlite(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+
+				usr2 := &model.User{
+					Name:     "test",
+					Nickname: "test",
+				}
 
 				err := dal.Insert(usr2).
 					OnConflict(model.UserT.I.IName).DoUpdateSet(model.UserT.Nickname).

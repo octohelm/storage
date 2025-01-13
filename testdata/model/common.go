@@ -13,7 +13,9 @@ type OperateTime struct {
 }
 
 func (v *OperateTimeWithDeleted) MarkCreatedAt() {
-	v.CreatedAt = datatypes.Datetime(time.Now())
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = datatypes.Datetime(time.Now())
+	}
 }
 
 type OperateTimeWithDeleted struct {
