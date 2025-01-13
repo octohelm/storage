@@ -1,15 +1,19 @@
 package model
 
 import (
-	"database/sql/driver"
 	"time"
 
+	"database/sql/driver"
 	"github.com/octohelm/storage/pkg/datatypes"
 )
 
 type OperateTime struct {
 	CreatedAt datatypes.Datetime `db:"f_created_at,default=CURRENT_TIMESTAMP,onupdate=CURRENT_TIMESTAMP"`
 	UpdatedAt int64              `db:"f_updated_at,default='0'"`
+}
+
+func (v *OperateTimeWithDeleted) MarkCreatedAt() {
+	v.CreatedAt = datatypes.Datetime(time.Now())
 }
 
 type OperateTimeWithDeleted struct {

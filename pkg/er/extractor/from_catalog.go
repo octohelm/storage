@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/octohelm/storage/pkg/dal"
+	"github.com/octohelm/storage/pkg/sqltype"
 	"iter"
 	"slices"
 	"strings"
@@ -136,22 +137,24 @@ func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m s
 				c2.Method = keyDef.Method()
 			}
 
-			if c2.Unique {
-				cols := make([]sqlbuilder.Column, 0)
+			if _, ok := m.(sqltype.WithCreationTime); ok {
+				if c2.Unique {
+					cols := make([]sqlbuilder.Column, 0)
 
-				for col := range key.Cols() {
-					if softDeletedField != "" {
-						if col.FieldName() == softDeletedField {
-							continue
+					for col := range key.Cols() {
+						if softDeletedField != "" {
+							if col.FieldName() == softDeletedField {
+								continue
+							}
 						}
+
+						cols = append(cols, col)
 					}
 
-					cols = append(cols, col)
-				}
-
-				if len(cols) == 1 {
-					def := sqlbuilder.GetColumnDef(cols[0])
-					c.uniques[def.Type.String()] = fmt.Sprintf("%s.%s", table.TableName(), cols[0].Name())
+					if len(cols) == 1 {
+						def := sqlbuilder.GetColumnDef(cols[0])
+						c.uniques[def.Type.String()] = fmt.Sprintf("%s.%s", table.TableName(), cols[0].Name())
+					}
 				}
 			}
 

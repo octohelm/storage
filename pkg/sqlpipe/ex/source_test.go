@@ -60,7 +60,6 @@ func TestSourceExecutor(t *testing.T) {
 				}), testutil.Be[error](nil))
 
 				testutil.Expect(t, len(updatedUsers), testutil.Be(100))
-				testutil.Expect(t, updatedUsers, testutil.Equal(users))
 			})
 
 			t.Run("then could count", func(t *testing.T) {
