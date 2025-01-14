@@ -13,7 +13,7 @@ import (
 )
 
 type UserByID struct {
-	// 用户ID
+	// ID 通过 用户ID 筛选
 	ID *filter.Filter[model.UserID] `name:"user~id,omitzero" in:"query"`
 }
 
@@ -26,7 +26,7 @@ func (f *UserByID) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.Use
 }
 
 type UserByName struct {
-	// 姓名
+	// Name 通过 姓名 筛选
 	Name *filter.Filter[string] `name:"user~name,omitzero" in:"query"`
 }
 
@@ -39,7 +39,7 @@ func (f *UserByName) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.U
 }
 
 type UserByNickname struct {
-	// 昵称
+	// Nickname 通过 昵称 筛选
 	Nickname *filter.Filter[string] `name:"user~nickname,omitzero" in:"query"`
 }
 
@@ -52,7 +52,7 @@ func (f *UserByNickname) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[mod
 }
 
 type UserByAge struct {
-	// 年龄
+	// Age 通过 年龄 筛选
 	Age *filter.Filter[int64] `name:"user~age,omitzero" in:"query"`
 }
 

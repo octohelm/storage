@@ -5,14 +5,14 @@ go 1.23.4
 require (
 	github.com/go-courier/logr v0.3.1
 	github.com/octohelm/enumeration v0.0.0-20241121070632-2cd7179b161c
-	github.com/octohelm/gengo v0.0.0-20250104080658-4527b142baef
+	github.com/octohelm/gengo v0.0.0-20250114031122-612df07e4139
 	github.com/octohelm/x v0.0.0-20250109055815-dda0e47e75ea
 )
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-json-experiment/json v0.0.0-20250108213703-50a1ba2c17a5
+	github.com/go-json-experiment/json v0.0.0-20250113184934-d8c9bc4f8854
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8

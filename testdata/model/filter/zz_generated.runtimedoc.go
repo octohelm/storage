@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package filter
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,7 +24,7 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v OrgByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *OrgByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "CreatedAt":
@@ -35,7 +37,7 @@ func (v OrgByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v OrgByID) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *OrgByID) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "ID":
@@ -48,7 +50,7 @@ func (v OrgByID) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v OrgByName) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *OrgByName) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Name":
@@ -61,7 +63,7 @@ func (v OrgByName) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v UserByAge) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *UserByAge) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Age":
@@ -76,7 +78,7 @@ func (v UserByAge) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v UserByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *UserByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "CreatedAt":
@@ -89,7 +91,7 @@ func (v UserByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v UserByDeletedAt) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *UserByDeletedAt) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "DeletedAt":
@@ -102,7 +104,7 @@ func (v UserByDeletedAt) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v UserByID) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *UserByID) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "ID":
@@ -117,7 +119,7 @@ func (v UserByID) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v UserByName) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *UserByName) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Name":
@@ -132,7 +134,7 @@ func (v UserByName) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v UserByNickname) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *UserByNickname) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Nickname":

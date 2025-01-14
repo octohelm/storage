@@ -83,7 +83,7 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 
 		fieldComment := fmt.Sprintf("%s", func() string {
 			if comment := def.Comment; comment != "" {
-				return comment
+				return fmt.Sprintf("%s 通过 %s 筛选", fieldName, comment)
 			}
 			return ""
 		}())

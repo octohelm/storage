@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package datatypes
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,11 +24,11 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (Bool) RuntimeDoc(names ...string) ([]string, bool) {
+func (*Bool) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Scheme":
@@ -48,17 +50,15 @@ func (v Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
 
 		return nil, false
 	}
-	return []string{
-		"openapi:strfmt endpoint",
-	}, true
+	return []string{"openapi:strfmt endpoint"}, true
 }
 
-func (SFID) RuntimeDoc(names ...string) ([]string, bool) {
+func (*SFID) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{
 		"openapi:strfmt snowflake-id",
 	}, true
 }
 
-func (SFIDs) RuntimeDoc(names ...string) ([]string, bool) {
+func (*SFIDs) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }

@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package compose
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,7 +24,7 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v List[M]) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *List[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Items":
@@ -35,10 +37,10 @@ func (v List[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (OneToMulti[ID, Record]) RuntimeDoc(names ...string) ([]string, bool) {
+func (*OneToMulti[ID, Record]) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (OneToOne[ID, Record]) RuntimeDoc(names ...string) ([]string, bool) {
+func (*OneToOne[ID, Record]) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }

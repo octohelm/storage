@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package internal
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,7 +24,7 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Source":
@@ -35,7 +37,7 @@ func (v Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{}, true
 
 		}
-		if doc, ok := runtimeDoc(v.Flags, "", names...); ok {
+		if doc, ok := runtimeDoc(&v.Flags, "", names...); ok {
 			return doc, ok
 		}
 
@@ -44,11 +46,11 @@ func (v Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (DeleteType) RuntimeDoc(names ...string) ([]string, bool) {
+func (*DeleteType) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v Flags) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Flags) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "OptWhereRequired":
@@ -65,7 +67,7 @@ func (v Flags) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v Mutation[M]) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Mutation[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "ForDelete":
@@ -92,12 +94,12 @@ func (v Mutation[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v Seed) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Seed) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 
 		}
-		if doc, ok := runtimeDoc(v.Flags, "", names...); ok {
+		if doc, ok := runtimeDoc(&v.Flags, "", names...); ok {
 			return doc, ok
 		}
 
@@ -106,6 +108,6 @@ func (v Seed) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (StmtPatcherFunc[M]) RuntimeDoc(names ...string) ([]string, bool) {
+func (*StmtPatcherFunc[M]) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }

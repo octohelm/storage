@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package filter
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,7 +24,7 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v Composed) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Composed) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Filters":
@@ -35,7 +37,7 @@ func (v Composed) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v ErrInvalidFilter) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *ErrInvalidFilter) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Filter":
@@ -48,7 +50,7 @@ func (v ErrInvalidFilter) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v ErrInvalidFilterOp) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *ErrInvalidFilterOp) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Op":
@@ -61,7 +63,7 @@ func (v ErrInvalidFilterOp) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v ErrUnsupportedQLField) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *ErrUnsupportedQLField) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "FieldName":
@@ -74,6 +76,6 @@ func (v ErrUnsupportedQLField) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (Op) RuntimeDoc(names ...string) ([]string, bool) {
+func (*Op) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }

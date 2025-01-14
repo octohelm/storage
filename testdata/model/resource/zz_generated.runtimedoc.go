@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package resource
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,12 +24,11 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v Resource[ID]) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Resource[ID]) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "ID":
 			return []string{
-				"ID",
 				"生成 ID",
 			}, true
 

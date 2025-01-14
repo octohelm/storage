@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package time
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,7 +24,25 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v CreationTime) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *CreationModificationTime) RuntimeDoc(names ...string) ([]string, bool) {
+	if len(names) > 0 {
+		switch names[0] {
+		case "UpdatedAt":
+			return []string{
+				"更新时间",
+			}, true
+
+		}
+		if doc, ok := runtimeDoc(&v.CreationTime, "", names...); ok {
+			return doc, ok
+		}
+
+		return nil, false
+	}
+	return []string{}, true
+}
+
+func (v *CreationTime) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "CreatedAt":
@@ -37,7 +57,7 @@ func (v CreationTime) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v CreationUpdationDeletionTime) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *CreationUpdationDeletionTime) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "DeletedAt":
@@ -46,25 +66,7 @@ func (v CreationUpdationDeletionTime) RuntimeDoc(names ...string) ([]string, boo
 			}, true
 
 		}
-		if doc, ok := runtimeDoc(v.CreationUpdationTime, "", names...); ok {
-			return doc, ok
-		}
-
-		return nil, false
-	}
-	return []string{}, true
-}
-
-func (v CreationUpdationTime) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-		case "UpdatedAt":
-			return []string{
-				"更新时间",
-			}, true
-
-		}
-		if doc, ok := runtimeDoc(v.CreationTime, "", names...); ok {
+		if doc, ok := runtimeDoc(&v.CreationUpdationTime, "", names...); ok {
 			return doc, ok
 		}
 

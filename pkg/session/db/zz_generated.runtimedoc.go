@@ -4,6 +4,8 @@ DON'T EDIT THIS FILE
 */
 package db
 
+import _ "embed"
+
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	if c, ok := v.(interface {
@@ -22,12 +24,12 @@ func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {
 	return nil, false
 }
 
-func (v Database) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Database) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Endpoint":
 			return []string{
-				"Endpoint of database",
+				"of database",
 			}, true
 		case "NameOverwrite":
 			return []string{
@@ -53,7 +55,7 @@ func (v Database) RuntimeDoc(names ...string) ([]string, bool) {
 	return []string{}, true
 }
 
-func (v Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
+func (v *Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
 	if len(names) > 0 {
 		switch names[0] {
 		case "Scheme":
@@ -75,7 +77,5 @@ func (v Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
 
 		return nil, false
 	}
-	return []string{
-		"openapi:strfmt endpoint",
-	}, true
+	return []string{"openapi:strfmt endpoint"}, true
 }
