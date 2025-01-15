@@ -2,3 +2,6 @@
 // https://static.simonwillison.net/static/2024/Pipe-Syntax-In-SQL.html
 // +gengo:runtimedoc=false
 package sqlpipe
+
+type P struct {
+}

@@ -107,7 +107,7 @@ func (v *UserByAge) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Age":
 			return []string{
-				"年龄",
+				"通过 年龄 筛选",
 			}, true
 
 		}
@@ -148,7 +148,7 @@ func (v *UserByID) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "ID":
 			return []string{
-				"用户ID",
+				"通过 用户ID 筛选",
 			}, true
 
 		}
@@ -163,7 +163,7 @@ func (v *UserByName) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Name":
 			return []string{
-				"姓名",
+				"通过 姓名 筛选",
 			}, true
 
 		}
@@ -178,7 +178,7 @@ func (v *UserByNickname) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Nickname":
 			return []string{
-				"昵称",
+				"通过 昵称 筛选",
 			}, true
 
 		}

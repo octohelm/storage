@@ -50,7 +50,9 @@ func (v *Endpoint) RuntimeDoc(names ...string) ([]string, bool) {
 
 		return nil, false
 	}
-	return []string{"openapi:strfmt endpoint"}, true
+	return []string{
+		"openapi:strfmt endpoint",
+	}, true
 }
 
 func (*SFID) RuntimeDoc(names ...string) ([]string, bool) {

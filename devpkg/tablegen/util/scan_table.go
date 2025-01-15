@@ -6,10 +6,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
-
 	"github.com/octohelm/gengo/pkg/gengo"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	typesx "github.com/octohelm/x/types"
 )
 

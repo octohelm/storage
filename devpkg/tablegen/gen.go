@@ -1,10 +1,12 @@
 package tablegen
 
 import (
+	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"go/types"
 	"reflect"
 
 	"github.com/octohelm/gengo/pkg/gengo"
+	"github.com/octohelm/gengo/pkg/gengo/snippet"
 	tablegenutil "github.com/octohelm/storage/devpkg/tablegen/util"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
@@ -55,22 +57,20 @@ func (g *tableGen) generateTableStatics(c gengo.Context, t sqlbuilder.Table, nam
 	}
 
 	if register != "" {
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 func init() {
 	@Register.Add(@Type'T)
 }
 
-`,
-			"Register": gengo.ID(register),
-			"Type":     gengo.ID(named.Obj()),
+`, snippet.Args{
+			"Register": snippet.ID(register),
+			"Type":     snippet.ID(named.Obj()),
 		})
 	}
 
 	cols := t.Cols()
 
-	c.Render(gengo.Snippet{
-		gengo.T: `
+	c.RenderT(`
 func (table@Type) New() @sqlbuilderModel {
 	return &@Type{}
 }
@@ -96,85 +96,88 @@ var @Type'T = &table@Type{
 		@indexValues
 	},
 }
-`,
-		"Type": gengo.ID(named.Obj()),
+`, snippet.Args{
+		"Type": snippet.ID(named.Obj()),
 
-		"sqlbuilderModel": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder.Model"),
+		"sqlbuilderModel": snippet.PkgExposeFor[sqlbuilder.P]("Model"),
 
-		"modelScopedFromModel": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.FromModel"),
-		"modelScopedTable":     gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.Table"),
-		"modelScopedKey":       gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.Key"),
+		"modelScopedFromModel": snippet.PkgExposeFor[modelscoped.P]("FromModel"),
+		"modelScopedTable":     snippet.PkgExposeFor[modelscoped.P]("Table"),
+		"modelScopedKey":       snippet.PkgExposeFor[modelscoped.P]("Key"),
 
-		"FieldNames": func(sw gengo.SnippetWriter) {
+		"FieldNames": snippet.Snippets(func(yield func(snippet.Snippet) bool) {
 			for col := range cols {
 				if def := sqlbuilder.GetColumnDef(col); def.DeprecatedActions == nil {
-					sw.Render(gengo.Snippet{
-						gengo.T: `
+					if !yield(snippet.T(`
 @fieldComment
 @FieldName @modelScopedTypedColumn[@Type, @FieldType]
-`,
-						"Type":         gengo.ID(named.Obj()),
-						"FieldName":    gengo.ID(col.FieldName()),
-						"FieldType":    gengo.ID(def.Type.String()),
-						"fieldComment": gengo.Comment(def.Comment),
-
-						"modelScopedTypedColumn": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.TypedColumn"),
-					})
+`, snippet.Args{
+						"Type":                   snippet.ID(named.Obj()),
+						"FieldName":              snippet.ID(col.FieldName()),
+						"FieldType":              snippet.ID(def.Type.String()),
+						"fieldComment":           snippet.Comment(def.Comment),
+						"modelScopedTypedColumn": snippet.PkgExposeFor[modelscoped.P]("TypedColumn"),
+					})) {
+						return
+					}
 				}
 			}
-		},
+		}),
 
-		"fieldNameValues": func(sw gengo.SnippetWriter) {
+		"fieldNameValues": snippet.Snippets(func(yield func(snippet.Snippet) bool) {
 			for col := range cols {
 				if def := sqlbuilder.GetColumnDef(col); def.DeprecatedActions == nil {
-					sw.Render(gengo.Snippet{
-						gengo.T: `
+					if !yield(snippet.T(`
 @FieldName: @modelScopedCastTypedColumn[@Type,@FieldType](@modelScopedFromModel[@Type]().F(@FieldNameValue)),
-`,
-						"Type":           gengo.ID(named.Obj()),
-						"FieldName":      gengo.ID(col.FieldName()),
-						"FieldType":      gengo.ID(def.Type.String()),
-						"FieldNameValue": col.FieldName(),
+`, snippet.Args{
+						"Type":           snippet.ID(named.Obj()),
+						"FieldName":      snippet.ID(col.FieldName()),
+						"FieldType":      snippet.ID(def.Type.String()),
+						"FieldNameValue": snippet.Value(col.FieldName()),
 
-						"modelScopedFromModel":       gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.FromModel"),
-						"modelScopedCastTypedColumn": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.CastTypedColumn"),
-					})
+						"modelScopedFromModel":       snippet.PkgExposeFor[modelscoped.P]("FromModel"),
+						"modelScopedCastTypedColumn": snippet.PkgExposeFor[modelscoped.P]("CastTypedColumn"),
+					})) {
+						return
+					}
 				}
 			}
-		},
+		}),
 
-		"indexNames": func(sw gengo.SnippetWriter) {
+		"indexNames": snippet.Snippets(func(yield func(snippet.Snippet) bool) {
 			for key := range t.Keys() {
 				if key.IsUnique() {
-					sw.Render(gengo.Snippet{
-						gengo.T: `
+					if !yield(snippet.T(`
 @KeyName @modelScopedKey[@Type]
-`,
-						"Type":    gengo.ID(named.Obj()),
-						"KeyName": gengo.ID(gengo.UpperCamelCase(key.Name())),
+`, snippet.Args{
+						"Type":    snippet.ID(named.Obj()),
+						"KeyName": snippet.ID(gengo.UpperCamelCase(key.Name())),
 
-						"modelScopedKey": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.Key"),
-					})
+						"modelScopedKey": snippet.PkgExposeFor[modelscoped.P]("Key"),
+					})) {
+						return
+					}
 				}
 			}
-		},
+		}),
 
-		"indexValues": func(sw gengo.SnippetWriter) {
+		"indexValues": snippet.Snippets(func(yield func(snippet.Snippet) bool) {
 			for key := range t.Keys() {
 				if key.IsUnique() {
-					sw.Render(gengo.Snippet{
-						gengo.T: `
+					if !yield(snippet.T(`
 @KeyName: @modelScopedFromModel[@Type]().MK(@keyName),
-`,
-						"KeyName": gengo.ID(gengo.UpperCamelCase(key.Name())),
-						"keyName": key.Name(),
-						"Type":    gengo.ID(named.Obj()),
+`, snippet.Args{
+						"KeyName": snippet.ID(gengo.UpperCamelCase(key.Name())),
+						"keyName": snippet.Value(key.Name()),
+						"Type":    snippet.ID(named.Obj()),
 
-						"modelScopedFromModel": gengo.ID("github.com/octohelm/storage/pkg/sqlbuilder/modelscoped.FromModel"),
-					})
+						"modelScopedFromModel": snippet.PkgExposeFor[modelscoped.P]("FromModel"),
+					})) {
+						return
+					}
 				}
 			}
-		},
+		}),
 	})
 }
 
@@ -198,35 +201,32 @@ func (g *tableGen) generateDescriptions(c gengo.Context, t sqlbuilder.Table, nam
 	}
 
 	if len(colComments) > 0 {
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 func(@Type) Comments() map[string]string {
 	return @comments
-}`,
-			"Type":     gengo.ID(named.Obj()),
-			"comments": colComments,
+}`, snippet.Args{
+			"Type":     snippet.ID(named.Obj()),
+			"comments": snippet.Value(colComments),
 		})
 	}
 
 	if len(colDescriptions) > 0 {
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 func(@Type) ColDescriptions() map[string][]string {
 	return @colDescriptions
-}`,
-			"Type":            gengo.ID(named.Obj()),
-			"colDescriptions": colDescriptions,
+}`, snippet.Args{
+			"Type":            snippet.ID(named.Obj()),
+			"colDescriptions": snippet.Value(colDescriptions),
 		})
 	}
 
 	if len(colRelations) > 0 {
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 func(@Type) ColRelations() map[string][]string {
 	return @colRelations
-}`,
-			"Type":         gengo.ID(named.Obj()),
-			"colRelations": colRelations,
+}`, snippet.Args{
+			"Type":         snippet.ID(named.Obj()),
+			"colRelations": snippet.Value(colRelations),
 		})
 	}
 }
@@ -263,55 +263,51 @@ func (g *tableGen) generateIndexInterfaces(c gengo.Context, t sqlbuilder.Table, 
 		}
 	}
 
-	c.Render(gengo.Snippet{
-		gengo.T: `
+	c.RenderT(`
 func (@Type) TableName() string {
 	return @tableName
 }
 
-`,
-		"Type":      gengo.ID(named.Obj()),
-		"tableName": t.TableName(),
+`, snippet.Args{
+		"Type":      snippet.ID(named.Obj()),
+		"tableName": snippet.Value(t.TableName()),
 	})
 
 	if len(primary) > 0 {
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 func (@Type) PrimaryKey() []string {
 	return @primary
 }
 
-`,
-			"Type":    gengo.ID(named.Obj()),
-			"primary": primary,
+`, snippet.Args{
+			"Type":    snippet.ID(named.Obj()),
+			"primary": snippet.Value(primary),
 		})
 	}
 
 	if len(uniqueIndexes) > 0 {
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 func (@Type) UniqueIndexes() @sqlbuilderIndexes {
 	return @uniqueIndexes
 }
 
-`,
-			"Type":              gengo.ID(named.Obj()),
-			"sqlbuilderIndexes": gengo.ID(reflect.TypeOf(uniqueIndexes)),
-			"uniqueIndexes":     uniqueIndexes,
+`, snippet.Args{
+			"Type":              snippet.ID(named.Obj()),
+			"sqlbuilderIndexes": snippet.ID(reflect.TypeOf(uniqueIndexes)),
+			"uniqueIndexes":     snippet.Value(uniqueIndexes),
 		})
 	}
 
 	if len(indexes) > 0 {
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 func (@Type) Indexes() @sqlbuilderIndexes {
 	return @indexes
 }
 
-`,
-			"Type":              gengo.ID(named.Obj()),
-			"sqlbuilderIndexes": gengo.ID(reflect.TypeOf(indexes)),
-			"indexes":           indexes,
+`, snippet.Args{
+			"Type":              snippet.ID(named.Obj()),
+			"sqlbuilderIndexes": snippet.ID(reflect.TypeOf(indexes)),
+			"indexes":           snippet.Value(indexes),
 		})
 	}
 }

@@ -8,8 +8,12 @@ import (
 
 	"github.com/octohelm/gengo/pkg/camelcase"
 	"github.com/octohelm/gengo/pkg/gengo"
+	"github.com/octohelm/gengo/pkg/gengo/snippet"
 	tablegenutil "github.com/octohelm/storage/devpkg/tablegen/util"
+	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlpipe"
+	sqlpipefilter "github.com/octohelm/storage/pkg/sqlpipe/filter"
 )
 
 func init() {
@@ -96,11 +100,10 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 			}
 		}
 
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 type @ModelTypeName'By@FieldName struct {
 	@fieldComment
-	@FieldName *@filterFilter[@FieldType] ` + "`" + `name:"@domainName~@domainFieldName,omitzero" in:"query"` + "`" + `
+	@FieldName *@filterFilter[@FieldType] `+"`"+`name:"@domainName~@domainFieldName,omitzero" in:"query"`+"`"+`
 }
 
 
@@ -111,22 +114,21 @@ func (f *@ModelTypeName'By@FieldName) OperatorType() @sqlpipeOperatorType {
 func (f *@ModelTypeName'By@FieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSource[@Type] {
 	return src.Pipe(@sqlpipefilterAsWhere(@Type'T.@FieldName, f.@FieldName))
 }
-`,
-			"ModelTypeName": gengo.ID(named.Obj().Name()),
-			"Type":          gengo.ID(named.Obj()),
+`, snippet.Args{
+			"ModelTypeName": snippet.ID(named.Obj().Name()),
+			"Type":          snippet.ID(named.Obj()),
 
-			"FieldName":       gengo.ID(fieldName),
-			"FieldType":       gengo.ID(fieldType.String()),
-			"fieldComment":    gengo.Comment(fieldComment),
-			"domainName":      gengo.ID(camelcase.LowerKebabCase(domainName)),
-			"domainFieldName": gengo.ID(domainFieldName),
+			"FieldName":       snippet.ID(fieldName),
+			"FieldType":       snippet.ID(fieldType.String()),
+			"fieldComment":    snippet.Comment(fieldComment),
+			"domainName":      snippet.ID(camelcase.LowerKebabCase(domainName)),
+			"domainFieldName": snippet.ID(domainFieldName),
 
-			"sqlpipeSource":         gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.Source"),
-			"sqlpipeOperatorType":   gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.OperatorType"),
-			"sqlpipeOperatorFilter": gengo.ID("github.com/octohelm/storage/pkg/sqlpipe.OperatorFilter"),
-			"sqlpipefilterAsWhere":  gengo.ID("github.com/octohelm/storage/pkg/sqlpipe/filter.AsWhere"),
-
-			"filterFilter": gengo.ID("github.com/octohelm/storage/pkg/filter.Filter"),
+			"sqlpipeSource":         snippet.PkgExposeFor[sqlpipe.P]("Source"),
+			"sqlpipeOperatorType":   snippet.PkgExposeFor[sqlpipe.OperatorType](),
+			"sqlpipeOperatorFilter": snippet.PkgExposeFor[sqlpipe.P]("OperatorFilter"),
+			"sqlpipefilterAsWhere":  snippet.PkgExposeFor[sqlpipefilter.P]("AsWhere"),
+			"filterFilter":          snippet.PkgExposeFor[filter.Filter[int]](),
 		})
 	}
 }

@@ -2,6 +2,7 @@ package filtergen
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"go/types"
 	"reflect"
@@ -9,7 +10,11 @@ import (
 
 	"github.com/octohelm/gengo/pkg/camelcase"
 	"github.com/octohelm/gengo/pkg/gengo"
+	"github.com/octohelm/gengo/pkg/gengo/snippet"
 	tablegenutil "github.com/octohelm/storage/devpkg/tablegen/util"
+	"github.com/octohelm/storage/pkg/dal"
+	dalcompose "github.com/octohelm/storage/pkg/dal/compose"
+	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
 
@@ -73,8 +78,7 @@ func (g *filterGen) generateSubFilter(c gengo.Context, tables map[*types.Named]s
 		return
 	}
 
-	c.Render(gengo.Snippet{
-		gengo.T: `
+	c.RenderT(`
 func @ModelTypeName'By@ModelFieldName'From@FromModelTypeName'(ctx @contextContext, patchers ...@patcherTyped[@FromModelType]) @patcherTyped[@ModelType] {
 	return @patcherWhere[@ModelType](
 		@ModelType'T.@ModelFieldName.V(
@@ -82,19 +86,19 @@ func @ModelTypeName'By@ModelFieldName'From@FromModelTypeName'(ctx @contextContex
 		),
 	)
 }
-`,
-		"ModelTypeName":  gengo.ID(modelType.Obj().Name()),
-		"ModelType":      gengo.ID(modelType.String()),
-		"ModelFieldName": gengo.ID(modelTypeFieldName),
+`, snippet.Args{
+		"ModelTypeName":  snippet.ID(modelType.Obj().Name()),
+		"ModelType":      snippet.ID(modelType.String()),
+		"ModelFieldName": snippet.ID(modelTypeFieldName),
 
-		"FromModelTypeName":  gengo.ID(fromModeType.Obj().Name()),
-		"FromModelType":      gengo.ID(fromModeType.String()),
-		"FromModelFieldName": gengo.ID(fromModelFieldName),
+		"FromModelTypeName":  snippet.ID(fromModeType.Obj().Name()),
+		"FromModelType":      snippet.ID(fromModeType.String()),
+		"FromModelFieldName": snippet.ID(fromModelFieldName),
 
-		"contextContext":          gengo.ID("context.Context"),
-		"patcherTyped":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Typed"),
-		"patcherWhere":            gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Where"),
-		"patcherInSelectIfExists": gengo.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.InSelectIfExists"),
+		"contextContext":          snippet.ID(reflect.TypeFor[context.Context]()),
+		"patcherTyped":            snippet.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Typed"),
+		"patcherWhere":            snippet.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.Where"),
+		"patcherInSelectIfExists": snippet.ID("github.com/octohelm/storage/pkg/dal/compose/querierpatcher.InSelectIfExists"),
 	})
 }
 
@@ -130,34 +134,39 @@ func (g *filterGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table, n
 			return ""
 		}())
 
-		c.Render(gengo.Snippet{
-			gengo.T: `
+		c.RenderT(`
 type @ModelTypeName'By@FieldName struct {
 	@composeFrom[@Type] 
 
 	@fieldComment
-	@FieldName *@filterFilter[@FieldType] ` + "`" + `name:"@domainName~@fieldName,omitempty" in:"query"` + "`" + `
+	@FieldName *@filterFilter[@FieldType] `+"`"+`name:"@domainName~@fieldName,omitempty" in:"query"`+"`"+`
 }
 
 func (f *@ModelTypeName'By@FieldName) ApplyQuerier(q @dalQuerier) @dalQuerier {
 	return @composeApplyQuerierFromFilter(q, @Type'T.@FieldName, f.@FieldName)
 }
-`,
-			"ModelTypeName": gengo.ID(named.Obj().Name()),
-			"Type":          gengo.ID(named.Obj()),
+`, snippet.Args{
+			"ModelTypeName": snippet.ID(named.Obj().Name()),
+			"Type":          snippet.ID(named.Obj()),
 
-			"FieldName":    gengo.ID(fieldName),
-			"FieldType":    gengo.ID(fieldType.String()),
-			"fieldComment": gengo.Comment(fieldComment),
-			"domainName":   gengo.ID(camelcase.LowerKebabCase(domainName)),
-			"fieldName":    gengo.ID(camelcase.LowerCamelCase(fieldName)),
+			"FieldName":    snippet.ID(fieldName),
+			"FieldType":    snippet.ID(fieldType.String()),
+			"fieldComment": snippet.Comment(fieldComment),
+			"domainName":   snippet.ID(camelcase.LowerKebabCase(domainName)),
+			"fieldName":    snippet.ID(camelcase.LowerCamelCase(fieldName)),
 
-			"dalQuerier": gengo.ID("github.com/octohelm/storage/pkg/dal.Querier"),
+			"dalQuerier": snippet.ID(reflect.TypeFor[dal.Querier]()),
 
-			"composeApplyQuerierFromFilter": gengo.ID("github.com/octohelm/storage/pkg/dal/compose.ApplyQuerierFromFilter"),
-
-			"composeFrom":  gengo.ID("github.com/octohelm/storage/pkg/dal/compose.From"),
-			"filterFilter": gengo.ID("github.com/octohelm/storage/pkg/filter.Filter"),
+			"composeApplyQuerierFromFilter": snippet.PkgExposeFor[dalcompose.P]("ApplyQuerierFromFilter"),
+			"composeFrom":                   snippet.PkgExposeFor[dalcompose.P]("From"),
+			"filterFilter":                  snippet.PkgExposeFor[filter.P]("Filter"),
 		})
 	}
+}
+
+type defaultModel struct {
+}
+
+func (defaultModel) TableName() string {
+	return "t"
 }
