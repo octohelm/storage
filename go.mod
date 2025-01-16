@@ -5,7 +5,7 @@ go 1.23.4
 require (
 	github.com/go-courier/logr v0.3.1
 	github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733
-	github.com/octohelm/gengo v0.0.0-20250115090809-c4a42272490b
+	github.com/octohelm/gengo v0.0.0-20250116105559-e91bea122d2c
 	github.com/octohelm/x v0.0.0-20250109055815-dda0e47e75ea
 )
 
@@ -16,12 +16,11 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
-	modernc.org/sqlite v1.34.4
+	modernc.org/sqlite v1.34.5
 )
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
@@ -35,10 +34,7 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
-	modernc.org/gc/v3 v3.0.0-20250105121824-520be1a3aee6 // indirect
 	modernc.org/libc v1.61.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.1 // indirect
-	modernc.org/strutil v1.2.1 // indirect
-	modernc.org/token v1.1.0 // indirect
 )

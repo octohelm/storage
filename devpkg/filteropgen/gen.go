@@ -75,6 +75,16 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 		}
 	}
 
+	modelTypeName := named.Obj().Name()
+
+	domainFieldNameSuffix := ""
+	if domainName != "" {
+		domainType := camelcase.UpperCamelCase(domainName)
+		if domainType != modelTypeName {
+			domainFieldNameSuffix = "Of" + domainType
+		}
+	}
+
 	if domainName == "" {
 		domainName = strings.TrimPrefix(t.TableName(), "t_")
 	}
@@ -83,11 +93,12 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 		f := t.F(fieldName)
 
 		def := sqlbuilder.GetColumnDef(f)
+
 		fieldType := def.Type
 
 		fieldComment := fmt.Sprintf("%s", func() string {
 			if comment := def.Comment; comment != "" {
-				return fmt.Sprintf("%s 通过 %s 筛选", fieldName, comment)
+				return fmt.Sprintf("通过 %s 筛选", comment)
 			}
 			return ""
 		}())
@@ -101,27 +112,28 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 		}
 
 		c.RenderT(`
-type @ModelTypeName'By@FieldName struct {
+type @ModelTypeName'By@DomainFieldName struct {
 	@fieldComment
 	@FieldName *@filterFilter[@FieldType] `+"`"+`name:"@domainName~@domainFieldName,omitzero" in:"query"`+"`"+`
 }
 
 
-func (f *@ModelTypeName'By@FieldName) OperatorType() @sqlpipeOperatorType {
+func (f *@ModelTypeName'By@DomainFieldName) OperatorType() @sqlpipeOperatorType {
 	return @sqlpipeOperatorFilter
 }
 
-func (f *@ModelTypeName'By@FieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSource[@Type] {
+func (f *@ModelTypeName'By@DomainFieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSource[@Type] {
 	return src.Pipe(@sqlpipefilterAsWhere(@Type'T.@FieldName, f.@FieldName))
 }
 `, snippet.Args{
-			"ModelTypeName": snippet.ID(named.Obj().Name()),
+			"ModelTypeName": snippet.ID(modelTypeName),
 			"Type":          snippet.ID(named.Obj()),
 
-			"FieldName":       snippet.ID(fieldName),
 			"FieldType":       snippet.ID(fieldType.String()),
+			"FieldName":       snippet.ID(fieldName),
 			"fieldComment":    snippet.Comment(fieldComment),
 			"domainName":      snippet.ID(camelcase.LowerKebabCase(domainName)),
+			"DomainFieldName": snippet.ID(camelcase.UpperCamelCase(domainFieldName) + domainFieldNameSuffix),
 			"domainFieldName": snippet.ID(domainFieldName),
 
 			"sqlpipeSource":         snippet.PkgExposeFor[sqlpipe.P]("Source"),
@@ -130,5 +142,45 @@ func (f *@ModelTypeName'By@FieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSo
 			"sqlpipefilterAsWhere":  snippet.PkgExposeFor[sqlpipefilter.P]("AsWhere"),
 			"filterFilter":          snippet.PkgExposeFor[filter.Filter[int]](),
 		})
+
+		_, sortable := def.StructTag.Lookup("sortable")
+		if sortable {
+
+			c.RenderT(`
+type @ModelTypeName'SortBy@DomainFieldName struct {
+}
+
+func (f *@ModelTypeName'SortBy@DomainFieldName) Name() string {
+	return "@domainName~@domainFieldName"
+}
+
+func (f *@ModelTypeName'SortBy@DomainFieldName) Label() string {
+	return @sorterLabel
+}
+
+func (f *@ModelTypeName'SortBy@DomainFieldName) Sort(src @sqlpipeSource[@Type], sortBy func(col @sqlbuilderColumn) @sqlpipeSourceOperator[@Type]) @sqlpipeSource[@Type] {
+	return src.Pipe(sortBy(@Type'T.@FieldName))
+}
+`, snippet.Args{
+				"ModelTypeName": snippet.ID(modelTypeName),
+				"Type":          snippet.ID(named.Obj()),
+
+				"FieldType":       snippet.ID(fieldType.String()),
+				"FieldName":       snippet.ID(fieldName),
+				"domainName":      snippet.ID(camelcase.LowerKebabCase(domainName)),
+				"DomainFieldName": snippet.ID(camelcase.UpperCamelCase(domainFieldName) + domainFieldNameSuffix),
+				"domainFieldName": snippet.ID(domainFieldName),
+
+				"sorterLabel": snippet.Value(def.Comment),
+
+				"sqlpipeSource":         snippet.PkgExposeFor[sqlpipe.P]("Source"),
+				"sqlpipeSourceOperator": snippet.PkgExposeFor[sqlpipe.P]("SourceOperator"),
+				"sqlbuilderColumn":      snippet.PkgExposeFor[sqlbuilder.Column](),
+				"sqlpipeOperatorType":   snippet.PkgExposeFor[sqlpipe.OperatorType](),
+				"sqlpipeOperatorFilter": snippet.PkgExposeFor[sqlpipe.P]("OperatorFilter"),
+				"sqlpipefilterAsWhere":  snippet.PkgExposeFor[sqlpipefilter.P]("AsWhere"),
+				"filterFilter":          snippet.PkgExposeFor[filter.Filter[int]](),
+			})
+		}
 	}
 }
