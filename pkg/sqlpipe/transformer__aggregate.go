@@ -56,8 +56,8 @@ func (s *aggregatedSource[S, O]) Frag(ctx context.Context) iter.Seq2[string, []a
 	return internal.CollectStmt(ctx, s)
 }
 
-func (s *aggregatedSource[S, O]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[O]) internal.StmtBuilder[O] {
-	b = b.WithFlags(s.GetFlags(ctx))
+func (s *aggregatedSource[S, O]) ApplyStmt(ctx context.Context, b *internal.Builder[O]) *internal.Builder[O] {
+	b = b.WithFlag(s.GetFlag(ctx))
 
 	b = b.WithProjects(s.projects...)
 

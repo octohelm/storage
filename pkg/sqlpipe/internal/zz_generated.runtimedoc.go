@@ -31,13 +31,19 @@ func (v *Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{}, true
 		case "Additions":
 			return []string{}, true
+		case "Orders":
+			return []string{}, true
 		case "Projects":
 			return []string{}, true
 		case "DefaultProjects":
 			return []string{}, true
+		case "DistinctOn":
+			return []string{}, true
+		case "Pager":
+			return []string{}, true
 
 		}
-		if doc, ok := runtimeDoc(&v.Flags, "", names...); ok {
+		if doc, ok := runtimeDoc(&v.Flag, "", names...); ok {
 			return doc, ok
 		}
 
@@ -47,23 +53,6 @@ func (v *Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 }
 
 func (*DeleteType) RuntimeDoc(names ...string) ([]string, bool) {
-	return []string{}, true
-}
-
-func (v *Flags) RuntimeDoc(names ...string) ([]string, bool) {
-	if len(names) > 0 {
-		switch names[0] {
-		case "OptWhereRequired":
-			return []string{}, true
-		case "OptIncludesAll":
-			return []string{}, true
-		case "OptForReturning":
-			return []string{}, true
-
-		}
-
-		return nil, false
-	}
 	return []string{}, true
 }
 
@@ -99,7 +88,7 @@ func (v *Seed) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 
 		}
-		if doc, ok := runtimeDoc(&v.Flags, "", names...); ok {
+		if doc, ok := runtimeDoc(&v.Flag, "", names...); ok {
 			return doc, ok
 		}
 

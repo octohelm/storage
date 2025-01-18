@@ -5,7 +5,7 @@ import (
 	"iter"
 
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	"github.com/octohelm/x/ptr"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
 type FromPatcher[M Model] interface {
@@ -18,7 +18,7 @@ type SourceCanPatcher[M Model] interface {
 
 func FromAll[M Model](patchers ...FromPatcher[M]) Source[M] {
 	s := &sourceFrom[M]{}
-	s.OptIncludesAll = ptr.Ptr(true)
+	s.Flag = flags.IncludesAll
 
 	for _, patcher := range patchers {
 		patcher.ApplyToFrom(s)
@@ -39,7 +39,7 @@ func From[M Model](patchers ...FromPatcher[M]) Source[M] {
 
 type sourceFrom[M Model] struct {
 	internal.Seed
-	
+
 	patchers []internal.StmtPatcher[M]
 }
 
@@ -63,6 +63,6 @@ func (s *sourceFrom[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return internal.CollectStmt(ctx, s)
 }
 
-func (s *sourceFrom[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
-	return internal.ApplyStmt(ctx, b.WithFlags(s.Flags), s.patchers...)
+func (s *sourceFrom[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
+	return internal.ApplyStmt(ctx, b.WithFlag(s.Flag), s.patchers...)
 }

@@ -58,12 +58,12 @@ func (s *limitedSource[M]) SetOffset(offset int64) {
 	s.offset = offset
 }
 
-func (s *limitedSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+func (s *limitedSource[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 	frag := sqlbuilder.Limit(s.limit)
 	if s.offset > 0 {
 		frag = frag.Offset(s.offset)
 	}
-	return s.Underlying.ApplyStmt(ctx, b.WithAdditions(frag))
+	return s.Underlying.ApplyStmt(ctx, b.WithPager(frag))
 }
 
 func (s *limitedSource[M]) Pipe(operators ...SourceOperator[M]) Source[M] {

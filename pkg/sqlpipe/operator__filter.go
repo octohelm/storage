@@ -4,12 +4,11 @@ import (
 	"context"
 	"iter"
 
-	"github.com/octohelm/x/ptr"
-
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
 type Filter[M Model] interface {
@@ -38,9 +37,7 @@ func WhereInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedColu
 				s := source.Pipe(Select(colSelect))
 
 				q := ""
-				for query, _ := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
-					OptWhereRequired: ptr.Ptr(true),
-				})) {
+				for query, _ := range s.Frag(internal.FlagContext.Inject(ctx, flags.WhereRequired)) {
 					if query != "" {
 						q = query
 						break
@@ -64,9 +61,7 @@ func WhereNotInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedC
 				s := source.Pipe(Select(colSelect))
 
 				q := ""
-				for query, _ := range s.Frag(internal.FlagsContext.Inject(ctx, internal.Flags{
-					OptWhereRequired: ptr.Ptr(true),
-				})) {
+				for query, _ := range s.Frag(internal.FlagContext.Inject(ctx, flags.WhereRequired)) {
 					if query != "" {
 						q = query
 						break
@@ -146,7 +141,7 @@ type whereBuilder struct {
 	b  func(ctx context.Context) sqlfrag.Fragment
 }
 
-func (s *filteredSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+func (s *filteredSource[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 	var w sqlfrag.Fragment
 
 	for _, b := range s.whereBuilders {

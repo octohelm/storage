@@ -26,7 +26,7 @@ func JoinOn[M Model, B Model, S Model, T comparable](
 		src:           from,
 		srcConditions: fromConditions,
 
-		create: func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.JoinAddition {
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.Join(b.T(ctx, new(S)))
 		},
 	}
@@ -38,7 +38,7 @@ func FullJoinOn[M Model, B Model, S Model, T comparable](
 	srcConditions ...SourceOperator[S],
 ) JoinSourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
-		create: func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.JoinAddition {
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.FullJoin(b.T(ctx, new(S)))
 		},
 		on:            on,
@@ -53,7 +53,7 @@ func CrossJoinOn[M Model, B Model, S Model, T comparable](
 	srcConditions ...SourceOperator[S],
 ) JoinSourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
-		create: func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.JoinAddition {
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.CrossJoin(b.T(ctx, new(S)))
 		},
 		on:            on,
@@ -68,7 +68,7 @@ func InnerJoinOn[M Model, B Model, S Model, T comparable](
 	srcConditions ...SourceOperator[S],
 ) JoinSourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
-		create: func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.JoinAddition {
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.InnerJoin(b.T(ctx, new(S)))
 		},
 		on:            on,
@@ -83,7 +83,7 @@ func LeftJoinOn[M Model, B Model, S Model, T comparable](
 	srcConditions ...SourceOperator[S],
 ) JoinSourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
-		create: func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.JoinAddition {
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.LeftJoin(b.T(ctx, new(S)))
 		},
 		on:            on,
@@ -98,7 +98,7 @@ func RightJoinOn[M Model, B Model, S Model, T comparable](
 	srcConditions ...SourceOperator[S],
 ) JoinSourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
-		create: func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.JoinAddition {
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.RightJoin(b.T(ctx, new(S)))
 		},
 		on:            on,
@@ -108,7 +108,7 @@ func RightJoinOn[M Model, B Model, S Model, T comparable](
 }
 
 type joinSourcerOperator[M Model, B Model, S Model, T comparable] struct {
-	create        func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.JoinAddition
+	create        func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition
 	on            modelscoped.TypedColumn[B, T]
 	src           modelscoped.TypedColumn[S, T]
 	srcConditions []SourceOperator[S]
@@ -123,19 +123,18 @@ func (j *joinSourcerOperator[M, B, S, T]) Next(src Source[M]) Source[M] {
 		Embed: Embed[M]{
 			Underlying: src,
 		},
-		applyAsAddition: func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.Addition {
+		applyAsAddition: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			where := j.on.V(sqlbuilder.EqCol(j.src))
-
 			return j.create(ctx, b).On(j.mayPatchWhere(where))
 		},
 	}
 }
 
 func (j *joinSourcerOperator[M, B, S, T]) ApplyToFrom(s SourceCanPatcher[M]) {
-	s.AddPatchers(internal.StmtPatcherFunc[M](func(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+	s.AddPatchers(internal.StmtPatcherFunc[M](func(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 		where := j.on.V(sqlbuilder.EqCol(j.src))
 
-		return b.WithAdditions(j.create(ctx, b).On(j.mayPatchWhere(where)))
+		return b.WithTableJoins(j.create(ctx, b).On(j.mayPatchWhere(where)))
 	}))
 }
 
@@ -169,11 +168,11 @@ func (j *joinSourcerOperator[M, B, S, T]) mayPatchWhere(where sqlfrag.Fragment) 
 type joinedSource[M Model] struct {
 	Embed[M]
 
-	applyAsAddition func(ctx context.Context, b internal.StmtBuilder[M]) sqlbuilder.Addition
+	applyAsAddition func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition
 }
 
-func (j *joinedSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
-	return j.Underlying.ApplyStmt(ctx, b.WithAdditions(j.applyAsAddition(ctx, b)))
+func (j *joinedSource[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
+	return j.Underlying.ApplyStmt(ctx, b.WithTableJoins(j.applyAsAddition(ctx, b)))
 }
 
 func (s *joinedSource[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {

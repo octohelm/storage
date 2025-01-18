@@ -10,40 +10,27 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	"github.com/octohelm/storage/pkg/sqlfrag"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 	"github.com/octohelm/storage/pkg/sqltype"
 	sqltypetime "github.com/octohelm/storage/pkg/sqltype/time"
 	"github.com/octohelm/x/reflect"
+	slicesx "github.com/octohelm/x/slices"
 )
 
 func BuildStmt[M sqlbuilder.Model](ctx context.Context, patchers ...StmtPatcher[M]) sqlfrag.Fragment {
 	b := &Builder[M]{}
-	if flags, ok := FlagsContext.MayFrom(ctx); ok {
-		b.Flags = flags
+	if f, ok := FlagContext.MayFrom(ctx); ok {
+		b.Flag = f
 	}
-
-	return b.ApplyPatchers(ctx, patchers...).(StmtCreator).BuildStmt(ctx)
+	return b.ApplyPatchers(ctx, patchers...).BuildStmt(ctx)
 }
 
-func ApplyStmt[M sqlbuilder.Model](ctx context.Context, b StmtBuilder[M], patchers ...StmtPatcher[M]) StmtBuilder[M] {
-	return b.(*Builder[M]).ApplyPatchers(ctx, patchers...)
+func ApplyStmt[M sqlbuilder.Model](ctx context.Context, b *Builder[M], patchers ...StmtPatcher[M]) *Builder[M] {
+	return b.ApplyPatchers(ctx, patchers...)
 }
 
 func CollectStmt[M sqlbuilder.Model](ctx context.Context, patchers ...StmtPatcher[M]) iter.Seq2[string, []any] {
 	return BuildStmt(ctx, patchers...).Frag(ctx)
-}
-
-type StmtBuilder[M sqlbuilder.Model] interface {
-	WithSource(source sqlfrag.Fragment) StmtBuilder[M]
-
-	WithDefaultProjects(projects ...sqlfrag.Fragment) StmtBuilder[M]
-	WithProjects(projects ...sqlfrag.Fragment) StmtBuilder[M]
-
-	WithAdditions(additions ...sqlbuilder.Addition) StmtBuilder[M]
-	WithoutAddition(omit func(a sqlbuilder.Addition) bool) StmtBuilder[M]
-
-	T(ctx context.Context, x any) sqlbuilder.Table
-
-	WithFlags(flags Flags) StmtBuilder[M]
 }
 
 type StmtCreator interface {
@@ -51,51 +38,67 @@ type StmtCreator interface {
 }
 
 type Builder[M sqlbuilder.Model] struct {
-	Source          sqlfrag.Fragment
-	Additions       []sqlbuilder.Addition
+	flags.Flag
+
+	Source     sqlfrag.Fragment
+	TableJoins []sqlbuilder.JoinAddition
+
+	Orders []sqlbuilder.Order
+
 	Projects        []sqlfrag.Fragment
 	DefaultProjects []sqlfrag.Fragment
-	Flags
+
+	DistinctOn []sqlfrag.Fragment
+
+	Pager sqlbuilder.Addition
+
+	Additions []sqlbuilder.Addition
 }
 
-func (s Builder[M]) WithFlags(flags Flags) StmtBuilder[M] {
-	s.Flags = s.Flags.Merge(flags)
+func (s Builder[M]) WithFlag(f flags.Flag) *Builder[M] {
+	s.Flag = s.Flag | f
 	return &s
 }
 
-func (s Builder[M]) WithSource(table sqlfrag.Fragment) StmtBuilder[M] {
+func (s Builder[M]) WithSource(table sqlfrag.Fragment) *Builder[M] {
 	s.Source = table
 	return &s
 }
 
-func (s Builder[M]) WithAdditions(additions ...sqlbuilder.Addition) StmtBuilder[M] {
+func (s Builder[M]) WithTableJoins(tableJoins ...sqlbuilder.JoinAddition) *Builder[M] {
+	s.TableJoins = append(s.TableJoins, tableJoins...)
+	return &s
+}
+
+func (s Builder[M]) WithOrders(orders ...sqlbuilder.Order) *Builder[M] {
+	s.Orders = append(orders, s.Orders...)
+	return &s
+}
+
+func (s Builder[M]) WithAdditions(additions ...sqlbuilder.Addition) *Builder[M] {
 	s.Additions = append(s.Additions, additions...)
 	return &s
 }
 
-func (s Builder[M]) WithoutAddition(omit func(a sqlbuilder.Addition) bool) StmtBuilder[M] {
-	additions := make([]sqlbuilder.Addition, 0, len(s.Additions))
-
-	for _, a := range s.Additions {
-		if !omit(a) {
-			additions = append(additions, a)
-		}
-	}
-
-	s.Additions = additions
-
+func (s Builder[M]) WithDistinctOn(on ...sqlfrag.Fragment) *Builder[M] {
+	s.DistinctOn = on
 	return &s
 }
 
-func (s Builder[M]) WithProjects(projects ...sqlfrag.Fragment) StmtBuilder[M] {
+func (s Builder[M]) WithProjects(projects ...sqlfrag.Fragment) *Builder[M] {
 	s.Projects = projects
 	return &s
 }
 
-func (s Builder[M]) WithDefaultProjects(projects ...sqlfrag.Fragment) StmtBuilder[M] {
+func (s Builder[M]) WithDefaultProjects(projects ...sqlfrag.Fragment) *Builder[M] {
 	if len(s.DefaultProjects) == 0 {
 		s.DefaultProjects = projects
 	}
+	return &s
+}
+
+func (s Builder[M]) WithPager(pager sqlbuilder.Addition) *Builder[M] {
+	s.Pager = pager
 	return &s
 }
 
@@ -122,7 +125,7 @@ func (s *Builder[M]) prepareProjects() []sqlfrag.Fragment {
 }
 
 func (s *Builder[M]) PatchWhere(ctx context.Context, where sqlfrag.Fragment) sqlfrag.Fragment {
-	if s.IncludesAll() {
+	if s.Is(flags.IncludesAll) {
 		return where
 	}
 
@@ -294,6 +297,12 @@ func (s *Builder[M]) buildSelect(ctx context.Context) sqlfrag.Fragment {
 
 	additions := make([]sqlbuilder.Addition, 0, len(s.Additions))
 
+	if len(s.TableJoins) > 0 {
+		additions = append(additions, slicesx.Map(s.TableJoins, func(a sqlbuilder.JoinAddition) sqlbuilder.Addition {
+			return a
+		})...)
+	}
+
 	var where sqlfrag.Fragment
 
 	for _, a := range s.Additions {
@@ -312,18 +321,41 @@ func (s *Builder[M]) buildSelect(ctx context.Context) sqlfrag.Fragment {
 		if w := s.PatchWhere(ctx, nil); !sqlfrag.IsNil(w) {
 			additions = append(additions, sqlbuilder.Where(w))
 		} else {
-			if s.WhereRequired() {
+			if s.Is(flags.WhereRequired) {
 				return sqlfrag.Empty()
 			}
 		}
 	}
+
+	orders := s.Orders
 
 	var project sqlfrag.Fragment
 	if projects := s.prepareProjects(); len(projects) > 0 {
 		project = sqlfrag.JoinValues(", ", projects...)
 	}
 
-	return sqlbuilder.Select(project).From(from, additions...)
+	var modifiers []sqlfrag.Fragment
+	if s.DistinctOn != nil {
+		modifiers = append(modifiers, sqlbuilder.DistinctOn(s.DistinctOn...))
+
+		orders = append(slicesx.Map(s.DistinctOn, func(col sqlfrag.Fragment) sqlbuilder.Order {
+			return sqlbuilder.DefaultOrder(col)
+		}), orders...)
+	}
+
+	if len(orders) > 0 {
+		if !s.Is(flags.WithoutSorter) {
+			additions = append(additions, sqlbuilder.OrderBy(orders...))
+		}
+	}
+
+	if s.Pager != nil {
+		if !s.Is(flags.WithoutPager) {
+			additions = append(additions, s.Pager)
+		}
+	}
+
+	return sqlbuilder.Select(project, modifiers...).From(from, additions...)
 }
 
 func (s *Builder[M]) T(ctx context.Context, m any) sqlbuilder.Table {
@@ -338,8 +370,8 @@ func (s *Builder[M]) T(ctx context.Context, m any) sqlbuilder.Table {
 	return sqlbuilder.TableFromModel(m)
 }
 
-func (s *Builder[M]) ApplyPatchers(ctx context.Context, patchers ...StmtPatcher[M]) StmtBuilder[M] {
-	var b StmtBuilder[M] = s
+func (s *Builder[M]) ApplyPatchers(ctx context.Context, patchers ...StmtPatcher[M]) *Builder[M] {
+	var b *Builder[M] = s
 	for _, patcher := range patchers {
 		b = patcher.ApplyStmt(ctx, b)
 	}

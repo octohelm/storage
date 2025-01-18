@@ -8,6 +8,36 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+func DistinctOn(on ...sqlfrag.Fragment) sqlfrag.Fragment {
+	return &distinctOn{on: on}
+}
+
+type distinctOn struct {
+	on []sqlfrag.Fragment
+}
+
+func (o *distinctOn) IsNil() bool {
+	return o == nil || len(o.on) == 0
+}
+
+func (o *distinctOn) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return func(yield func(string, []any) bool) {
+		if !yield("DISTINCT ON (", nil) {
+			return
+		}
+
+		for g, args := range sqlfrag.Join(",", sqlfrag.NonNil(slices.Values(o.on))).Frag(ctx) {
+			if !yield(g, args) {
+				return
+			}
+		}
+
+		if !yield(")", nil) {
+			return
+		}
+	}
+}
+
 func OrderBy(orders ...Order) Addition {
 	finalOrders := make([]Order, 0)
 
@@ -55,6 +85,10 @@ func NullsFirst() sqlfrag.Fragment {
 
 func NullsLast() sqlfrag.Fragment {
 	return sqlfrag.Pair(" NULLS LAST")
+}
+
+func DefaultOrder(target sqlfrag.Fragment, ex ...sqlfrag.Fragment) Order {
+	return &order{target: target, ex: ex}
 }
 
 func AscOrder(target sqlfrag.Fragment, ex ...sqlfrag.Fragment) Order {

@@ -108,7 +108,7 @@ func (s *updateOrDeleteSource[M]) Frag(ctx context.Context) iter.Seq2[string, []
 	return internal.CollectStmt(ctx, s)
 }
 
-func (s *updateOrDeleteSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+func (s *updateOrDeleteSource[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 	return s.Underlying.ApplyStmt(ctx, b.WithSource(s.mutation))
 }
 

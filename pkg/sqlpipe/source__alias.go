@@ -20,7 +20,7 @@ func As[M Model](src Source[M], name string, opts ...FromPatcher[M]) Source[M] {
 		p.ApplyToFrom(s)
 	}
 
-	s.Flags = s.embed.GetFlags(context.Background())
+	s.Flag = s.embed.GetFlag(context.Background())
 
 	return s
 }
@@ -52,12 +52,12 @@ func (s *sourceAlias[M]) String() string {
 	return internal.ToString(s)
 }
 
-func (s *sourceAlias[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+func (s *sourceAlias[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 	stmt := internal.BuildStmt(ctx, append([]internal.StmtPatcher[M]{
 		s.embed.Underlying,
 	}, s.patchers...)...)
 
-	return b.WithFlags(s.GetFlags(ctx)).WithSource(
+	return b.WithFlag(s.GetFlag(ctx)).WithSource(
 		sqlfrag.Pair("? AS ?",
 			sqlfrag.Block(stmt),
 			sqlfrag.Const(s.name),

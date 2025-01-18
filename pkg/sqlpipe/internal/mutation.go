@@ -2,16 +2,15 @@ package internal
 
 import (
 	"context"
-	"github.com/octohelm/storage/pkg/sqltype"
+	"errors"
 	"iter"
 	"slices"
 
-	"errors"
-	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
-	reflectx "github.com/octohelm/x/reflect"
-
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
+	"github.com/octohelm/storage/pkg/sqltype"
+	reflectx "github.com/octohelm/x/reflect"
 )
 
 type DeleteType uint

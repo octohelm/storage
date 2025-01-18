@@ -75,6 +75,6 @@ func (s *sourceValues[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return internal.CollectStmt(ctx, s)
 }
 
-func (s *sourceValues[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+func (s *sourceValues[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 	return b.WithSource(s.mutation)
 }

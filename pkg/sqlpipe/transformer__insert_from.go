@@ -34,7 +34,7 @@ func (s *insertFrom[S, O]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}), s)
 }
 
-func (s *insertFrom[S, O]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[O]) internal.StmtBuilder[O] {
+func (s *insertFrom[S, O]) ApplyStmt(ctx context.Context, b *internal.Builder[O]) *internal.Builder[O] {
 	selectStmt := internal.BuildStmt(ctx, s.Underlying)
 
 	return b.WithSource(

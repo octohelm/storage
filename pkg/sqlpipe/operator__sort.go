@@ -35,39 +35,25 @@ func DescSort[M Model](col modelscoped.Column[M], ex ...sqlfrag.Fragment) Source
 }
 
 func newSortedSource[M Model](src Source[M], order sqlbuilder.Order) Source[M] {
-	switch x := src.(type) {
-	case *sortedSource[M]:
-		// self compose
-		return x.withOrders(order)
-	default:
-		return &sortedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			orders: []sqlbuilder.Order{order},
-		}
+	return &sortedSource[M]{
+		Embed: Embed[M]{
+			Underlying: src,
+		},
+		order: order,
 	}
 }
 
 type sortedSource[M Model] struct {
 	Embed[M]
-
-	orders []sqlbuilder.Order
+	order sqlbuilder.Order
 }
 
 func (s *sortedSource[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return internal.CollectStmt(ctx, s)
 }
 
-func (s *sortedSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
-	return s.Underlying.ApplyStmt(ctx, b.WithAdditions(
-		sqlbuilder.OrderBy(s.orders...),
-	))
-}
-
-func (s sortedSource[M]) withOrders(order sqlbuilder.Order) Source[M] {
-	s.orders = append(s.orders, order)
-	return &s
+func (s *sortedSource[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
+	return s.Underlying.ApplyStmt(ctx, b.WithOrders(s.order))
 }
 
 func (s *sortedSource[M]) Pipe(operators ...SourceOperator[M]) Source[M] {

@@ -100,7 +100,7 @@ func (s *projectedSource[M]) Frag(ctx context.Context) iter.Seq2[string, []any] 
 	return internal.CollectStmt(ctx, s)
 }
 
-func (s *projectedSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+func (s *projectedSource[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 	if s.asDefault {
 		return s.Underlying.ApplyStmt(ctx, b.WithDefaultProjects(s.projects...))
 	}

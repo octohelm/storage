@@ -13,7 +13,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	exiternal "github.com/octohelm/storage/pkg/sqlpipe/ex/internal"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	"github.com/octohelm/x/ptr"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
 type SourceExecutor[M sqlpipe.Model] interface {
@@ -77,7 +77,7 @@ func (e *Executor[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return e.source().Frag(ctx)
 }
 
-func (e *Executor[M]) ApplyStmt(ctx context.Context, s internal.StmtBuilder[M]) internal.StmtBuilder[M] {
+func (e *Executor[M]) ApplyStmt(ctx context.Context, s *internal.Builder[M]) *internal.Builder[M] {
 	return e.source().ApplyStmt(ctx, s)
 }
 
@@ -102,12 +102,59 @@ func (e *Executor[M]) source() sqlpipe.Source[M] {
 	}
 
 	if len(e.operators) > 0 {
-		return s.Pipe(slices.SortedFunc(slices.Values(e.operators), func(a sqlpipe.SourceOperator[M], b sqlpipe.SourceOperator[M]) int {
+		return s.Pipe(slices.SortedFunc(flatten(slices.Values(e.operators)), func(a sqlpipe.SourceOperator[M], b sqlpipe.SourceOperator[M]) int {
 			return cmp.Compare(a.OperatorType(), b.OperatorType())
 		})...)
 	}
 
 	return s
+}
+
+type collector[M sqlpipe.Model] struct {
+	operators []sqlpipe.SourceOperator[M]
+}
+
+func (c *collector[M]) IsNil() bool {
+	return false
+}
+
+func (c *collector[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
+	return nil
+}
+
+func (c *collector[M]) ApplyStmt(ctx context.Context, s *internal.Builder[M]) *internal.Builder[M] {
+	return nil
+}
+
+func (c *collector[M]) Pipe(operators ...sqlpipe.SourceOperator[M]) sqlpipe.Source[M] {
+	if len(operators) > 0 {
+		c.operators = append(c.operators, operators...)
+	}
+	return c
+}
+
+func flatten[M sqlpipe.Model](opSeq iter.Seq[sqlpipe.SourceOperator[M]]) iter.Seq[sqlpipe.SourceOperator[M]] {
+	return func(yield func(sqlpipe.SourceOperator[M]) bool) {
+		for op := range opSeq {
+			if op.OperatorType() == sqlpipe.OperatorCompose {
+				c := &collector[M]{}
+
+				op.Next(c)
+
+				for _, subOp := range c.operators {
+					if !yield(subOp) {
+						return
+					}
+				}
+
+				continue
+			}
+
+			if !yield(op) {
+				return
+			}
+		}
+	}
 }
 
 func (e *Executor[M]) Commit(ctx context.Context) error {
@@ -166,9 +213,7 @@ func (e *Executor[M]) Item(ctx context.Context) iter.Seq2[*M, error] {
 	)
 
 	x := scanner.RecvFunc[M](func(ctx context.Context, recv func(v *M) error) error {
-		rows, err := s.Adapter().Query(internal.FlagsContext.Inject(ctx, internal.Flags{
-			OptForReturning: ptr.Ptr(true),
-		}), ex)
+		rows, err := s.Adapter().Query(internal.FlagContext.Inject(ctx, flags.ForReturning), ex)
 		if err != nil {
 			return err
 		}
@@ -183,14 +228,7 @@ func (e *Executor[M]) CountTo(ctx context.Context, x *int64) error {
 
 	ex := e.source().Pipe(
 		sqlpipe.Project[M](sqlbuilder.Count()),
-		exiternal.WithoutAddition[M](func(a sqlbuilder.Addition) bool {
-			switch a.AdditionType() {
-			case sqlbuilder.AdditionLimit, sqlbuilder.AdditionOrderBy:
-				return true
-			default:
-				return false
-			}
-		}),
+		exiternal.ForCount[M](),
 	)
 
 	rows, err := s.Adapter().Query(ctx, ex)

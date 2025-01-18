@@ -60,6 +60,27 @@ FROM t_user
 `))
 		})
 
+		t.Run("with distinct on", func(t *testing.T) {
+			filteredSrc := src.Pipe(
+				sqlpipe.DescSort(model.UserT.UpdatedAt),
+				sqlpipe.Select[model.User](
+					model.UserT.ID,
+					model.UserT.Age,
+				),
+				sqlpipe.DistinctOn(model.UserT.Age),
+			)
+
+			testingx.Expect[sqlfrag.Fragment](t, filteredSrc, testutil.BeFragment(`
+SELECT f_id, f_age
+FROM (
+	SELECT DISTINCT ON ( f_age ) t_user.*
+	FROM t_user
+	ORDER BY (f_age),(f_updated_at) DESC
+) AS t_user
+ORDER BY (f_updated_at) DESC
+`))
+		})
+
 		t.Run("then where", func(t *testing.T) {
 			filteredSrc := src.Pipe(
 				sqlpipe.Where(model.UserT.Name, sqlbuilder.Eq("x")),

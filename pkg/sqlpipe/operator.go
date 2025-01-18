@@ -3,12 +3,13 @@ package sqlpipe
 type OperatorType uint
 
 const (
-	OperatorFilter OperatorType = iota + 1
+	OperatorCompose OperatorType = iota
+	OperatorProject
+	OperatorFilter
 	OperatorSort
 	OperatorLimit
 	OperatorOnConflict
 	OperatorJoin
-	OperatorProject
 	OperatorCommit
 	OperatorSetting
 )

@@ -2,6 +2,7 @@ package sqlpipe
 
 import (
 	"context"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 	"iter"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
@@ -61,16 +62,14 @@ func (s *onConflictSource[M]) Frag(ctx context.Context) iter.Seq2[string, []any]
 	return internal.CollectStmt(ctx, s)
 }
 
-func (s *onConflictSource[M]) ApplyStmt(ctx context.Context, b internal.StmtBuilder[M]) internal.StmtBuilder[M] {
-	flags := s.GetFlags(ctx)
-
+func (s *onConflictSource[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
 	return s.Underlying.ApplyStmt(
 		ctx,
-		b.WithAdditions(s.toOnConflictAddition(ctx, flags)),
+		b.WithAdditions(s.toOnConflictAddition(ctx, s.GetFlag(ctx))),
 	)
 }
 
-func (s *onConflictSource[M]) toOnConflictAddition(ctx context.Context, flags internal.Flags) sqlbuilder.OnConflictAddition {
+func (s *onConflictSource[M]) toOnConflictAddition(ctx context.Context, f flags.Flag) sqlbuilder.OnConflictAddition {
 	if s.with != nil {
 		return s.with(sqlbuilder.OnConflict(s.cols))
 	}
@@ -87,7 +86,7 @@ func (s *onConflictSource[M]) toOnConflictAddition(ctx context.Context, flags in
 		return sqlbuilder.OnConflict(s.cols).DoUpdateSet(assignments...)
 	}
 
-	if flags.ForReturning() {
+	if f.Is(flags.ForReturning) {
 		for col := range s.cols.Cols() {
 			return sqlbuilder.OnConflict(s.cols).DoUpdateSet(sqlbuilder.ColumnsAndValues(
 				col, col.Fragment("EXCLUDED.?", sqlfrag.Const(col.Name())),

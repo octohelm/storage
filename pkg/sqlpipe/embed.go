@@ -2,6 +2,7 @@ package sqlpipe
 
 import (
 	"context"
+	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
@@ -15,7 +16,7 @@ func (u *Embed[M]) Unwrap() Source[M] {
 	return u.Underlying
 }
 
-func (u *Embed[M]) GetFlags(ctx context.Context) internal.Flags {
+func (u *Embed[M]) GetFlag(ctx context.Context) flags.Flag {
 	src := u.Underlying
 
 	for {
@@ -28,11 +29,11 @@ func (u *Embed[M]) GetFlags(ctx context.Context) internal.Flags {
 		break
 	}
 
-	if x, ok := src.(internal.WithFlags); ok {
-		return x.GetFlags(ctx)
+	if x, ok := src.(internal.WithFlag); ok {
+		return x.GetFlag(ctx)
 	}
 
-	return internal.Flags{}
+	return 0
 }
 
 func (e *Embed[M]) IsNil() bool {
