@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 
 	"github.com/octohelm/storage/pkg/session"
@@ -21,6 +22,8 @@ type Database struct {
 	Endpoint Endpoint `flag:""`
 	// Overwrite dbname when not empty
 	NameOverwrite string `flag:",omitempty"`
+	// Overwrite extra when not empty
+	ExtraOverwrite string `flag:",omitempty"`
 	// Overwrite username when not empty
 	UsernameOverwrite string `flag:",omitempty"`
 	// Overwrite password when not empty
@@ -67,6 +70,14 @@ func (d *Database) Init(ctx context.Context) error {
 		if endpoint.Scheme != "sqlite" {
 			endpoint.Path = "/" + name
 		}
+	}
+
+	if extra := d.ExtraOverwrite; extra != "" {
+		q, err := url.ParseQuery(extra)
+		if err != nil {
+			return err
+		}
+		endpoint.Extra = q
 	}
 
 	if username := d.UsernameOverwrite; username != "" {
