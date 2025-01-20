@@ -66,7 +66,7 @@ func (s Builder[M]) WithSource(table sqlfrag.Fragment) *Builder[M] {
 }
 
 func (s Builder[M]) WithTableJoins(tableJoins ...sqlbuilder.JoinAddition) *Builder[M] {
-	s.TableJoins = append(s.TableJoins, tableJoins...)
+	s.TableJoins = append(tableJoins, s.TableJoins...)
 	return &s
 }
 

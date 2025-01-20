@@ -23,13 +23,13 @@ func TestSourceFromWithJoin(t *testing.T) {
 	t.Run("exec", func(t *testing.T) {
 		orgUser := sqlpipe.FromAll[OrgUser](
 			sqlpipe.JoinOn[OrgUser](
-				model.OrgUserT.UserID,
-				model.UserT.ID,
-			),
-			sqlpipe.JoinOn[OrgUser](
 				model.OrgUserT.OrgID,
 				model.OrgT.ID,
 				sqlpipe.Where(model.OrgT.ID, sqlbuilder.Neq(model.OrgID(0))),
+			),
+			sqlpipe.JoinOn[OrgUser](
+				model.OrgUserT.UserID,
+				model.UserT.ID,
 			),
 		)
 
@@ -44,12 +44,12 @@ JOIN t_org ON (t_org_user.f_org_id = t_org.f_id) AND ((t_org.f_id <> ?) AND (t_o
 	t.Run("then where", func(t *testing.T) {
 		filtered := sqlpipe.FromAll[OrgUser]().Pipe(
 			sqlpipe.JoinOn[OrgUser](
-				model.OrgUserT.UserID,
-				model.UserT.ID,
-			),
-			sqlpipe.JoinOn[OrgUser](
 				model.OrgUserT.OrgID,
 				model.OrgT.ID,
+			),
+			sqlpipe.JoinOn[OrgUser](
+				model.OrgUserT.UserID,
+				model.UserT.ID,
 			),
 			sqlpipe.CastWhere[OrgUser](model.UserT.Name, sqlbuilder.Eq("x")),
 			sqlpipe.CastOrWhere[OrgUser](model.OrgT.Name, sqlbuilder.Neq("x")),
