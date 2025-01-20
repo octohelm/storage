@@ -11,16 +11,11 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
-type JoinSourceOperator[M Model] interface {
-	SourceOperator[M]
-	FromPatcher[M]
-}
-
 func JoinOn[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],
 	fromConditions ...SourceOperator[S],
-) JoinSourceOperator[M] {
+) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		on:            on,
 		src:           from,
@@ -36,7 +31,7 @@ func FullJoinOn[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	src modelscoped.TypedColumn[S, T],
 	srcConditions ...SourceOperator[S],
-) JoinSourceOperator[M] {
+) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.FullJoin(b.T(ctx, new(S)))
@@ -51,7 +46,7 @@ func CrossJoinOn[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	src modelscoped.TypedColumn[S, T],
 	srcConditions ...SourceOperator[S],
-) JoinSourceOperator[M] {
+) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.CrossJoin(b.T(ctx, new(S)))
@@ -66,7 +61,7 @@ func InnerJoinOn[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	src modelscoped.TypedColumn[S, T],
 	srcConditions ...SourceOperator[S],
-) JoinSourceOperator[M] {
+) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.InnerJoin(b.T(ctx, new(S)))
@@ -81,7 +76,7 @@ func LeftJoinOn[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	src modelscoped.TypedColumn[S, T],
 	srcConditions ...SourceOperator[S],
-) JoinSourceOperator[M] {
+) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.LeftJoin(b.T(ctx, new(S)))
@@ -96,7 +91,7 @@ func RightJoinOn[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	src modelscoped.TypedColumn[S, T],
 	srcConditions ...SourceOperator[S],
-) JoinSourceOperator[M] {
+) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.RightJoin(b.T(ctx, new(S)))

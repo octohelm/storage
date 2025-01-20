@@ -21,15 +21,15 @@ type OrgUser struct {
 
 func TestSourceFromWithJoin(t *testing.T) {
 	t.Run("exec", func(t *testing.T) {
-		orgUser := sqlpipe.FromAll[OrgUser](
+		orgUser := sqlpipe.FromAll[OrgUser]().Pipe(
+			sqlpipe.JoinOn[OrgUser](
+				model.OrgUserT.UserID,
+				model.UserT.ID,
+			),
 			sqlpipe.JoinOn[OrgUser](
 				model.OrgUserT.OrgID,
 				model.OrgT.ID,
 				sqlpipe.Where(model.OrgT.ID, sqlbuilder.Neq(model.OrgID(0))),
-			),
-			sqlpipe.JoinOn[OrgUser](
-				model.OrgUserT.UserID,
-				model.UserT.ID,
 			),
 		)
 
