@@ -2,46 +2,71 @@ package json
 
 import (
 	"database/sql/driver"
-	"fmt"
+
 	"github.com/go-json-experiment/json"
+	jsonv1 "github.com/go-json-experiment/json/v1"
 )
 
-func scanValue(dbValue any, value any) error {
-	switch v := dbValue.(type) {
-	case []byte:
-		bytes := v
-		if len(bytes) > 0 {
-			return json.Unmarshal(bytes, value)
-		}
-		return nil
-	case string:
-		str := v
-		if str == "" {
-			return nil
-		}
-		return json.Unmarshal([]byte(str), value)
-	case nil:
-		return nil
-	default:
-		return fmt.Errorf("cannot sql.Scan() from: %#v", value)
+func ValueOf[T any](v *T) Value[T] {
+	return Value[T]{v: v}
+}
+
+type Value[T any] struct {
+	v *T
+}
+
+func (v *Value[T]) OneOf() []any {
+	return []any{new(T)}
+}
+
+func (v Value[T]) IsZero() bool {
+	return v.v == nil
+}
+
+func (v *Value[T]) Set(t *T) {
+	v.v = t
+}
+
+func (v *Value[T]) Get() *T {
+	return v.v
+}
+
+func (v Value[T]) As(a *T) {
+	if v.v != nil {
+		*a = *v.v
 	}
 }
 
-func toValue(value any) (driver.Value, error) {
-	if zeroCheck, ok := value.(interface {
-		IsZero() bool
-	}); ok {
-		if zeroCheck.IsZero() {
-			return "", nil
-		}
+func (v *Value[T]) UnmarshalJSON(data []byte) error {
+	t := new(T)
+	if err := json.Unmarshal(data, t, jsonv1.OmitEmptyWithLegacyDefinition(true)); err != nil {
+		return err
 	}
-	bytes, err := json.Marshal(value)
-	if err != nil {
-		return "", err
+	*v = Value[T]{
+		v: t,
 	}
-	str := string(bytes)
-	if str == "null" {
-		return "", nil
+	return nil
+}
+
+func (v Value[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.v, jsonv1.OmitEmptyWithLegacyDefinition(true))
+}
+
+func (Value[T]) DataType(driverName string) string {
+	return "text"
+}
+
+func (v Value[T]) Value() (driver.Value, error) {
+	return toValue(v.v)
+}
+
+func (v *Value[T]) Scan(src any) error {
+	x := new(T)
+	if err := scanValue(src, x); err != nil {
+		return err
 	}
-	return str, nil
+	*v = Value[T]{
+		v: x,
+	}
+	return nil
 }
