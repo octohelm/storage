@@ -1,7 +1,6 @@
 package tablegen
 
 import (
-	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"go/types"
 	"reflect"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/octohelm/gengo/pkg/gengo/snippet"
 	tablegenutil "github.com/octohelm/storage/devpkg/tablegen/util"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 )
 
 func init() {

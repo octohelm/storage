@@ -29,7 +29,7 @@ func (v *Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Source":
 			return []string{}, true
-		case "Additions":
+		case "TableJoins":
 			return []string{}, true
 		case "Orders":
 			return []string{}, true
@@ -40,6 +40,8 @@ func (v *Builder[M]) RuntimeDoc(names ...string) ([]string, bool) {
 		case "DistinctOn":
 			return []string{}, true
 		case "Pager":
+			return []string{}, true
+		case "Additions":
 			return []string{}, true
 
 		}

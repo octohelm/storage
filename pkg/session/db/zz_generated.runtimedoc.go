@@ -35,6 +35,10 @@ func (v *Database) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"Overwrite dbname when not empty",
 			}, true
+		case "ExtraOverwrite":
+			return []string{
+				"Overwrite extra when not empty",
+			}, true
 		case "UsernameOverwrite":
 			return []string{
 				"Overwrite username when not empty",

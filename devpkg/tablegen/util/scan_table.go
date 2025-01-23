@@ -13,7 +13,15 @@ import (
 )
 
 func toDefaultTableName(name string, tableGroup string) string {
-	if tableGroup != "" && strings.ToLower(tableGroup) != strings.ToLower(name) {
+	if tableGroup != "" {
+		prefix := strings.ToLower(strings.ReplaceAll(tableGroup, "_", ""))
+		loweredName := strings.ToLower(name)
+		if prefix == loweredName {
+			return gengo.LowerSnakeCase("t_" + name)
+		}
+		if strings.HasPrefix(loweredName, prefix) {
+			return gengo.LowerSnakeCase("t_" + tableGroup + "_" + name[len(prefix):])
+		}
 		return gengo.LowerSnakeCase("t_" + tableGroup + "_" + name)
 	}
 	return gengo.LowerSnakeCase("t_" + name)
@@ -23,7 +31,6 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 	tags, _ := c.Package(named.Obj().Pkg().Path()).Doc(named.Obj().Pos())
 
 	tableGroup := ""
-
 	if r, ok := tags["gengo:table:group"]; ok {
 		if len(r) > 0 {
 			tableGroup = r[0]
