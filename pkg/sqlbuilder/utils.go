@@ -212,9 +212,14 @@ func (x FieldNameAndOption) Name() string {
 	s := string(x)
 	i := strings.Index(s, ",")
 	if i > 0 {
-		return s[0:i]
+		return pickFieldName(s[0:i])
 	}
-	return s
+	return pickFieldName(s)
+}
+
+func pickFieldName(ref string) string {
+	parts := strings.Split(ref, ".")
+	return parts[len(parts)-1]
 }
 
 func (x FieldNameAndOption) Options() []string {
