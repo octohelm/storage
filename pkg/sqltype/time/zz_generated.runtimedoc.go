@@ -31,7 +31,6 @@ func (v *CreationModificationTime) RuntimeDoc(names ...string) ([]string, bool) 
 			return []string{
 				"更新时间",
 			}, true
-
 		}
 		if doc, ok := runtimeDoc(&v.CreationTime, "", names...); ok {
 			return doc, ok
@@ -49,7 +48,6 @@ func (v *CreationTime) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"创建时间",
 			}, true
-
 		}
 
 		return nil, false
@@ -64,7 +62,6 @@ func (v *CreationUpdationDeletionTime) RuntimeDoc(names ...string) ([]string, bo
 			return []string{
 				"删除时间",
 			}, true
-
 		}
 		if doc, ok := runtimeDoc(&v.CreationUpdationTime, "", names...); ok {
 			return doc, ok

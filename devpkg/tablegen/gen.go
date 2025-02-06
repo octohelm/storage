@@ -268,6 +268,10 @@ func (@Type) TableName() string {
 	return @tableName
 }
 
+func (@Type) GetKind() string {
+	return "@Type"
+}
+
 `, snippet.Args{
 		"Type":      snippet.ID(named.Obj()),
 		"tableName": snippet.Value(t.TableName()),

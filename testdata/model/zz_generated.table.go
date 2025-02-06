@@ -14,6 +14,10 @@ func (Org) TableName() string {
 	return "t_org"
 }
 
+func (Org) GetKind() string {
+	return "Org"
+}
+
 func (Org) PrimaryKey() []string {
 	return []string{
 		"ID",
@@ -80,6 +84,10 @@ func (OrgUser) TableName() string {
 	return "t_org_user"
 }
 
+func (OrgUser) GetKind() string {
+	return "OrgUser"
+}
+
 func (OrgUser) PrimaryKey() []string {
 	return []string{
 		"ID",
@@ -131,6 +139,10 @@ var OrgUserT = &tableOrgUser{
 
 func (User) TableName() string {
 	return "t_user"
+}
+
+func (User) GetKind() string {
+	return "User"
 }
 
 func (User) PrimaryKey() []string {

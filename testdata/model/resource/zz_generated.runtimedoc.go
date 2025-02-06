@@ -31,7 +31,6 @@ func (v *Resource[ID]) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"生成 ID",
 			}, true
-
 		}
 
 		return nil, false

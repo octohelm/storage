@@ -21,6 +21,7 @@ func (Gender) EnumValues() []any {
 		GENDER__MALE, GENDER__FEMALE,
 	}
 }
+
 func (v Gender) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
@@ -122,6 +123,7 @@ func (GenderExt) EnumValues() []any {
 		GENDER_EXT__FEMALE, GENDER_EXT__MALE,
 	}
 }
+
 func ParseGenderExtLabelString(label string) (GenderExt, error) {
 	switch label {
 	case "女":

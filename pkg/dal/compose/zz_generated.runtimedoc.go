@@ -29,7 +29,6 @@ func (v *List[M]) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Items":
 			return []string{}, true
-
 		}
 
 		return nil, false

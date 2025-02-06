@@ -29,7 +29,6 @@ func (v *CountedUser) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Count":
 			return []string{}, true
-
 		}
 		if doc, ok := runtimeDoc(&v.User, "", names...); ok {
 			return doc, ok

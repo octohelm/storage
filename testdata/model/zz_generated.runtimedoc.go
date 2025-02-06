@@ -52,7 +52,6 @@ func (v *OperateTimeWithDeleted) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "DeletedAt":
 			return []string{}, true
-
 		}
 		if doc, ok := runtimeDoc(&v.OperateTime, "", names...); ok {
 			return doc, ok

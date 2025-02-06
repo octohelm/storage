@@ -29,7 +29,6 @@ func (v *OrgByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "CreatedAt":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -42,7 +41,6 @@ func (v *OrgByID) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "ID":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -55,7 +53,6 @@ func (v *OrgByName) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Name":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -68,7 +65,6 @@ func (v *OrgUserByID) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "ID":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -81,7 +77,6 @@ func (v *OrgUserByOrgID) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "OrgID":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -94,7 +89,6 @@ func (v *OrgUserByUserID) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "UserID":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -109,7 +103,6 @@ func (v *UserByAge) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"通过 年龄 筛选",
 			}, true
-
 		}
 
 		return nil, false
@@ -122,7 +115,6 @@ func (v *UserByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "CreatedAt":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -135,7 +127,6 @@ func (v *UserByDeletedAt) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "DeletedAt":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -150,7 +141,6 @@ func (v *UserByID) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"通过 用户ID 筛选",
 			}, true
-
 		}
 
 		return nil, false
@@ -165,7 +155,6 @@ func (v *UserByName) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"通过 姓名 筛选",
 			}, true
-
 		}
 
 		return nil, false
@@ -180,7 +169,6 @@ func (v *UserByNickname) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"通过 昵称 筛选",
 			}, true
-
 		}
 
 		return nil, false

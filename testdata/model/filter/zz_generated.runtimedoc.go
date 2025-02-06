@@ -29,7 +29,6 @@ func (v *OrgByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "CreatedAt":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -42,7 +41,6 @@ func (v *OrgByID) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "ID":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -55,7 +53,6 @@ func (v *OrgByName) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Name":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -70,7 +67,6 @@ func (v *UserByAge) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"年龄",
 			}, true
-
 		}
 
 		return nil, false
@@ -83,7 +79,6 @@ func (v *UserByCreatedAt) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "CreatedAt":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -96,7 +91,6 @@ func (v *UserByDeletedAt) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "DeletedAt":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -111,7 +105,6 @@ func (v *UserByID) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"用户ID",
 			}, true
-
 		}
 
 		return nil, false
@@ -126,7 +119,6 @@ func (v *UserByName) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"姓名",
 			}, true
-
 		}
 
 		return nil, false
@@ -141,7 +133,6 @@ func (v *UserByNickname) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{
 				"昵称",
 			}, true
-
 		}
 
 		return nil, false

@@ -66,7 +66,6 @@ func (v *DeprecatedActions) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "RenameTo":
 			return []string{}, true
-
 		}
 
 		return nil, false

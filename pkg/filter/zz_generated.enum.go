@@ -21,6 +21,7 @@ func (Op) EnumValues() []any {
 		OP__EQ, OP__CONTAINS, OP__PREFIX, OP__SUFFIX, OP__WHERE, OP__AND, OP__OR, OP__INTERSECTION, OP__NEQ, OP__IN, OP__NOTIN, OP__GTE, OP__GT, OP__LTE, OP__LT, OP__NOTCONTAINS,
 	}
 }
+
 func (v Op) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }

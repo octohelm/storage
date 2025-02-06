@@ -15,6 +15,10 @@ func (CountedUser) TableName() string {
 	return "t_counted_user"
 }
 
+func (CountedUser) GetKind() string {
+	return "CountedUser"
+}
+
 func (tableCountedUser) New() sqlbuilder.Model {
 	return &CountedUser{}
 }
@@ -46,8 +50,7 @@ type tableCountedUser struct {
 	Count modelscoped.TypedColumn[CountedUser, int]
 }
 
-type indexesOfCountedUser struct {
-}
+type indexesOfCountedUser struct{}
 
 var CountedUserT = &tableCountedUser{
 	Table: modelscoped.FromModel[CountedUser](),

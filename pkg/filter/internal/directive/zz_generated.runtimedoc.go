@@ -44,7 +44,6 @@ func (v *ErrInvalidDirective) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "DirectiveName":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -57,7 +56,6 @@ func (v *ErrUnsupportedDirective) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "DirectiveName":
 			return []string{}, true
-
 		}
 
 		return nil, false

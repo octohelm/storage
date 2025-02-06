@@ -29,7 +29,6 @@ func (v *Composed) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Filters":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -42,7 +41,6 @@ func (v *ErrInvalidFilter) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Filter":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -55,7 +53,6 @@ func (v *ErrInvalidFilterOp) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "Op":
 			return []string{}, true
-
 		}
 
 		return nil, false
@@ -68,7 +65,6 @@ func (v *ErrUnsupportedQLField) RuntimeDoc(names ...string) ([]string, bool) {
 		switch names[0] {
 		case "FieldName":
 			return []string{}, true
-
 		}
 
 		return nil, false
