@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/migrator/internal"
@@ -33,7 +34,7 @@ func Migrate(ctx context.Context, a adapter.Adapter, toTables *sqlbuilder.Tables
 	return a.Transaction(ctx, func(ctx context.Context) error {
 		for _, m := range migrations {
 			if _, err := a.Exec(ctx, m); err != nil {
-				return err
+				return fmt.Errorf("migrate failed: %w", err)
 			}
 		}
 		return nil

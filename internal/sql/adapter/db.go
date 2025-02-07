@@ -3,6 +3,7 @@ package adapter
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"runtime"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
@@ -35,14 +36,14 @@ func (d *db) Exec(ctx context.Context, frag sqlfrag.Fragment) (sql.Result, error
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {
 		result, err := sqlDo.ExecContext(ctx, query, args...)
 		if err != nil {
-			return nil, d.convertErr(err)
+			return nil, fmt.Errorf("exec failed: %w: %s", d.convertErr(err), query)
 		}
 		return result, nil
 	}
 
 	result, err := d.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, d.convertErr(err)
+		return nil, fmt.Errorf("exec failed: %w: %s", d.convertErr(err), query)
 	}
 	return result, nil
 }
@@ -54,10 +55,18 @@ func (d *db) Query(ctx context.Context, frag sqlfrag.Fragment) (*sql.Rows, error
 	query, args := sqlfrag.Collect(ctx, frag)
 
 	if sqlDo := SqlDoFromContext(ctx); sqlDo != nil {
-		return sqlDo.QueryContext(ctx, query, args...)
+		rows, err := sqlDo.QueryContext(ctx, query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("query failed: %w: %s", err, query)
+		}
+		return rows, err
 	}
 
-	return d.QueryContext(ctx, query, args...)
+	rows, err := d.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w: %s", err, query)
+	}
+	return rows, err
 }
 
 func (d *db) Transaction(ctx context.Context, action func(ctx context.Context) error) (err error) {
