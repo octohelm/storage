@@ -5,8 +5,8 @@ go 1.23.4
 require (
 	github.com/go-courier/logr v0.3.1
 	github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733
-	github.com/octohelm/gengo v0.0.0-20250206072845-f6f6df1a08ef
-	github.com/octohelm/x v0.0.0-20250109055815-dda0e47e75ea
+	github.com/octohelm/gengo v0.0.0-20250208093034-2a09863d11f8
+	github.com/octohelm/x v0.0.0-20250210030010-81907387c139
 )
 
 require (

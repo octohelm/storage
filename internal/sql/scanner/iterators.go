@@ -2,10 +2,9 @@ package scanner
 
 import (
 	"context"
+	reflectx "github.com/octohelm/x/reflect"
 	"iter"
 	"reflect"
-
-	reflectx "github.com/octohelm/x/reflect"
 )
 
 func Recv[T any](next func(v *T) error) ScanIterator {
@@ -28,22 +27,21 @@ type RecvFunc[M any] func(ctx context.Context, recv func(v *M) error) error
 
 func (recv RecvFunc[M]) Item(c context.Context) iter.Seq2[*M, error] {
 	return func(yield func(item *M, err error) bool) {
-		chDone := make(chan error)
-		defer close(chDone)
-
 		ctx, cancel := context.WithCancel(c)
-		defer func() {
-			cancel()
-		}()
+		defer cancel()
 
 		chItem := make(chan *M)
+		chErr := make(chan error)
 		go func() {
 			defer close(chItem)
+			defer close(chErr)
 
-			chDone <- recv(ctx, func(item *M) error {
-				chItem <- item
-				return nil
-			})
+			chErr <- recv(ctx,
+				func(item *M) error {
+					chItem <- item
+					return nil
+				},
+			)
 		}()
 
 		for {
@@ -52,11 +50,11 @@ func (recv RecvFunc[M]) Item(c context.Context) iter.Seq2[*M, error] {
 				if !yield(item, nil) {
 					cancel()
 					// wait all done
-					<-chDone
+					<-chErr
 					return
 				}
 				continue
-			case err := <-chDone:
+			case err := <-chErr:
 				if err != nil {
 					if !yield(nil, err) {
 						return
