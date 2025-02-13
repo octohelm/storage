@@ -1,8 +1,9 @@
 package compose
 
 import (
-	"golang.org/x/exp/maps"
 	"iter"
+	"maps"
+	"slices"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 )
@@ -18,7 +19,7 @@ func (m OneToMulti[ID, Record]) IsZero() bool {
 }
 
 func (m OneToMulti[ID, Record]) Keys() []ID {
-	return maps.Keys(m)
+	return slices.Collect(maps.Keys(m))
 }
 
 func (m OneToMulti[ID, Record]) Records(id ID) iter.Seq[*Record] {
@@ -52,11 +53,11 @@ func (m OneToOne[ID, Record]) IsZero() bool {
 }
 
 func (m OneToOne[ID, Record]) Keys() []ID {
-	return maps.Keys(m)
+	return slices.Collect(maps.Keys(m))
 }
 
 func (m OneToOne[ID, Record]) AsInKeys() sqlbuilder.ColumnValuer[ID] {
-	return sqlbuilder.In(maps.Keys(m)...)
+	return sqlbuilder.In(slices.Collect(maps.Keys(m))...)
 }
 
 func (m OneToOne[ID, Record]) FillWith(id ID, do func(p *Record)) {

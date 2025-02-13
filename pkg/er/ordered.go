@@ -174,7 +174,7 @@ func (m *record[K, V]) UnmarshalJSONFrom(d *jsontext.Decoder, options json.Optio
 }
 
 func (p record[K, V]) MarshalJSONTo(encoder *jsontext.Encoder, options json.Options) error {
-	if err := encoder.WriteToken(jsontext.ObjectStart); err != nil {
+	if err := encoder.WriteToken(jsontext.BeginObject); err != nil {
 		return err
 	}
 
@@ -188,7 +188,7 @@ func (p record[K, V]) MarshalJSONTo(encoder *jsontext.Encoder, options json.Opti
 		}
 	}
 
-	if err := encoder.WriteToken(jsontext.ObjectEnd); err != nil {
+	if err := encoder.WriteToken(jsontext.EndObject); err != nil {
 		return err
 	}
 
