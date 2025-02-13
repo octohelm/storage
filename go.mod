@@ -6,13 +6,13 @@ require (
 	github.com/go-courier/logr v0.3.1
 	github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733
 	github.com/octohelm/gengo v0.0.0-20250208093034-2a09863d11f8
-	github.com/octohelm/x v0.0.0-20250212034859-0e2c4f726784
+	github.com/octohelm/x v0.0.0-20250213100717-a5d72cc790e0
 )
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-json-experiment/json v0.0.0-20250212230008-60a0516c2895
+	github.com/go-json-experiment/json v0.0.0-20250213060926-925ba3f173fa
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	modernc.org/sqlite v1.34.5

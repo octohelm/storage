@@ -120,7 +120,7 @@ func (r *record[K, V]) Get(k K) (V, bool) {
 	return *new(V), false
 }
 
-func (m *record[K, V]) UnmarshalJSONFrom(d *jsontext.Decoder, options json.Options) error {
+func (m *record[K, V]) UnmarshalJSONFrom(d *jsontext.Decoder) error {
 	t, err := d.ReadToken()
 	if err != nil {
 		if err == io.EOF {
@@ -173,7 +173,7 @@ func (m *record[K, V]) UnmarshalJSONFrom(d *jsontext.Decoder, options json.Optio
 	return nil
 }
 
-func (p record[K, V]) MarshalJSONTo(encoder *jsontext.Encoder, options json.Options) error {
+func (p record[K, V]) MarshalJSONTo(encoder *jsontext.Encoder) error {
 	if err := encoder.WriteToken(jsontext.BeginObject); err != nil {
 		return err
 	}
