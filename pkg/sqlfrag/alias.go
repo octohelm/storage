@@ -3,9 +3,10 @@ package sqlfrag
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/octohelm/x/slices"
 	"strings"
 	"sync"
+
+	"github.com/octohelm/x/slices"
 )
 
 var a = &aliases{}

@@ -2,6 +2,8 @@ package filter
 
 import (
 	"bytes"
+	"iter"
+	"slices"
 	"strings"
 
 	"github.com/octohelm/storage/pkg/filter/internal/directive"
@@ -39,8 +41,8 @@ func (f Filter[T]) Op() Op {
 	return f.op
 }
 
-func (v Filter[T]) Args() []Arg {
-	return v.args
+func (v Filter[T]) Args() iter.Seq[Arg] {
+	return slices.Values(v.args)
 }
 
 func (f Filter[T]) IsZero() bool {

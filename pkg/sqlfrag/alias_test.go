@@ -1,8 +1,9 @@
 package sqlfrag
 
 import (
-	testingx "github.com/octohelm/x/testing"
 	"testing"
+
+	testingx "github.com/octohelm/x/testing"
 )
 
 func TestSafeProjected(t *testing.T) {

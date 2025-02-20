@@ -1,4 +1,3 @@
 package filter
 
-type P struct {
-}
+type P struct{}

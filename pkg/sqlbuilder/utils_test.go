@@ -1,8 +1,9 @@
 package sqlbuilder
 
 import (
-	testingx "github.com/octohelm/x/testing"
 	"testing"
+
+	testingx "github.com/octohelm/x/testing"
 )
 
 func TestParseIndexDefine(t *testing.T) {

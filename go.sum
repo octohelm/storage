@@ -5,8 +5,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
-github.com/go-courier/logr v0.3.1 h1:RcHM7qpO8OpuV+zFvJMXtJEspTnnYmT6uGiAomwb8X8=
-github.com/go-courier/logr v0.3.1/go.mod h1:NQWi+TSv0rS1RfyWHv7MNEI5cNy9NR6k1n8R24uHgdY=
+github.com/go-courier/logr v0.3.2 h1:zzh5t9BFtZ6IjALisEbWQy11WPMa259wgQRYM8K4fVc=
+github.com/go-courier/logr v0.3.2/go.mod h1:ojcyR9ttwhxczm8iABg/ekFwLlzvGaJVLyqWLhL7woM=
 github.com/go-json-experiment/json v0.0.0-20250213060926-925ba3f173fa h1:Rpu6sKAzIeSWBkrFHD52g8yipagcPbY2Lmm70NL1Gzc=
 github.com/go-json-experiment/json v0.0.0-20250213060926-925ba3f173fa/go.mod h1:TiCD2a1pcmjd7YnhGH0f/zKNcCD06B029pHhzV23c2M=
 github.com/go-logr/logr v1.4.2 h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=
@@ -40,8 +40,8 @@ github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdh
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733 h1:QFroPAzF1hZYuy90nuxz6XXrX12ZLQUTmsAOLUbBVAk=
 github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733/go.mod h1:s4JBUBvmokS4N0uxRnjds0tBRlBn355OFz2EDHLnEZk=
-github.com/octohelm/gengo v0.0.0-20250208093034-2a09863d11f8 h1:vHn1hRBIaBpuOaXjF2k1ZZUa916lH6h/c4inio5mGRA=
-github.com/octohelm/gengo v0.0.0-20250208093034-2a09863d11f8/go.mod h1:5P1mfFeJ2QaGPIr+4HQGMsrTuadX5t22vREZj4PRZgk=
+github.com/octohelm/gengo v0.0.0-20250219103331-fc799ce3110a h1:ZUej76TLnrVMXBlF0fYgp2W53bNLYQQboT9hjBIKtvc=
+github.com/octohelm/gengo v0.0.0-20250219103331-fc799ce3110a/go.mod h1:Z1jRAOYHNcGJzRVIbzXpK+cXM+VM67bV1pwwh6RoYtU=
 github.com/octohelm/x v0.0.0-20250213100717-a5d72cc790e0 h1:qY5AHEFZJ6tmI6Ixmch3Iy1+99Zf1Cc7tAe5+dkN/7E=
 github.com/octohelm/x v0.0.0-20250213100717-a5d72cc790e0/go.mod h1:EaMGdCSJiZislRhgbbCol1GgPN05NhIIdgAWDPJMRf4=
 github.com/onsi/ginkgo/v2 v2.22.1 h1:QW7tbJAUDyVDVOM5dFa7qaybo+CRfR7bemlQUN6Z8aM=

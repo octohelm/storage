@@ -2,11 +2,11 @@ package filter
 
 import (
 	"bytes"
-	"github.com/go-json-experiment/json"
 	"go/ast"
 	"reflect"
 	"strings"
 
+	"github.com/go-json-experiment/json"
 	"github.com/octohelm/storage/pkg/filter/internal/directive"
 	slicesx "github.com/octohelm/x/slices"
 )

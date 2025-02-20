@@ -2,6 +2,7 @@ package filter
 
 import (
 	"encoding"
+	"iter"
 
 	"github.com/octohelm/storage/pkg/filter/internal/directive"
 )
@@ -24,8 +25,9 @@ type TypedRule[T comparable] interface {
 type Rule interface {
 	Arg
 	Op() Op
-	Args() []Arg
+
 	IsZero() bool
+	Args() iter.Seq[Arg]
 
 	directive.Unmarshaler
 }

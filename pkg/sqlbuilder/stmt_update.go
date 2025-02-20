@@ -2,12 +2,11 @@ package sqlbuilder
 
 import (
 	"context"
+	"errors"
 	"iter"
 	"slices"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
-
-	"errors"
 )
 
 var UpdateNeedLimitByWhere = errors.New("no where limit for update")

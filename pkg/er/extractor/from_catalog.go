@@ -3,16 +3,16 @@ package extractor
 import (
 	"context"
 	"fmt"
-	"github.com/octohelm/storage/pkg/dal"
-	"github.com/octohelm/storage/pkg/sqltype"
 	"iter"
 	"slices"
 	"strings"
 
+	"github.com/octohelm/storage/deprecated/pkg/dal"
 	"github.com/octohelm/storage/pkg/er"
 	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
+	"github.com/octohelm/storage/pkg/sqltype"
 )
 
 func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tables) *er.OrderedDatabase {

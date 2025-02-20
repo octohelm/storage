@@ -1,6 +1,10 @@
 package filter
 
 import (
+	"iter"
+	"slices"
+
+	"github.com/octohelm/storage/internal/xiter"
 	slicesx "github.com/octohelm/x/slices"
 )
 
@@ -103,7 +107,7 @@ func Suffix[T comparable](v T) *Filter[T] {
 }
 
 // In values
-func In[T comparable](values []T) *Filter[T] {
+func In[T comparable](values ...T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__IN,
 		args: slicesx.Map(values, func(e T) Arg {
@@ -112,13 +116,31 @@ func In[T comparable](values []T) *Filter[T] {
 	}
 }
 
+func InSeq[T comparable](values iter.Seq[T]) *Filter[T] {
+	return &Filter[T]{
+		op: OP__IN,
+		args: slices.Collect(xiter.Map(values, func(e T) Arg {
+			return Lit(e)
+		})),
+	}
+}
+
 // Notin values
-func Notin[T comparable](values []T) *Filter[T] {
+func Notin[T comparable](values ...T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__NOTIN,
 		args: slicesx.Map(values, func(e T) Arg {
 			return Lit(e)
 		}),
+	}
+}
+
+func NotinSeq[T comparable](values iter.Seq[T]) *Filter[T] {
+	return &Filter[T]{
+		op: OP__NOTIN,
+		args: slices.Collect(xiter.Map(values, func(e T) Arg {
+			return Lit(e)
+		})),
 	}
 }
 

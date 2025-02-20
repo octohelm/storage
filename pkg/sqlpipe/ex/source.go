@@ -23,21 +23,27 @@ type SourceExecutor[M sqlpipe.Model] interface {
 
 	PipeE(operators ...sqlpipe.SourceOperator[M]) SourceExecutor[M]
 
-	// just execute
+	// Commit just execute
 	Commit(ctx context.Context) error
 
-	// execute then iter item
+	// Items execute and return item or error
+	Items(ctx context.Context) iter.Seq2[*M, error]
+
+	// Item deprecated use Items instead
 	Item(ctx context.Context) iter.Seq2[*M, error]
-	// execute then range
+
+	// Range execute then range
 	Range(ctx context.Context, fn func(*M)) error
 
-	// execute then scan as one item
+	// FindOne execute then scan as one item
+	// notice this will return nil when not result found
 	FindOne(ctx context.Context) (*M, error)
-	// execute then list as item list
+	// List execute then list as item list
 	List(ctx context.Context) ([]*M, error)
-	// execute then list to item adder
+
+	// ListTo execute then list to item adder
 	ListTo(ctx context.Context, adder Adder[M]) error
-	// execute as count
+	// CountTo execute as count
 	CountTo(ctx context.Context, x *int64) error
 }
 
@@ -52,8 +58,7 @@ func FromSource[M sqlpipe.Model](src sqlpipe.Source[M]) SourceExecutor[M] {
 }
 
 type Executor[M sqlpipe.Model] struct {
-	src sqlpipe.Source[M]
-
+	src       sqlpipe.Source[M]
 	operators []sqlpipe.SourceOperator[M]
 }
 
@@ -165,7 +170,7 @@ func (e *Executor[M]) Commit(ctx context.Context) error {
 func (e *Executor[M]) List(ctx context.Context) ([]*M, error) {
 	list := make([]*M, 0)
 
-	for item, err := range e.Item(ctx) {
+	for item, err := range e.Items(ctx) {
 		if err != nil {
 			return nil, err
 		}
@@ -175,18 +180,8 @@ func (e *Executor[M]) List(ctx context.Context) ([]*M, error) {
 	return list, nil
 }
 
-func (e *Executor[M]) Range(ctx context.Context, fn func(m *M)) error {
-	for item, err := range e.Item(ctx) {
-		if err != nil {
-			return err
-		}
-		fn(item)
-	}
-	return nil
-}
-
 func (e *Executor[M]) ListTo(ctx context.Context, listAdder Adder[M]) error {
-	for item, err := range e.Item(ctx) {
+	for item, err := range e.Items(ctx) {
 		if err != nil {
 			return err
 		}
@@ -205,7 +200,7 @@ func (e *Executor[M]) FindOne(ctx context.Context) (*M, error) {
 	return nil, nil
 }
 
-func (e *Executor[M]) Item(ctx context.Context) iter.Seq2[*M, error] {
+func (e *Executor[M]) Items(ctx context.Context) iter.Seq2[*M, error] {
 	s := e.session(ctx)
 
 	ex := e.source().Pipe(
@@ -220,7 +215,7 @@ func (e *Executor[M]) Item(ctx context.Context) iter.Seq2[*M, error] {
 		return scanner.Scan(ctx, rows, scanner.Recv(recv))
 	})
 
-	return x.Item(ctx)
+	return x.Items(ctx)
 }
 
 func (e *Executor[M]) CountTo(ctx context.Context, x *int64) error {
@@ -236,4 +231,18 @@ func (e *Executor[M]) CountTo(ctx context.Context, x *int64) error {
 		return err
 	}
 	return scanner.Scan(ctx, rows, x)
+}
+
+func (e *Executor[M]) Item(ctx context.Context) iter.Seq2[*M, error] {
+	return e.Items(ctx)
+}
+
+func (e *Executor[M]) Range(ctx context.Context, fn func(m *M)) error {
+	for item, err := range e.Items(ctx) {
+		if err != nil {
+			return err
+		}
+		fn(item)
+	}
+	return nil
 }

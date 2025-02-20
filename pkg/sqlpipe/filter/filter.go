@@ -3,7 +3,6 @@ package filter
 import (
 	"fmt"
 	"iter"
-	"slices"
 
 	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -13,104 +12,80 @@ import (
 )
 
 func AsWhere[M sqlpipe.Model, T comparable](col modelscoped.TypedColumn[M, T], f *filter.Filter[T]) sqlpipe.SourceOperator[M] {
-	return asWhere(sqlpipe.FilterOpAnd, col, f)
+	return sqlpipe.NewWhere(sqlpipe.FilterOpAnd, col, func(v sqlbuilder.Column) sqlfrag.Fragment {
+		return asWhere(col, f)
+	})
 }
 
-func asWhere[M sqlpipe.Model, T comparable](op sqlpipe.FilterOp, col modelscoped.TypedColumn[M, T], f *filter.Filter[T]) sqlpipe.SourceOperator[M] {
+func asWhere[M sqlpipe.Model, T comparable](col modelscoped.TypedColumn[M, T], f *filter.Filter[T]) sqlfrag.Fragment {
 	if f == nil || f.IsZero() {
-		return sqlpipe.NewWhere(op, col, func(v sqlbuilder.Column) sqlfrag.Fragment {
-			return nil
-		})
+		return nil
 	}
-
 	switch f.Op() {
 	case filter.OP__AND:
-		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlpipe.SourceOperator[M], bool) {
-			return asWhere[M, T](sqlpipe.FilterOpAnd, col, f), true
+		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlfrag.Fragment, bool) {
+			return asWhere(col, f), true
 		})
-
-		return sqlpipe.SourceOperatorFunc[M](sqlpipe.OperatorFilter, func(src sqlpipe.Source[M]) sqlpipe.Source[M] {
-			return src.Pipe(rules...)
-		})
+		return sqlbuilder.AndSeq(rules)
 	case filter.OP__OR:
-		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlpipe.SourceOperator[M], bool) {
-			return asWhere[M, T](sqlpipe.FilterOpOr, col, f), true
+		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlfrag.Fragment, bool) {
+			return asWhere(col, f), true
 		})
-		return sqlpipe.SourceOperatorFunc[M](sqlpipe.OperatorFilter, func(src sqlpipe.Source[M]) sqlpipe.Source[M] {
-			return src.Pipe(rules...)
-		})
+		return sqlbuilder.OrSeq(rules)
 	case filter.OP__NOTIN:
-		return sqlpipe.NewWhere(op, col, sqlbuilder.NotIn(pickValues(f)...))
+		return col.V(sqlbuilder.NotInSeq(Values(f)))
 	case filter.OP__IN:
-		return sqlpipe.NewWhere(op, col, sqlbuilder.In(pickValues(f)...))
+		return col.V(sqlbuilder.InSeq(Values(f)))
 	case filter.OP__EQ:
 		if v, ok := pickValue(f); ok {
-			return sqlpipe.NewWhere(op, col, sqlbuilder.Eq(v))
+			return col.V(sqlbuilder.Eq(v))
 		}
 	case filter.OP__NEQ:
 		if v, ok := pickValue(f); ok {
-			return sqlpipe.NewWhere(op, col, sqlbuilder.Neq(v))
+			return col.V(sqlbuilder.Neq(v))
 		}
 	case filter.OP__GT:
 		if v, ok := pickValue(f); ok {
-			return sqlpipe.NewWhere(op, col, sqlbuilder.Gt(v))
+			return col.V(sqlbuilder.Gt(v))
 		}
 	case filter.OP__GTE:
 		if v, ok := pickValue(f); ok {
-			return sqlpipe.NewWhere(op, col, sqlbuilder.Gte(v))
+			return col.V(sqlbuilder.Gte(v))
 		}
 	case filter.OP__LT:
 		if v, ok := pickValue(f); ok {
-			return sqlpipe.NewWhere(op, col, sqlbuilder.Lt(v))
+			return col.V(sqlbuilder.Lt(v))
 		}
 	case filter.OP__LTE:
 		if v, ok := pickValue(f); ok {
-			return sqlpipe.NewWhere(op, col, sqlbuilder.Lte(v))
+			return col.V(sqlbuilder.Lte(v))
 		}
 	case filter.OP__PREFIX:
 		if v, ok := pickValue(f); ok {
-			s := fmt.Sprintf("%v", v)
-
-			return sqlpipe.NewWhere(op, col, func(col sqlbuilder.Column) sqlfrag.Fragment {
-				return col.Fragment("# LIKE ?", s+"%")
-			})
+			return col.Fragment("# LIKE ?", fmt.Sprintf("%v", v)+"%")
 		}
 	case filter.OP__SUFFIX:
 		if v, ok := pickValue(f); ok {
-			s := fmt.Sprintf("%v", v)
-
-			return sqlpipe.NewWhere(op, col, func(col sqlbuilder.Column) sqlfrag.Fragment {
-				return col.Fragment("# LIKE ?", "%"+s)
-			})
+			return col.Fragment("# LIKE ?", "%"+fmt.Sprintf("%v", v))
 		}
 	case filter.OP__CONTAINS:
 		if v, ok := pickValue(f); ok {
-			s := fmt.Sprintf("%v", v)
-
-			return sqlpipe.NewWhere(op, col, func(col sqlbuilder.Column) sqlfrag.Fragment {
-				return col.Fragment("# LIKE ?", "%"+s+"%")
-			})
+			return col.Fragment("# LIKE ?", "%"+fmt.Sprintf("%v", v)+"%")
 		}
 	case filter.OP__NOTCONTAINS:
 		if v, ok := pickValue(f); ok {
-			s := fmt.Sprintf("%v", v)
-
-			return sqlpipe.NewWhere(op, col, func(col sqlbuilder.Column) sqlfrag.Fragment {
-				return col.Fragment("# NOT LIKE ?", "%"+s+"%")
-			})
+			return col.Fragment("# NOT LIKE ?", "%"+fmt.Sprintf("%v", v)+"%")
 		}
 	default:
 
 	}
 
-	return sqlpipe.NewWhere(op, col, func(v sqlbuilder.Column) sqlfrag.Fragment {
-		return nil
-	})
+	return nil
 }
 
 func SubFilters[T comparable](f *filter.Filter[T]) iter.Seq[*filter.Filter[T]] {
 	return func(yield func(*filter.Filter[T]) bool) {
-		for _, arg := range f.Args() {
+		for arg := range f.Args() {
 			switch x := any(arg).(type) {
 			case filter.Filter[T]:
 				if !yield(&x) {
@@ -127,7 +102,7 @@ func SubFilters[T comparable](f *filter.Filter[T]) iter.Seq[*filter.Filter[T]] {
 
 func Values[T comparable](f *filter.Filter[T]) iter.Seq[T] {
 	return func(yield func(value T) bool) {
-		for _, arg := range f.Args() {
+		for arg := range f.Args() {
 			switch x := any(arg).(type) {
 			case filter.Value[T]:
 				if !yield(x.Value()) {
@@ -136,10 +111,6 @@ func Values[T comparable](f *filter.Filter[T]) iter.Seq[T] {
 			}
 		}
 	}
-}
-
-func pickValues[T comparable](f *filter.Filter[T]) []T {
-	return slices.Collect(Values(f))
 }
 
 func pickValue[T comparable](f *filter.Filter[T]) (T, bool) {

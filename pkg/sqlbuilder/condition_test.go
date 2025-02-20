@@ -3,8 +3,8 @@ package sqlbuilder_test
 import (
 	"testing"
 
+	"github.com/octohelm/storage/internal/xiter"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	testingx "github.com/octohelm/x/testing"
 
@@ -47,7 +47,7 @@ func TestConditions(t *testing.T) {
 						(*Condition)(nil),
 						(*Condition)(nil),
 						colC.V(In(1, 2)),
-						colC.V(In(3, 4)),
+						colC.V(InSeq(xiter.Of(3, 4))),
 						colA.V(Eq(1)),
 						colB.V(Like("text")),
 					),

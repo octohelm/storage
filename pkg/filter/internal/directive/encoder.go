@@ -2,8 +2,9 @@ package directive
 
 import (
 	"bytes"
-	"github.com/go-json-experiment/json"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 )
 
 func MarshalDirective(funcName string, args ...any) ([]byte, error) {

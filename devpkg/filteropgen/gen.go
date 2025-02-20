@@ -145,7 +145,6 @@ func (f *@ModelTypeName'By@DomainFieldName) Next(src @sqlpipeSource[@Type]) @sql
 
 		_, sortable := def.StructTag.Lookup("sortable")
 		if sortable {
-
 			c.RenderT(`
 type @ModelTypeName'SortBy@DomainFieldName struct {
 }

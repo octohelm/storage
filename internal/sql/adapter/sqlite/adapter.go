@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"fmt"
-
 	"errors"
-	"modernc.org/sqlite"
+	"fmt"
 	"net/url"
+
+	"modernc.org/sqlite"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 

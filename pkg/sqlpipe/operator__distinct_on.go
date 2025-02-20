@@ -2,11 +2,12 @@ package sqlpipe
 
 import (
 	"context"
+	"iter"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 	slicesx "github.com/octohelm/x/slices"
-	"iter"
 )
 
 func DistinctOn[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {

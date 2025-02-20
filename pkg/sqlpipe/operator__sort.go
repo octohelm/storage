@@ -2,8 +2,9 @@ package sqlpipe
 
 import (
 	"context"
-	"github.com/octohelm/storage/pkg/sqlfrag"
 	"iter"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"

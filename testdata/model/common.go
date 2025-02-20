@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"database/sql/driver"
-	"github.com/octohelm/storage/pkg/datatypes"
+	"github.com/octohelm/storage/deprecated/pkg/datatypes"
 )
 
 type OperateTime struct {

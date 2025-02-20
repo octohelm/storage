@@ -3,6 +3,7 @@ package sqlbuilder
 import (
 	"context"
 	"iter"
+	"slices"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
@@ -47,15 +48,27 @@ func (c *Condition) IsNil() bool {
 }
 
 func And(conditions ...sqlfrag.Fragment) SqlCondition {
-	return composedCondition("AND", progressCondition(conditions)...)
+	return composedCondition("AND", progressCondition(conditions))
+}
+
+func AndSeq(conditions iter.Seq[sqlfrag.Fragment]) SqlCondition {
+	return composedCondition("AND", progressCondition(slices.Collect(conditions)))
 }
 
 func Or(conditions ...sqlfrag.Fragment) SqlCondition {
-	return composedCondition("OR", progressCondition(conditions)...)
+	return composedCondition("OR", progressCondition(conditions))
+}
+
+func OrSeq(conditions iter.Seq[sqlfrag.Fragment]) SqlCondition {
+	return composedCondition("OR", progressCondition(slices.Collect(conditions)))
 }
 
 func Xor(conditions ...sqlfrag.Fragment) SqlCondition {
-	return composedCondition("XOR", progressCondition(conditions)...)
+	return composedCondition("XOR", progressCondition(conditions))
+}
+
+func XorSeq(conditions iter.Seq[sqlfrag.Fragment]) SqlCondition {
+	return composedCondition("XOR", progressCondition(slices.Collect(conditions)))
 }
 
 func progressCondition(conditions []sqlfrag.Fragment) []SqlCondition {
@@ -81,7 +94,7 @@ func progressCondition(conditions []sqlfrag.Fragment) []SqlCondition {
 	return finals
 }
 
-func composedCondition(op string, conditions ...SqlCondition) SqlCondition {
+func composedCondition(op string, conditions []SqlCondition) SqlCondition {
 	return &ComposedCondition{op: op, conditions: conditions}
 }
 

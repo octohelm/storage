@@ -22,12 +22,14 @@ func (times *CreationTime) MarkCreatedAt() {
 
 var _ sqltype.WithModificationTime = &CreationUpdationTime{}
 
-type CreationUpdationTime = CreationModificationTime
-type CreationModificationTime struct {
-	CreationTime
-	// 更新时间
-	UpdatedAt Timestamp `db:"f_updated_at,default='0'" json:"updatedAt"`
-}
+type (
+	CreationUpdationTime     = CreationModificationTime
+	CreationModificationTime struct {
+		CreationTime
+		// 更新时间
+		UpdatedAt Timestamp `db:"f_updated_at,default='0'" json:"updatedAt"`
+	}
+)
 
 func (times *CreationUpdationTime) MarkModifiedAt() {
 	if times.UpdatedAt.IsZero() {

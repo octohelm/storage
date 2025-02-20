@@ -16,6 +16,22 @@ var (
 	TimestampUnixZero = Timestamp(time.Unix(0, 0))
 )
 
+func Now() Timestamp {
+	return Timestamp(time.Now())
+}
+
+func Add(t Timestamp, d time.Duration) Timestamp {
+	return Timestamp(time.Time(t).Add(d))
+}
+
+func Sub(t Timestamp, u Timestamp) time.Duration {
+	return time.Time(t).Sub(time.Time(u))
+}
+
+func AddDate(t Timestamp, years int, months int, days int) Timestamp {
+	return Timestamp(time.Time(t).AddDate(years, months, days))
+}
+
 // openapi:strfmt date-time
 type Timestamp time.Time
 
@@ -102,15 +118,16 @@ func (dt *Timestamp) UnmarshalText(data []byte) (err error) {
 	return
 }
 
-func (dt Timestamp) Unix() int64 {
-	return time.Time(dt).Unix()
-}
-
 func (dt Timestamp) IsZero() bool {
 	unix := dt.Unix()
 	return unix == 0 || unix == TimestampZero.Unix()
 }
 
+func (dt Timestamp) Unix() int64                  { return time.Time(dt).Unix() }
+func (dt Timestamp) Year() int                    { return time.Time(dt).Year() }
+func (dt Timestamp) Month() time.Month            { return time.Time(dt).Month() }
+func (dt Timestamp) Day() int                     { return time.Time(dt).Day() }
+func (dt Timestamp) Date() (int, time.Month, int) { return time.Time(dt).Date() }
 func (dt Timestamp) In(loc *time.Location) Timestamp {
 	return Timestamp(time.Time(dt).In(loc))
 }

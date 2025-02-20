@@ -1,7 +1,10 @@
 package sqlbuilder
 
 import (
+	"iter"
 	"strings"
+
+	"github.com/octohelm/storage/internal/xiter"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
@@ -103,12 +106,29 @@ func In[T any](values ...T) ColumnValuer[T] {
 	}
 }
 
+func InSeq[T any](values iter.Seq[T]) ColumnValuer[T] {
+	return func(c Column) sqlfrag.Fragment {
+		return sqlfrag.Pair("? IN (?)", c, xiter.Map(values, func(x T) any {
+			return x
+		}))
+	}
+}
+
 func NotIn[T any](values ...T) ColumnValuer[T] {
 	return func(c Column) sqlfrag.Fragment {
 		if len(values) == 0 {
 			return nil
 		}
+
 		return sqlfrag.Pair("? NOT IN (?)", c, values)
+	}
+}
+
+func NotInSeq[T any](values iter.Seq[T]) ColumnValuer[T] {
+	return func(c Column) sqlfrag.Fragment {
+		return sqlfrag.Pair("? NOT IN (?)", c, xiter.Map(values, func(x T) any {
+			return x
+		}))
 	}
 }
 

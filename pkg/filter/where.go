@@ -2,9 +2,10 @@ package filter
 
 import (
 	"bytes"
-	"github.com/go-json-experiment/json"
+	"iter"
 	"slices"
 
+	"github.com/go-json-experiment/json"
 	"github.com/octohelm/storage/pkg/filter/internal/directive"
 	slicesx "github.com/octohelm/x/slices"
 )
@@ -23,8 +24,8 @@ type where[T comparable] struct {
 	args []Arg
 }
 
-func (w where[T]) Args() []Arg {
-	return w.args
+func (w where[T]) Args() iter.Seq[Arg] {
+	return slices.Values(w.args)
 }
 
 func (w where[T]) IsZero() bool {

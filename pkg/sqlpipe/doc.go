@@ -3,5 +3,4 @@
 // +gengo:runtimedoc=false
 package sqlpipe
 
-type P struct {
-}
+type P struct{}

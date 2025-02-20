@@ -26,7 +26,7 @@ func TestFilterMarshalAndUnmarshal(t *testing.T) {
 			`where("item.id",and(gte(1),lte(10)))`,
 		},
 		{
-			In([]string{"a", "b", "c"}).WhereOf("item.name"),
+			In("a", "b", "c").WhereOf("item.name"),
 			`where("item.name",in("a","b","c"))`,
 		},
 	}
@@ -66,7 +66,7 @@ func TestFilterMarshalAndUnmarshal(t *testing.T) {
 				ItemName: Eq("x"),
 			},
 			ItemListFilterByID{
-				ItemID: In([]int{1, 2, 3, 4}),
+				ItemID: In(1, 2, 3, 4),
 			},
 		)
 
