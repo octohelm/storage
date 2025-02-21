@@ -3,6 +3,7 @@ package migrator
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/migrator/internal"
@@ -10,7 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func Migrate(ctx context.Context, a adapter.Adapter, toTables *sqlbuilder.Tables) error {
+func Migrate(ctx context.Context, a adapter.Adapter, toCatalog sqlbuilder.Catalog) error {
 	fromTables, err := a.Catalog(ctx)
 	if err != nil {
 		return err
@@ -18,8 +19,8 @@ func Migrate(ctx context.Context, a adapter.Adapter, toTables *sqlbuilder.Tables
 
 	migrations := make([]sqlfrag.Fragment, 0)
 
-	for _, name := range toTables.TableNames() {
-		d := internal.Diff(a.Dialect(), fromTables.Table(name), toTables.Table(name))
+	for _, name := range slices.Sorted(sqlbuilder.TableNames(toCatalog)) {
+		d := internal.Diff(a.Dialect(), fromTables.Table(name), toCatalog.Table(name))
 		if sqlfrag.IsNil(d) {
 			continue
 		}

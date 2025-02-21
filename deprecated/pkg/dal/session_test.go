@@ -417,11 +417,10 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	t.Cleanup(func() {
 		a := dal.SessionFor(ctx, name).Adapter()
 
-		cat.Range(func(table sqlbuilder.Table, idx int) bool {
+		for table := range cat.Tables() {
 			_, e := a.Exec(ctx, a.Dialect().DropTable(table))
 			testutil.Expect(t, e, testutil.Be[error](nil))
-			return true
-		})
+		}
 
 		err := a.Close()
 		testutil.Expect(t, err, testutil.Be[error](nil))

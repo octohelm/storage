@@ -8,9 +8,8 @@ import (
 
 var catalogs = sync.Map{}
 
-func RegisterCatalog(name string, tables *sqlbuilder.Tables) {
-	tables.Range(func(tab sqlbuilder.Table, idx int) bool {
-		catalogs.Store(tab.TableName(), name)
-		return true
-	})
+func RegisterCatalog(name string, catalog sqlbuilder.Catalog) {
+	for t := range catalog.Tables() {
+		catalogs.Store(t.TableName(), name)
+	}
 }

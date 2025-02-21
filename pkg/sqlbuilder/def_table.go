@@ -1,10 +1,8 @@
 package sqlbuilder
 
 import (
-	"container/list"
 	"context"
 	"iter"
-	"sort"
 	"strings"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
@@ -132,65 +130,4 @@ func (t *table) Fragment(query string, args ...any) sqlfrag.Fragment {
 	q := strings.ReplaceAll(query, "#", "@_t_")
 
 	return sqlfrag.Pair(q, append([]any{argSet}, args...)...)
-}
-
-type Tables struct {
-	l      *list.List
-	tables map[string]*list.Element
-}
-
-func (tables *Tables) TableNames() (names []string) {
-	tables.Range(func(tab Table, idx int) bool {
-		names = append(names, tab.TableName())
-		return true
-	})
-	sort.Strings(names)
-	return
-}
-
-func (tables *Tables) Add(tabs ...Table) {
-	if tables.tables == nil {
-		tables.tables = map[string]*list.Element{}
-		tables.l = list.New()
-	}
-
-	for _, tab := range tabs {
-		if tab != nil {
-			if _, ok := tables.tables[tab.TableName()]; ok {
-				tables.Remove(tab.TableName())
-			}
-			e := tables.l.PushBack(tab)
-			tables.tables[tab.TableName()] = e
-		}
-	}
-}
-
-func (tables *Tables) Table(tableName string) Table {
-	if tables.tables != nil {
-		if c, ok := tables.tables[tableName]; ok {
-			return c.Value.(Table)
-		}
-	}
-	return nil
-}
-
-func (tables *Tables) Remove(name string) {
-	if tables.tables != nil {
-		if e, exists := tables.tables[name]; exists {
-			tables.l.Remove(e)
-			delete(tables.tables, name)
-		}
-	}
-}
-
-func (tables Tables) Range(cb func(tab Table, idx int) bool) {
-	if tables.l != nil {
-		i := 0
-		for e := tables.l.Front(); e != nil; e = e.Next() {
-			if !cb(e.Value.(Table), i) {
-				break
-			}
-			i++
-		}
-	}
 }

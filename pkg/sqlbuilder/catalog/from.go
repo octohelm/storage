@@ -5,7 +5,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder/internal"
 )
 
-func From(models ...internal.Model) *sqlbuilder.Tables {
+func From(models ...internal.Model) sqlbuilder.Catalog {
 	tables := &sqlbuilder.Tables{}
 	for i := range models {
 		tables.Add(sqlbuilder.TableFromModel(models[i]))

@@ -15,7 +15,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqltype"
 )
 
-func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tables) *er.OrderedDatabase {
+func FromCatalog(ctx context.Context, s session.Session, catalog sqlbuilder.Catalog) *er.OrderedDatabase {
 	erd := &er.OrderedDatabase{
 		Head: er.Head{
 			Name: s.Name(),
@@ -24,16 +24,16 @@ func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tabl
 
 	c := &collector{
 		s:       s,
-		uniques: make(map[string]string),
+		idTypes: make(map[string]string),
 	}
 
-	for t := range c.tables(ctx, tables) {
+	for t := range c.tables(ctx, catalog) {
 		erd.Tables.Set(t.Name, t)
 	}
 
 	for _, t := range erd.Tables.KeyValues() {
 		for _, col := range t.Columns.KeyValues() {
-			if of, ok := c.uniques[col.GoType]; ok {
+			if of, ok := c.idTypes[col.GoType]; ok {
 				if !strings.HasPrefix(of, t.Name+".") {
 					col.Of = of
 				}
@@ -47,12 +47,12 @@ func FromCatalog(ctx context.Context, s session.Session, tables *sqlbuilder.Tabl
 type collector struct {
 	s session.Session
 
-	uniques map[string]string
+	idTypes map[string]string
 }
 
-func (c *collector) tables(ctx context.Context, tables *sqlbuilder.Tables) iter.Seq[*er.OrderedTable] {
+func (c *collector) tables(ctx context.Context, catalog sqlbuilder.Catalog) iter.Seq[*er.OrderedTable] {
 	return func(yield func(*er.OrderedTable) bool) {
-		for table := range tables.Range {
+		for table := range catalog.Tables() {
 			t := &er.OrderedTable{
 				Head: er.Head{
 					Name: table.TableName(),
@@ -153,7 +153,10 @@ func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m s
 
 					if len(cols) == 1 {
 						def := sqlbuilder.GetColumnDef(cols[0])
-						c.uniques[def.Type.String()] = fmt.Sprintf("%s.%s", table.TableName(), cols[0].Name())
+						// if field tagged `of:"{Model}" should never register the id types`
+						if _, ok := def.StructTag.Lookup("of"); !ok {
+							c.idTypes[def.Type.String()] = fmt.Sprintf("%s.%s", table.TableName(), cols[0].Name())
+						}
 					}
 				}
 			}

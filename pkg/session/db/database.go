@@ -7,10 +7,9 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/octohelm/storage/pkg/session"
-
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/migrator"
+	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 
 	_ "github.com/octohelm/storage/internal/sql/adapter/postgres"
@@ -47,15 +46,14 @@ func (d *Database) SetDefaults() {
 	}
 }
 
-func (d *Database) ApplyCatalog(name string, tables ...*sqlbuilder.Tables) {
+func (d *Database) ApplyCatalog(name string, tables ...sqlbuilder.Catalog) {
 	d.name = name
 	d.tables = &sqlbuilder.Tables{}
 
-	for i := range tables {
-		tables[i].Range(func(tab sqlbuilder.Table, idx int) bool {
-			d.tables.Add(tab)
-			return true
-		})
+	for _, t := range tables {
+		for tt := range t.Tables() {
+			d.tables.Add(tt)
+		}
 	}
 }
 
@@ -112,7 +110,7 @@ func (d *Database) Session() session.Session {
 	return session.New(d.db, d.name)
 }
 
-func (d *Database) Tables() *sqlbuilder.Tables {
+func (d *Database) Catalog() sqlbuilder.Catalog {
 	return d.tables
 }
 

@@ -1,7 +1,9 @@
 package postgres
 
 import (
+	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"net/url"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -40,7 +42,7 @@ func Test(t *testing.T) {
 		ctx := testutil.NewContext(t)
 		tables, err := a.Catalog(ctx)
 		testutil.Expect(t, err, testutil.Be[error](nil))
-		spew.Dump(tables.TableNames())
+		spew.Dump(slices.Sorted(sqlbuilder.TableNames(tables)))
 	})
 }
 
