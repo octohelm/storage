@@ -10,7 +10,7 @@ tool (
 require (
 	github.com/go-courier/logr v0.3.2
 	github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733
-	github.com/octohelm/gengo v0.0.0-20250219103331-fc799ce3110a
+	github.com/octohelm/gengo v0.0.0-20250225080353-d22ddf3d348c
 	github.com/octohelm/x v0.0.0-20250213100717-a5d72cc790e0
 )
 

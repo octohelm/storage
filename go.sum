@@ -40,8 +40,8 @@ github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdh
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733 h1:QFroPAzF1hZYuy90nuxz6XXrX12ZLQUTmsAOLUbBVAk=
 github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733/go.mod h1:s4JBUBvmokS4N0uxRnjds0tBRlBn355OFz2EDHLnEZk=
-github.com/octohelm/gengo v0.0.0-20250219103331-fc799ce3110a h1:ZUej76TLnrVMXBlF0fYgp2W53bNLYQQboT9hjBIKtvc=
-github.com/octohelm/gengo v0.0.0-20250219103331-fc799ce3110a/go.mod h1:Z1jRAOYHNcGJzRVIbzXpK+cXM+VM67bV1pwwh6RoYtU=
+github.com/octohelm/gengo v0.0.0-20250225080353-d22ddf3d348c h1:EzR1UPi3o1NYF26oaEpJ988k9waNQ2L9PqrwyShR7J4=
+github.com/octohelm/gengo v0.0.0-20250225080353-d22ddf3d348c/go.mod h1:Z1jRAOYHNcGJzRVIbzXpK+cXM+VM67bV1pwwh6RoYtU=
 github.com/octohelm/x v0.0.0-20250213100717-a5d72cc790e0 h1:qY5AHEFZJ6tmI6Ixmch3Iy1+99Zf1Cc7tAe5+dkN/7E=
 github.com/octohelm/x v0.0.0-20250213100717-a5d72cc790e0/go.mod h1:EaMGdCSJiZislRhgbbCol1GgPN05NhIIdgAWDPJMRf4=
 github.com/onsi/ginkgo/v2 v2.22.1 h1:QW7tbJAUDyVDVOM5dFa7qaybo+CRfR7bemlQUN6Z8aM=
