@@ -5,18 +5,42 @@ import (
 	"maps"
 )
 
-type Set[ID comparable, Record any] interface {
-	IsZero() bool
+func AllRecords[ID comparable, Record any](set Set[ID, Record]) iter.Seq[*Record] {
+	return func(yield func(*Record) bool) {
+		for key := range set.Keys() {
+			for v := range set.Records(key) {
+				if !yield(v) {
+					return
+				}
+			}
+		}
+	}
+}
 
+func FirstRecords[ID comparable, Record any](set Set[ID, Record]) iter.Seq[*Record] {
+	return func(yield func(*Record) bool) {
+		for key := range set.Keys() {
+			for v := range set.Records(key) {
+				if !yield(v) {
+					return
+				}
+				// pick first only for each key
+				break
+			}
+		}
+	}
+}
+
+type Set[ID comparable, Record any] interface {
 	Record(id ID, r *Record)
 
+	IsZero() bool
 	Keys() iter.Seq[ID]
-	AllRecords() iter.Seq[*Record]
-
 	Records(id ID) iter.Seq[*Record]
 }
 
-// Depecrated use Set instead
+// RelCache
+// Deprecated use Set instead
 type RelCache[ID comparable, Record any] = Set[ID, Record]
 
 type OneToMulti[ID comparable, Record any] map[ID][]*Record
@@ -59,7 +83,7 @@ func (m OneToMulti[ID, Record]) Records(id ID) iter.Seq[*Record] {
 	}
 }
 
-// Depecrated use Records instead
+// FillWith Deprecated use Records instead
 func (m OneToMulti[ID, Record]) FillWith(id ID, do func(p *Record)) {
 	if list, ok := m[id]; ok {
 		for _, x := range list {
@@ -84,16 +108,6 @@ func (m OneToOne[ID, Record]) Keys() iter.Seq[ID] {
 	return maps.Keys(m)
 }
 
-func (m OneToOne[ID, Record]) AllRecords() iter.Seq[*Record] {
-	return func(yield func(*Record) bool) {
-		for _, x := range m {
-			if !yield(x) {
-				return
-			}
-		}
-	}
-}
-
 func (m OneToOne[ID, Record]) Records(id ID) iter.Seq[*Record] {
 	return func(yield func(*Record) bool) {
 		if x, ok := m[id]; ok {
@@ -104,7 +118,19 @@ func (m OneToOne[ID, Record]) Records(id ID) iter.Seq[*Record] {
 	}
 }
 
-// Depecrated use Records instead
+// AllRecords
+// Deprecated use AllRecords instead
+func (m OneToOne[ID, Record]) AllRecords() iter.Seq[*Record] {
+	return func(yield func(*Record) bool) {
+		for _, x := range m {
+			if !yield(x) {
+				return
+			}
+		}
+	}
+}
+
+// FillWith  Deprecated use Records instead
 func (m OneToOne[ID, Record]) FillWith(id ID, do func(p *Record)) {
 	if x, ok := m[id]; ok {
 		do(x)

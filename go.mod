@@ -10,22 +10,22 @@ tool (
 require (
 	github.com/go-courier/logr v0.3.2
 	github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733
-	github.com/octohelm/gengo v0.0.0-20250225080353-d22ddf3d348c
+	github.com/octohelm/gengo v0.0.0-20250225091908-fe5a392970d3
 	github.com/octohelm/x v0.0.0-20250213100717-a5d72cc790e0
 )
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-json-experiment/json v0.0.0-20250213060926-925ba3f173fa
+	github.com/go-json-experiment/json v0.0.0-20250223041408-d3c622f1b874
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
-	modernc.org/sqlite v1.34.5
+	modernc.org/sqlite v1.35.0
 )
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
@@ -33,8 +33,8 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
