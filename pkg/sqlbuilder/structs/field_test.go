@@ -46,7 +46,7 @@ func init() {
 		},
 		B: []string{"b"},
 	}
-	p.C = ptr.String("c")
+	p.C = ptr.Ptr("c")
 }
 
 func TestTableFieldsFor(t *testing.T) {

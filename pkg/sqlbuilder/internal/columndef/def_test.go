@@ -33,7 +33,7 @@ func TestColumnTypeFromTypeAndTag(t *testing.T) {
 		},
 		`,default='1'`: {
 			Type:    types.FromRType(reflect.TypeOf("")),
-			Default: ptr.String(`'1'`),
+			Default: ptr.Ptr(`'1'`),
 		},
 	}
 
