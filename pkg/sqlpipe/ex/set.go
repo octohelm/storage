@@ -5,7 +5,7 @@ import (
 	"maps"
 )
 
-func AllRecords[ID comparable, Record any](set Set[ID, Record]) iter.Seq[*Record] {
+func AllRecords[ID comparable, Record any, S Set[ID, Record]](set S) iter.Seq[*Record] {
 	return func(yield func(*Record) bool) {
 		for key := range set.Keys() {
 			for v := range set.Records(key) {
@@ -17,7 +17,7 @@ func AllRecords[ID comparable, Record any](set Set[ID, Record]) iter.Seq[*Record
 	}
 }
 
-func FirstRecords[ID comparable, Record any](set Set[ID, Record]) iter.Seq[*Record] {
+func FirstRecords[ID comparable, Record any, S Set[ID, Record]](set S) iter.Seq[*Record] {
 	return func(yield func(*Record) bool) {
 		for key := range set.Keys() {
 			for v := range set.Records(key) {
