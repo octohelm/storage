@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/octohelm/storage/pkg/sqltype"
 	"time"
 
 	"database/sql/driver"
@@ -23,9 +24,13 @@ type OperateTimeWithDeleted struct {
 	DeletedAt int64 `db:"f_deleted_at,default='0'"`
 }
 
+var _ sqltype.WithSoftDelete = &OperateTimeWithDeleted{}
+
 func (v OperateTimeWithDeleted) SoftDeleteFieldAndZeroValue() (string, driver.Value) {
 	return "DeletedAt", int64(v.DeletedAt)
 }
+
+var _ sqltype.DeletedAtMarker = &OperateTimeWithDeleted{}
 
 func (v *OperateTimeWithDeleted) MarkDeletedAt() {
 	v.DeletedAt = time.Now().Unix()

@@ -28,3 +28,7 @@ func (f Flag) Is(mode Flag) bool {
 func (f Flag) With(f2 Flag) Flag {
 	return f | f2
 }
+
+func (f Flag) Without(f2 Flag) Flag {
+	return f &^ f2
+}

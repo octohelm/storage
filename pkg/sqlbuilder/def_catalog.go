@@ -74,7 +74,6 @@ func (c *Tables) Remove(name string) {
 }
 
 func (c Tables) Tables() iter.Seq[Table] {
-
 	return func(yield func(Table) bool) {
 		emitted := make(map[string]bool)
 

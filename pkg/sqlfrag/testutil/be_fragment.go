@@ -11,16 +11,25 @@ import (
 	testingx "github.com/octohelm/x/testing"
 )
 
-func BeFragment(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {
+func BeFragmentForQuery(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {
 	return &fragmentMatcher[sqlfrag.Fragment]{
 		query: strings.TrimSpace(query),
 		args:  args,
 	}
 }
 
+func BeFragment(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {
+	return &fragmentMatcher[sqlfrag.Fragment]{
+		query:     strings.TrimSpace(query),
+		args:      args,
+		checkArgs: true,
+	}
+}
+
 type fragmentMatcher[A sqlfrag.Fragment] struct {
-	query string
-	args  []any
+	query     string
+	args      []any
+	checkArgs bool
 }
 
 func (m *fragmentMatcher[A]) Negative() bool {
@@ -40,7 +49,7 @@ func (m *fragmentMatcher[A]) Match(actual A) bool {
 		return m.query == q
 	}
 
-	return m.query == q && reflect.DeepEqual(m.args, args)
+	return m.query == q && (!m.checkArgs || reflect.DeepEqual(m.args, args))
 }
 
 func (m *fragmentMatcher[A]) FormatActual(actual A) string {

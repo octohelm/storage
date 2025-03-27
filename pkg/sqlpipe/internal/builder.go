@@ -124,8 +124,8 @@ func (s *Builder[M]) prepareProjects() []sqlfrag.Fragment {
 	return s.Projects
 }
 
-func (s *Builder[M]) PatchWhere(ctx context.Context, where sqlfrag.Fragment) sqlfrag.Fragment {
-	if s.Is(flags.IncludesAll) {
+func (s *Builder[M]) PatchWhere(ctx context.Context, flag flags.Flag, where sqlfrag.Fragment) sqlfrag.Fragment {
+	if flag.Is(flags.IncludesAll) {
 		return where
 	}
 
@@ -144,12 +144,34 @@ func (s *Builder[M]) PatchWhere(ctx context.Context, where sqlfrag.Fragment) sql
 	return where
 }
 
-func (s *Builder[M]) buildDelete(ctx context.Context, mut *Mutation[M]) sqlfrag.Fragment {
+func (s Builder[M]) buildDelete(ctx context.Context, mut *Mutation[M]) sqlfrag.Fragment {
 	m := new(M)
 
 	t := s.T(ctx, m)
 
-	additions := s.Additions
+	additions := make([]sqlbuilder.Addition, 0, len(s.Additions))
+
+	var where sqlfrag.Fragment
+
+	for _, a := range s.Additions {
+		switch a.AdditionType() {
+		case sqlbuilder.AdditionWhere:
+			where = a
+			continue
+		default:
+		}
+
+		additions = append(additions, a)
+	}
+
+	f := s.Flag
+	if mut.ForDelete == DeleteTypeSoft {
+		f = f.Without(flags.IncludesAll)
+	}
+
+	if w := s.PatchWhere(ctx, f, where); !sqlfrag.IsNil(w) {
+		additions = append(additions, sqlbuilder.Where(w))
+	}
 
 	if projects := s.prepareProjects(); len(projects) > 0 {
 		additions = append(additions, sqlbuilder.Returning(sqlfrag.JoinValues(", ", projects...)))
@@ -318,7 +340,7 @@ func (s *Builder[M]) buildSelect(ctx context.Context) sqlfrag.Fragment {
 	}
 
 	// patch soft_delete field filter if need
-	if w := s.PatchWhere(ctx, where); !sqlfrag.IsNil(w) {
+	if w := s.PatchWhere(ctx, s.Flag, where); !sqlfrag.IsNil(w) {
 		where = w
 		additions = append(additions, sqlbuilder.Where(w))
 	}

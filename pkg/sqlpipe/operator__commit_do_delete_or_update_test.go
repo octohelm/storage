@@ -7,6 +7,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/pkg/sqlpipe"
+	"github.com/octohelm/storage/pkg/sqltype/time"
 	"github.com/octohelm/storage/testdata/model"
 	testingx "github.com/octohelm/x/testing"
 )
@@ -93,6 +94,18 @@ WHERE f_name = ?
 RETURNING *
 `, "x",
 			))
+		})
+
+		t.Run("soft", func(t *testing.T) {
+			d := src.Pipe(
+				sqlpipe.DoDelete[model.User](),
+			)
+
+			testingx.Expect[sqlfrag.Fragment](t, d, testutil.BeFragmentForQuery(`
+UPDATE t_user
+SET f_deleted_at = ?
+WHERE (f_name = ?) AND (f_deleted_at = ?)
+`, time.Now(), "x", 0))
 		})
 	})
 }
