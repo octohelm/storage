@@ -2,7 +2,7 @@ package flags
 
 const (
 	none = -(iota + 1)
-	whereRequired
+	whereOrLimitRequired
 	includesAll
 	forReturning
 
@@ -11,9 +11,9 @@ const (
 )
 
 const (
-	WhereRequired Flag = 1 << -whereRequired
-	IncludesAll   Flag = 1 << -includesAll
-	ForReturning  Flag = 1 << -forReturning
+	WhereOrPagerRequired Flag = 1 << -whereOrLimitRequired
+	IncludesAll          Flag = 1 << -includesAll
+	ForReturning         Flag = 1 << -forReturning
 
 	WithoutSorter Flag = 1 << -withoutSorter
 	WithoutPager  Flag = 1 << -withoutPager

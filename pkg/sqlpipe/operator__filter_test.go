@@ -73,6 +73,28 @@ WHERE f_id IN (
 `, int64(0)))
 	})
 
+	t.Run("should build when limit exists", func(t *testing.T) {
+		src := sqlpipe.FromAll[model.User]().Pipe(
+			sqlpipe.WhereInSelectFrom(
+				model.UserT.ID,
+				model.OrgUserT.UserID,
+				sqlpipe.From[model.OrgUser]().Pipe(
+					sqlpipe.Limit[model.OrgUser](10),
+				),
+			),
+		)
+
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+SELECT *
+FROM t_user
+WHERE f_id IN (
+	SELECT f_user_id
+	FROM t_org_user
+	LIMIT 10
+)
+`))
+	})
+
 	t.Run("should not build when where empty", func(t *testing.T) {
 		src := sqlpipe.FromAll[model.User]().Pipe(
 			sqlpipe.WhereInSelectFrom(

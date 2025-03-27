@@ -306,24 +306,26 @@ func (s *Builder[M]) buildSelect(ctx context.Context) sqlfrag.Fragment {
 	var where sqlfrag.Fragment
 
 	for _, a := range s.Additions {
-		if a.AdditionType() == sqlbuilder.AdditionWhere {
+		switch a.AdditionType() {
+		case sqlbuilder.AdditionWhere:
 			where = a
 			continue
+		default:
 		}
+
 		additions = append(additions, a)
+
 	}
 
-	if where != nil {
-		if w := s.PatchWhere(ctx, where); !sqlfrag.IsNil(w) {
-			additions = append(additions, sqlbuilder.Where(w))
-		}
-	} else {
-		if w := s.PatchWhere(ctx, nil); !sqlfrag.IsNil(w) {
-			additions = append(additions, sqlbuilder.Where(w))
-		} else {
-			if s.Is(flags.WhereRequired) {
-				return sqlfrag.Empty()
-			}
+	// patch soft_delete field filter if need
+	if w := s.PatchWhere(ctx, where); !sqlfrag.IsNil(w) {
+		where = w
+		additions = append(additions, sqlbuilder.Where(w))
+	}
+
+	if s.Is(flags.WhereOrPagerRequired) {
+		if sqlfrag.IsNil(where) && s.Pager == nil {
+			return sqlfrag.Empty()
 		}
 	}
 
