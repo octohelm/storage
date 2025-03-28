@@ -32,8 +32,11 @@ func AddDate(t Timestamp, years int, months int, days int) Timestamp {
 	return Timestamp(time.Time(t).AddDate(years, months, days))
 }
 
-// openapi:strfmt date-time
 type Timestamp time.Time
+
+func (Timestamp) OpenAPISchemaFormat() string {
+	return "date-time"
+}
 
 func (Timestamp) DataType(engine string) string {
 	return "bigint"
