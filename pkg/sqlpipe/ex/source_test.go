@@ -2,7 +2,6 @@ package ex
 
 import (
 	"context"
-	"slices"
 	"testing"
 
 	"github.com/google/uuid"
@@ -27,8 +26,17 @@ func TestSourceExecutor(t *testing.T) {
 		ContextWithDatabase(t, "sqlpipe_crud", ""),
 		ContextWithDatabase(t, "sqlpipe_crud", "postgres://postgres@localhost?sslmode=disable"),
 	} {
+		t.Run("empty insert", func(t *testing.T) {
+			err := repo.User.From(
+				sqlpipe.ValueSeq(func(yield func(*model.User) bool) {
+
+				}),
+			).Commit(ctx)
+			testutil.Expect(t, err, testutil.Be[error](nil))
+		})
+
 		t.Run("batch insert", func(t *testing.T) {
-			values := sqlpipe.Values(slices.Collect(func(yield func(*model.User) bool) {
+			values := sqlpipe.ValueSeq(func(yield func(*model.User) bool) {
 				for i := 0; i < 100; i++ {
 					usr := &model.User{
 						Name: uuid.New().String(),
@@ -38,7 +46,7 @@ func TestSourceExecutor(t *testing.T) {
 						return
 					}
 				}
-			}))
+			})
 
 			users := make([]*model.User, 0)
 

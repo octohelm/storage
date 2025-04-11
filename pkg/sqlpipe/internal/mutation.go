@@ -24,13 +24,74 @@ const (
 type Mutation[M sqlbuilder.Model] struct {
 	ForDelete DeleteType
 	ForUpdate bool
-	OmitZero  bool
 
-	From            any
-	StrictColumns   []modelscoped.Column[M]
-	OmitZeroExclude []modelscoped.Column[M]
-	Assignments     []sqlbuilder.Assignment
-	Values          iter.Seq[*M]
+	From any
+
+	OmitZero OmitZero[M]
+	Strict   Strict[M]
+
+	Assignments []sqlbuilder.Assignment
+	Values      iter.Seq[*M]
+}
+
+type OmitZero[M sqlbuilder.Model] struct {
+	Enabled bool
+	Exclude []modelscoped.Column[M]
+}
+
+type Strict[M sqlbuilder.Model] struct {
+	Omit    bool
+	Columns []modelscoped.Column[M]
+}
+
+func (s *Strict[M]) StrictColumnCollection(t sqlbuilder.Table) sqlbuilder.ColumnCollection {
+	cols := sqlbuilder.Cols()
+
+	if len(s.Columns) > 0 {
+		if s.Omit {
+			excludes := sqlbuilder.Cols()
+			for _, c := range s.Columns {
+				if col := t.F(c.FieldName()); col != nil {
+					excludes.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+				}
+			}
+
+			// all
+			for col := range t.Cols() {
+				def := sqlbuilder.GetColumnDef(col)
+
+				if def.DeprecatedActions != nil || def.AutoIncrement {
+					continue
+				}
+
+				if c := excludes.F(col.FieldName()); c == nil {
+					cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+				}
+			}
+
+			return cols
+		}
+
+		for _, c := range s.Columns {
+			if col := t.F(c.FieldName()); col != nil {
+				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+			}
+		}
+
+		return cols
+	}
+
+	for col := range t.Cols() {
+		def := sqlbuilder.GetColumnDef(col)
+
+		if def.DeprecatedActions != nil || def.AutoIncrement {
+			continue
+		}
+
+		cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
+	}
+
+	return cols
 }
 
 func (m *Mutation[M]) IsNil() bool {
@@ -49,29 +110,7 @@ func (m *Mutation[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 }
 
 func (m *Mutation[M]) PrepareColumnCollectionForInsert(t sqlbuilder.Table) sqlbuilder.ColumnCollection {
-	cols := sqlbuilder.Cols()
-
-	if len(m.StrictColumns) > 0 {
-		for _, c := range m.StrictColumns {
-			if col := t.F(c.FieldName()); col != nil {
-				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
-			}
-		}
-	} else {
-		for col := range t.Cols() {
-			def := sqlbuilder.GetColumnDef(col)
-
-			if def.DeprecatedActions != nil {
-				continue
-			}
-
-			if !def.AutoIncrement {
-				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
-			}
-		}
-	}
-
-	return cols
+	return m.Strict.StrictColumnCollection(t)
 }
 
 func (m *Mutation[M]) PrepareAssignments(ctx context.Context, t sqlbuilder.Table) iter.Seq[sqlbuilder.Assignment] {
@@ -97,10 +136,10 @@ func (m *Mutation[M]) PrepareAssignments(ctx context.Context, t sqlbuilder.Table
 		panic(errors.New("assigment only support single value"))
 	}
 
-	if m.OmitZero {
+	if m.OmitZero.Enabled {
 		includes := sqlbuilder.Cols()
 
-		for _, c := range m.OmitZeroExclude {
+		for _, c := range m.OmitZero.Exclude {
 			if col := t.F(c.FieldName()); col != nil {
 				includes.(sqlbuilder.ColumnCollectionManger).AddCol(col)
 			}
@@ -119,14 +158,8 @@ func (m *Mutation[M]) PrepareAssignments(ctx context.Context, t sqlbuilder.Table
 		}
 	}
 
-	if m.StrictColumns != nil {
-		cols := sqlbuilder.Cols()
-
-		for _, c := range m.StrictColumns {
-			if col := t.F(c.FieldName()); col != nil {
-				cols.(sqlbuilder.ColumnCollectionManger).AddCol(col)
-			}
-		}
+	if m.Strict.Columns != nil {
+		cols := m.Strict.StrictColumnCollection(t)
 
 		return func(yield func(sqlbuilder.Assignment) bool) {
 			for sfv := range structs.AllFieldValue(ctx, values[0]) {

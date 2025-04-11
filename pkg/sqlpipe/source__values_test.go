@@ -11,7 +11,15 @@ import (
 )
 
 func TestSourceValues(t *testing.T) {
-	t.Run("for insert", func(t *testing.T) {
+	t.Run("noop", func(t *testing.T) {
+		src := sqlpipe.Values(make([]*model.User, 0), model.UserT.Name).Pipe(
+			sqlpipe.OnConflictDoNothing(model.UserT.I.IName),
+		)
+
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(``))
+	})
+
+	t.Run("insert", func(t *testing.T) {
 		users := []*model.User{
 			{
 				Name: "1",
@@ -80,5 +88,34 @@ RETURNING *
 				"1", "2",
 			))
 		})
+	})
+
+	t.Run("insert omit", func(t *testing.T) {
+		users := []*model.User{
+			{
+				Name: "1",
+			},
+			{
+				Name: "2",
+			},
+		}
+
+		src := sqlpipe.ValuesOmit(users,
+			model.UserT.Nickname,
+			model.UserT.Username,
+			model.UserT.Gender,
+			model.UserT.Age,
+			model.UserT.CreatedAt,
+			model.UserT.UpdatedAt,
+			model.UserT.DeletedAt,
+		)
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+INSERT INTO t_user (f_name)
+VALUES
+	(?),
+	(?)
+`,
+			"1", "2",
+		))
 	})
 }

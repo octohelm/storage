@@ -39,8 +39,10 @@ func (s *insertFrom[S, O]) ApplyStmt(ctx context.Context, b *internal.Builder[O]
 
 	return b.WithSource(
 		&internal.Mutation[O]{
-			StrictColumns: s.cols,
-			From:          selectStmt,
+			Strict: internal.Strict[O]{
+				Columns: s.cols,
+			},
+			From: selectStmt,
 		},
 	)
 }

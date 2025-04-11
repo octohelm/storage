@@ -230,10 +230,10 @@ func (s *Builder[M]) buildInsert(ctx context.Context, m *Mutation[M]) sqlfrag.Fr
 		additions = append(additions, sqlbuilder.Returning(sqlfrag.JoinValues(", ", projects...)))
 	}
 
-	if m.OmitZero {
+	if m.OmitZero.Enabled {
 		includes := sqlbuilder.Cols()
 
-		for _, c := range m.OmitZeroExclude {
+		for _, c := range m.OmitZero.Exclude {
 			if col := t.F(c.FieldName()); col != nil {
 				includes.(sqlbuilder.ColumnCollectionManger).AddCol(col)
 			}

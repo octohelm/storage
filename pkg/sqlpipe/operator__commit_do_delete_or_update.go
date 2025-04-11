@@ -59,15 +59,40 @@ func DoUpdate[M Model, T any](col modelscoped.TypedColumn[M, T], valuer sqlbuild
 	})
 }
 
-func DoUpdateSet[M Model](m *M, cols ...modelscoped.Column[M]) SourceOperator[M] {
+func DoUpdateSet[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		s := &updateOrDeleteSource[M]{
 			Embed: Embed[M]{
 				Underlying: src,
 			},
 			mutation: &internal.Mutation[M]{
-				ForUpdate:     true,
-				StrictColumns: cols,
+				ForUpdate: true,
+				Strict: internal.Strict[M]{
+					Columns: columns,
+				},
+				Values: func(yield func(*M) bool) {
+					if !yield(m) {
+						return
+					}
+				},
+			},
+		}
+		return s
+	})
+}
+
+func DoUpdateSetOmit[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator[M] {
+	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
+		s := &updateOrDeleteSource[M]{
+			Embed: Embed[M]{
+				Underlying: src,
+			},
+			mutation: &internal.Mutation[M]{
+				ForUpdate: true,
+				Strict: internal.Strict[M]{
+					Columns: columns,
+					Omit:    true,
+				},
 				Values: func(yield func(*M) bool) {
 					if !yield(m) {
 						return
@@ -86,9 +111,11 @@ func DoUpdateSetOmitZero[M Model](m *M, exclude ...modelscoped.Column[M]) Source
 				Underlying: src,
 			},
 			mutation: &internal.Mutation[M]{
-				ForUpdate:       true,
-				OmitZero:        true,
-				OmitZeroExclude: exclude,
+				ForUpdate: true,
+				OmitZero: internal.OmitZero[M]{
+					Enabled: true,
+					Exclude: exclude,
+				},
 				Values: func(yield func(*M) bool) {
 					yield(m)
 				},

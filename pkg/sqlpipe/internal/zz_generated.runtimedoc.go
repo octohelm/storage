@@ -69,7 +69,7 @@ func (v *Mutation[M]) RuntimeDoc(names ...string) ([]string, bool) {
 			return []string{}, true
 		case "From":
 			return []string{}, true
-		case "StrictColumns":
+		case "StrictColumn":
 			return []string{}, true
 		case "OmitZeroExclude":
 			return []string{}, true

@@ -46,6 +46,27 @@ WHERE f_name = ?
 `, "a", "x"))
 	})
 
+	t.Run("do update omit", func(t *testing.T) {
+		updated := src.Pipe(
+			sqlpipe.DoUpdateSetOmit(&model.User{
+				Name: "a",
+			},
+				model.UserT.Username,
+				model.UserT.Gender,
+				model.UserT.Age,
+				model.UserT.CreatedAt,
+				model.UserT.UpdatedAt,
+				model.UserT.DeletedAt,
+			),
+		)
+
+		testingx.Expect[sqlfrag.Fragment](t, updated, testutil.BeFragment(`
+UPDATE t_user
+SET f_name = ?, f_nickname = ?
+WHERE f_name = ?
+`, "a", "", "x"))
+	})
+
 	t.Run("do update", func(t *testing.T) {
 		updated := src.Pipe(
 			sqlpipe.DoUpdateSetOmitZero(&model.User{
