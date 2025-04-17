@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
-
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/pkg/sqlpipe"
@@ -22,11 +21,11 @@ type OrgUser struct {
 func TestSourceFromWithJoin(t *testing.T) {
 	t.Run("exec", func(t *testing.T) {
 		orgUser := sqlpipe.FromAll[OrgUser]().Pipe(
-			sqlpipe.JoinOn[OrgUser](
+			sqlpipe.JoinOnAs[OrgUser](
 				model.OrgUserT.UserID,
 				model.UserT.ID,
 			),
-			sqlpipe.JoinOn[OrgUser](
+			sqlpipe.JoinOnAs[OrgUser](
 				model.OrgUserT.OrgID,
 				model.OrgT.ID,
 				sqlpipe.Where(model.OrgT.ID, sqlbuilder.Neq(model.OrgID(0))),
@@ -43,11 +42,11 @@ JOIN t_org ON (t_org_user.f_org_id = t_org.f_id) AND ((t_org.f_id <> ?) AND (t_o
 
 	t.Run("then where", func(t *testing.T) {
 		filtered := sqlpipe.FromAll[OrgUser]().Pipe(
-			sqlpipe.JoinOn[OrgUser](
+			sqlpipe.JoinOnAs[OrgUser](
 				model.OrgUserT.OrgID,
 				model.OrgT.ID,
 			),
-			sqlpipe.JoinOn[OrgUser](
+			sqlpipe.JoinOnAs[OrgUser](
 				model.OrgUserT.UserID,
 				model.UserT.ID,
 			),

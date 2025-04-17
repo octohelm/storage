@@ -11,15 +11,30 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
-func JoinOn[M Model, B Model, S Model, T comparable](
+func JoinOn[M Model, S Model, T comparable](
+	on modelscoped.TypedColumn[M, T],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
+) SourceOperator[M] {
+	return &joinSourcerOperator[M, M, S, T]{
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
+			return sqlbuilder.Join(b.T(ctx, new(S)))
+		},
+	}
+}
+
+func JoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],
 	fromConditions ...SourceOperator[S],
 ) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
-		on:            on,
-		src:           from,
-		srcConditions: fromConditions,
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
 
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.Join(b.T(ctx, new(S)))
@@ -27,99 +42,174 @@ func JoinOn[M Model, B Model, S Model, T comparable](
 	}
 }
 
-func FullJoinOn[M Model, B Model, S Model, T comparable](
+func FullJoinOn[M Model, S Model, T comparable](
+	on modelscoped.TypedColumn[M, T],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
+) SourceOperator[M] {
+	return &joinSourcerOperator[M, M, S, T]{
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
+			return sqlbuilder.FullJoin(b.T(ctx, new(S)))
+		},
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
+	}
+}
+
+func FullJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
-	src modelscoped.TypedColumn[S, T],
-	srcConditions ...SourceOperator[S],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
 ) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.FullJoin(b.T(ctx, new(S)))
 		},
-		on:            on,
-		src:           src,
-		srcConditions: srcConditions,
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
 	}
 }
 
-func CrossJoinOn[M Model, B Model, S Model, T comparable](
+func CrossJoinOn[M Model, S Model, T comparable](
+	on modelscoped.TypedColumn[M, T],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
+) SourceOperator[M] {
+	return &joinSourcerOperator[M, M, S, T]{
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
+			return sqlbuilder.CrossJoin(b.T(ctx, new(S)))
+		},
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
+	}
+}
+
+func CrossJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
-	src modelscoped.TypedColumn[S, T],
-	srcConditions ...SourceOperator[S],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
 ) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.CrossJoin(b.T(ctx, new(S)))
 		},
-		on:            on,
-		src:           src,
-		srcConditions: srcConditions,
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
 	}
 }
 
-func InnerJoinOn[M Model, B Model, S Model, T comparable](
+func InnerJoinOn[M Model, S Model, T comparable](
+	on modelscoped.TypedColumn[M, T],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
+) SourceOperator[M] {
+	return &joinSourcerOperator[M, M, S, T]{
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
+			return sqlbuilder.InnerJoin(b.T(ctx, new(S)))
+		},
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
+	}
+}
+
+func InnerJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
-	src modelscoped.TypedColumn[S, T],
-	srcConditions ...SourceOperator[S],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
 ) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.InnerJoin(b.T(ctx, new(S)))
 		},
-		on:            on,
-		src:           src,
-		srcConditions: srcConditions,
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
 	}
 }
 
-func LeftJoinOn[M Model, B Model, S Model, T comparable](
+func LeftJoinOn[M Model, S Model, T comparable](
+	on modelscoped.TypedColumn[M, T],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
+) SourceOperator[M] {
+	return &joinSourcerOperator[M, M, S, T]{
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
+			return sqlbuilder.LeftJoin(b.T(ctx, new(S)))
+		},
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
+	}
+}
+
+func LeftJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
-	src modelscoped.TypedColumn[S, T],
-	srcConditions ...SourceOperator[S],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
 ) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.LeftJoin(b.T(ctx, new(S)))
 		},
-		on:            on,
-		src:           src,
-		srcConditions: srcConditions,
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
 	}
 }
 
-func RightJoinOn[M Model, B Model, S Model, T comparable](
+func RightJoinOn[M Model, S Model, T comparable](
+	on modelscoped.TypedColumn[M, T],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
+) SourceOperator[M] {
+	return &joinSourcerOperator[M, M, S, T]{
+		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
+			return sqlbuilder.RightJoin(b.T(ctx, new(S)))
+		},
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
+	}
+}
+
+func RightJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
-	src modelscoped.TypedColumn[S, T],
-	srcConditions ...SourceOperator[S],
+	from modelscoped.TypedColumn[S, T],
+	fromConditions ...SourceOperator[S],
 ) SourceOperator[M] {
 	return &joinSourcerOperator[M, B, S, T]{
 		create: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			return sqlbuilder.RightJoin(b.T(ctx, new(S)))
 		},
-		on:            on,
-		src:           src,
-		srcConditions: srcConditions,
+		on:             on,
+		from:           from,
+		fromConditions: fromConditions,
 	}
 }
 
 type joinSourcerOperator[M Model, B Model, S Model, T comparable] struct {
-	create        func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition
-	on            modelscoped.TypedColumn[B, T]
-	src           modelscoped.TypedColumn[S, T]
-	srcConditions []SourceOperator[S]
+	create         func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition
+	on             modelscoped.TypedColumn[B, T]
+	from           modelscoped.TypedColumn[S, T]
+	fromConditions []SourceOperator[S]
 }
 
 func (j *joinSourcerOperator[M, B, S, T]) OperatorType() OperatorType {
 	return OperatorJoin
 }
 
-func (j *joinSourcerOperator[M, B, S, T]) Next(src Source[M]) Source[M] {
+func (j *joinSourcerOperator[M, B, S, T]) Next(from Source[M]) Source[M] {
 	return &joinedSource[M]{
 		Embed: Embed[M]{
-			Underlying: src,
+			Underlying: from,
 		},
 		applyAsAddition: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
-			where := j.on.V(sqlbuilder.EqCol(j.src))
+			where := j.on.V(sqlbuilder.EqCol(j.from))
 			return j.create(ctx, b).On(j.mayPatchWhere(where))
 		},
 	}
@@ -127,15 +217,15 @@ func (j *joinSourcerOperator[M, B, S, T]) Next(src Source[M]) Source[M] {
 
 func (j *joinSourcerOperator[M, B, S, T]) ApplyToFrom(s SourceCanPatcher[M]) {
 	s.AddPatchers(internal.StmtPatcherFunc[M](func(ctx context.Context, b *internal.Builder[M]) *internal.Builder[M] {
-		where := j.on.V(sqlbuilder.EqCol(j.src))
+		where := j.on.V(sqlbuilder.EqCol(j.from))
 
 		return b.WithTableJoins(j.create(ctx, b).On(j.mayPatchWhere(where)))
 	}))
 }
 
 func (j *joinSourcerOperator[M, B, S, T]) mayPatchWhere(where sqlfrag.Fragment) sqlfrag.Fragment {
-	if len(j.srcConditions) > 0 {
-		onSrc := From[S]().Pipe(j.srcConditions...)
+	if len(j.fromConditions) > 0 {
+		onSrc := From[S]().Pipe(j.fromConditions...)
 
 		return sqlbuilder.And(where, sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
 			return func(yield func(string, []any) bool) {

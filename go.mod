@@ -10,7 +10,7 @@ tool (
 require (
 	github.com/go-courier/logr v0.3.2
 	github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733
-	github.com/octohelm/gengo v0.0.0-20250326091949-b027fe02828d
+	github.com/octohelm/gengo v0.0.0-20250415085555-ac23c78ea087
 	github.com/octohelm/x v0.0.0-20250409031213-9c254440c2b8
 )
 
@@ -43,5 +43,5 @@ require (
 	modernc.org/libc v1.62.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.9.1 // indirect
-	mvdan.cc/gofumpt v0.7.0 // indirect
+	mvdan.cc/gofumpt v0.8.0 // indirect
 )
