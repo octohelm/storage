@@ -49,7 +49,13 @@ func (g *filteropGen) GenerateType(c gengo.Context, srcNamed *types.Named) error
 				if _, ok := tag.Lookup("select"); ok {
 					// drop
 				} else {
-					g.generateIndexedFilter(c, t, named, tag.Get("domain"))
+					g.generateIndexedFilter(
+						c,
+						t,
+						named,
+						tag.Get("domain"),
+						tag.Get("of"),
+					)
 				}
 			}
 		}
@@ -58,7 +64,7 @@ func (g *filteropGen) GenerateType(c gengo.Context, srcNamed *types.Named) error
 	return gengo.ErrSkip
 }
 
-func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table, named *types.Named, domainName string) {
+func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table, named *types.Named, domainName, ofDomainName string) {
 	indexedFields := make([]string, 0)
 
 	cols := map[string]bool{}
@@ -75,13 +81,17 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 		}
 	}
 
-	modelTypeName := named.Obj().Name()
-
-	domainFieldNameSuffix := ""
+	domainModel := named.Obj().Name()
 	if domainName != "" {
-		domainType := camelcase.UpperCamelCase(domainName)
-		if domainType != modelTypeName {
-			domainFieldNameSuffix = "Of" + domainType
+		domainModel = domainName
+	}
+
+	if ofDomainName != "" {
+		if !strings.HasPrefix(camelcase.UpperCamelCase(domainModel), camelcase.UpperCamelCase(ofDomainName)) {
+			domainModel = camelcase.UpperCamelCase(ofDomainName) + domainModel
+		}
+		if domainName == "" {
+			domainName = ofDomainName
 		}
 	}
 
@@ -114,26 +124,25 @@ func (g *filteropGen) generateIndexedFilter(c gengo.Context, t sqlbuilder.Table,
 		c.RenderT(`
 type @ModelTypeName'By@DomainFieldName struct {
 	@fieldComment
-	@FieldName *@filterFilter[@FieldType] `+"`"+`name:"@domainName~@domainFieldName,omitzero" in:"query"`+"`"+`
+	@DomainFieldName *@filterFilter[@FieldType] `+"`"+`name:"@domainName~@domainFieldName,omitzero" in:"query"`+"`"+`
 }
-
 
 func (f *@ModelTypeName'By@DomainFieldName) OperatorType() @sqlpipeOperatorType {
 	return @sqlpipeOperatorFilter
 }
 
 func (f *@ModelTypeName'By@DomainFieldName) Next(src @sqlpipeSource[@Type]) @sqlpipeSource[@Type] {
-	return src.Pipe(@sqlpipefilterAsWhere(@Type'T.@FieldName, f.@FieldName))
+	return src.Pipe(@sqlpipefilterAsWhere(@Type'T.@FieldName, f.@DomainFieldName))
 }
 `, snippet.Args{
-			"ModelTypeName": snippet.ID(modelTypeName),
+			"ModelTypeName": snippet.ID(camelcase.UpperCamelCase(domainModel)),
 			"Type":          snippet.ID(named.Obj()),
 
 			"FieldType":       snippet.ID(fieldType.String()),
 			"FieldName":       snippet.ID(fieldName),
 			"fieldComment":    snippet.Comment(fieldComment),
 			"domainName":      snippet.ID(camelcase.LowerKebabCase(domainName)),
-			"DomainFieldName": snippet.ID(camelcase.UpperCamelCase(domainFieldName) + domainFieldNameSuffix),
+			"DomainFieldName": snippet.ID(camelcase.UpperCamelCase(domainFieldName)),
 			"domainFieldName": snippet.ID(domainFieldName),
 
 			"sqlpipeSource":         snippet.PkgExposeFor[sqlpipe.P]("Source"),
@@ -161,13 +170,13 @@ func (f *@ModelTypeName'SortBy@DomainFieldName) Sort(src @sqlpipeSource[@Type], 
 	return src.Pipe(sortBy(@Type'T.@FieldName))
 }
 `, snippet.Args{
-				"ModelTypeName": snippet.ID(modelTypeName),
+				"ModelTypeName": snippet.ID(camelcase.UpperCamelCase(domainModel)),
 				"Type":          snippet.ID(named.Obj()),
 
 				"FieldType":       snippet.ID(fieldType.String()),
 				"FieldName":       snippet.ID(fieldName),
 				"domainName":      snippet.ID(camelcase.LowerKebabCase(domainName)),
-				"DomainFieldName": snippet.ID(camelcase.UpperCamelCase(domainFieldName) + domainFieldNameSuffix),
+				"DomainFieldName": snippet.ID(camelcase.UpperCamelCase(domainFieldName)),
 				"domainFieldName": snippet.ID(domainFieldName),
 
 				"sorterLabel": snippet.Value(def.Comment),
