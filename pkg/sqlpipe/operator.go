@@ -8,6 +8,7 @@ const (
 	OperatorFilter
 	OperatorSort
 	OperatorLimit
+	OperatorLock
 	OperatorOnConflict
 	OperatorJoin
 	OperatorCommit

@@ -135,6 +135,23 @@ LIMIT 10
 			})
 		})
 
+		t.Run("for lock", func(t *testing.T) {
+			locked := src.Pipe(
+				sqlpipe.Limit[model.User](10),
+				sqlpipe.ForUpdate[model.User](sqlpipe.SkipLocked()),
+			)
+
+			t.Run("exec", func(t *testing.T) {
+				testingx.Expect[sqlfrag.Fragment](t, locked, testutil.BeFragment(`
+SELECT *
+FROM t_user
+LIMIT 10
+FOR UPDATE SKIP LOCKED
+`))
+			})
+
+		})
+
 		t.Run("then limit", func(t *testing.T) {
 			limitedSrc := src.Pipe(
 				sqlpipe.Limit[model.User](10),

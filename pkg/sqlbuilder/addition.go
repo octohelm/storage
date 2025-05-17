@@ -26,6 +26,7 @@ const (
 	AdditionOnConflict
 	AdditionReturning
 	AdditionLimit
+	AdditionLock
 	AdditionOther
 	AdditionComment
 )
@@ -60,20 +61,23 @@ func (additions Additions) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
-func AsAddition(fragment sqlfrag.Fragment) *OtherAddition {
-	return &OtherAddition{
-		Fragment: fragment,
+func AsAddition(additionType AdditionType, fragment sqlfrag.Fragment) Addition {
+	return &addition{
+		additionType: additionType,
+		Fragment:     fragment,
 	}
 }
 
-type OtherAddition struct {
+type addition struct {
 	sqlfrag.Fragment
+
+	additionType AdditionType
 }
 
-func (a *OtherAddition) IsNil() bool {
+func (a *addition) IsNil() bool {
 	return a == nil || sqlfrag.IsNil(a.Fragment)
 }
 
-func (OtherAddition) AdditionType() AdditionType {
-	return AdditionOther
+func (a *addition) AdditionType() AdditionType {
+	return a.additionType
 }

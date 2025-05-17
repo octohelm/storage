@@ -110,6 +110,7 @@ func (s *StmtSelect) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
-func ForUpdate() *OtherAddition {
-	return AsAddition(sqlfrag.Pair("FOR UPDATE"))
+// Deprecated
+func ForUpdate() Addition {
+	return AsAddition(AdditionLock, sqlfrag.Pair("FOR UPDATE"))
 }
