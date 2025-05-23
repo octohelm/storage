@@ -56,6 +56,13 @@ func (g *tableGen) generateTableStatics(c gengo.Context, t sqlbuilder.Table, nam
 		}
 	}
 
+	objectKind := named.Obj().Name()
+	if r, ok := tags["gengo:table:objectkind"]; ok {
+		if len(r) > 0 {
+			objectKind = r[0]
+		}
+	}
+
 	if register != "" {
 		c.RenderT(`
 func init() {
@@ -67,6 +74,16 @@ func init() {
 			"Type":     snippet.ID(named.Obj()),
 		})
 	}
+
+	c.RenderT(`
+func (@Type) GetKind() string {
+	return @objectKind
+}
+
+`, snippet.Args{
+		"Type":       snippet.ID(named.Obj()),
+		"objectKind": snippet.Value(objectKind),
+	})
 
 	cols := t.Cols()
 
@@ -267,11 +284,6 @@ func (g *tableGen) generateIndexInterfaces(c gengo.Context, t sqlbuilder.Table, 
 func (@Type) TableName() string {
 	return @tableName
 }
-
-func (@Type) GetKind() string {
-	return "@Type"
-}
-
 `, snippet.Args{
 		"Type":      snippet.ID(named.Obj()),
 		"tableName": snippet.Value(t.TableName()),
