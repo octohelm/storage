@@ -4,36 +4,92 @@ import (
 	"testing"
 	"time"
 
-	"github.com/octohelm/storage/internal/testutil"
+	"github.com/octohelm/x/testing/bdd"
 )
 
 func TestTimestamp(t *testing.T) {
-	t.Run("Parse", func(t *testing.T) {
-		t0, _ := time.Parse(time.RFC3339, "2017-03-27T23:58:59+08:00")
-		dt := Timestamp(t0)
+	b := bdd.FromT(t)
 
-		testutil.Expect(t, dt.String(), testutil.Equal("2017-03-27T23:58:59+08:00"))
-		testutil.Expect(t, dt.Format(time.RFC3339), testutil.Equal("2017-03-27T23:58:59+08:00"))
-		testutil.Expect(t, dt.Unix(), testutil.Equal(int64(1490630339)))
+	b.Given("zero time", func(b bdd.T) {
+		dt := TimestampZero
+
+		b.Then("output empty",
+			bdd.Equal("", dt.String()),
+		)
+
+		b.Then("output unix sec",
+			bdd.Equal(-62135596800, dt.Unix()),
+		)
+
+		b.When("marshal text", func(b bdd.T) {
+			data := bdd.Must(dt.MarshalText())
+
+			b.Then("output empty string",
+				bdd.Equal("", string(data)),
+			)
+
+			b.When("unmarshal text", func(b bdd.T) {
+				var dt2 Timestamp
+
+				b.Then("success",
+					bdd.NoError(dt2.UnmarshalText(data)),
+					bdd.Equal(dt, dt2),
+				)
+			})
+		})
 	})
-	t.Run("Marshal & Unmarshal", func(t *testing.T) {
+
+	b.Given("time string", func(b bdd.T) {
 		t0, _ := time.Parse(time.RFC3339, "2017-03-27T23:58:59+08:00")
 		dt := Timestamp(t0)
 
-		dateString, err := dt.MarshalText()
-		testutil.Expect(t, err, testutil.Be[error](nil))
-		testutil.Expect(t, string(dateString), testutil.Equal("2017-03-27T23:58:59+08:00"))
+		b.Then("output RFC3339 string",
+			bdd.Equal("2017-03-27T23:58:59+08:00", dt.String()),
+		)
 
-		dt2 := TimestampZero
-		testutil.Expect(t, dt2.IsZero(), testutil.Be(true))
+		b.Then("output unix sec",
+			bdd.Equal(1490630339, dt.Unix()),
+		)
 
-		err = dt2.UnmarshalText(dateString)
-		testutil.Expect(t, err, testutil.Be[error](nil))
-		testutil.Expect(t, dt2, testutil.Equal(dt))
-		testutil.Expect(t, dt2.IsZero(), testutil.Be(false))
+		b.When("marshal text", func(b bdd.T) {
+			data := bdd.Must(dt.MarshalText())
 
-		dt3 := TimestampZero
-		err = dt3.UnmarshalText([]byte(""))
-		testutil.Expect(t, err, testutil.Be[error](nil))
+			b.Then("output as string with RFC3339",
+				bdd.Equal("2017-03-27T23:58:59+08:00", string(data)),
+			)
+
+			b.When("unmarshal text", func(b bdd.T) {
+				var dt2 Timestamp
+
+				b.Then("success",
+					bdd.NoError(dt2.UnmarshalText(data)),
+					bdd.Equal(dt, dt2),
+				)
+			})
+		})
+	})
+
+	b.Given("time string for custom output layout", func(b bdd.T) {
+		t0, _ := time.Parse(time.RFC3339, "2017-03-27T23:58:59+08:00")
+		dt := Timestamp(t0)
+
+		b.When("marshal text", func(b bdd.T) {
+			SetOutput("2006-01-02 15:04:05", nil)
+
+			data := bdd.Must(dt.MarshalText())
+
+			b.Then("output as string with custom output layout",
+				bdd.Equal("2017-03-27 23:58:59", string(data)),
+			)
+
+			b.When("unmarshal text", func(b bdd.T) {
+				var dt2 Timestamp
+
+				b.Then("success",
+					bdd.NoError(dt2.UnmarshalText(data)),
+					bdd.Equal(dt.Unix(), dt2.Unix()),
+				)
+			})
+		})
 	})
 }

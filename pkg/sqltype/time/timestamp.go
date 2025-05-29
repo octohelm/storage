@@ -7,14 +7,34 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	_ "time/tzdata"
 )
 
 var (
 	UTC               = time.UTC
-	CST               = time.FixedZone("CST", 8*60*60)
 	TimestampZero     = Timestamp(time.Time{})
 	TimestampUnixZero = Timestamp(time.Unix(0, 0))
 )
+
+var (
+	CST          = time.UTC
+	OutputLayout = time.RFC3339
+)
+
+func init() {
+	cst, _ := time.LoadLocation("Asia/Shanghai")
+	if cst != nil {
+		CST = cst
+	}
+}
+
+func SetOutput(layout string, location *time.Location) {
+	OutputLayout = layout
+
+	if location != nil {
+		CST = location
+	}
+}
 
 func Now() Timestamp {
 	return Timestamp(time.Now())
@@ -42,11 +62,19 @@ func (Timestamp) DataType(engine string) string {
 	return "bigint"
 }
 
-func ParseTimestampFromString(s string) (dt Timestamp, err error) {
-	var t time.Time
-	t, err = time.Parse(time.RFC3339, s)
-	dt = Timestamp(t)
-	return
+func ParseTimestampFromString(s string) (Timestamp, error) {
+	if OutputLayout != time.RFC3339 {
+		t, err := time.ParseInLocation(OutputLayout, s, CST)
+		if err == nil {
+			return Timestamp(t), nil
+		}
+	}
+	// fallback
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return TimestampUnixZero, err
+	}
+	return Timestamp(t), nil
 }
 
 func ParseTimestampFromStringWithLayout(input, layout string) (Timestamp, error) {
@@ -96,7 +124,7 @@ func (dt Timestamp) String() string {
 	if dt.IsZero() {
 		return ""
 	}
-	return time.Time(dt).In(CST).Format(time.RFC3339)
+	return time.Time(dt).In(CST).Format(OutputLayout)
 }
 
 func (dt Timestamp) Format(layout string) string {
