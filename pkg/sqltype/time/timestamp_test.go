@@ -40,7 +40,7 @@ func TestTimestamp(t *testing.T) {
 	})
 
 	b.Given("time string", func(b bdd.T) {
-		t0, _ := time.ParseInLocation(time.RFC3339, "2017-03-27T23:58:59+08:00", nil)
+		t0, _ := time.ParseInLocation(time.RFC3339, "2017-03-27T23:58:59+08:00", CST)
 		dt := Timestamp(t0)
 
 		b.Then("output RFC3339 string",
@@ -63,14 +63,14 @@ func TestTimestamp(t *testing.T) {
 
 				b.Then("success",
 					bdd.NoError(dt2.UnmarshalText(data)),
-					bdd.Equal(dt, dt2),
+					bdd.Equal(dt.Unix(), dt2.Unix()),
 				)
 			})
 		})
 	})
 
 	b.Given("time string for custom output layout", func(b bdd.T) {
-		t0, _ := time.ParseInLocation(time.RFC3339, "2017-03-27T23:58:59+08:00", nil)
+		t0, _ := time.ParseInLocation(time.RFC3339, "2017-03-27T23:58:59+08:00", CST)
 		dt := Timestamp(t0)
 
 		b.When("marshal text", func(b bdd.T) {

@@ -31,7 +31,7 @@ func init() {
 var (
 	outputLayout     = time.RFC3339
 	supportedLayouts = map[string]*time.Location{
-		time.RFC3339: nil,
+		time.RFC3339: CST,
 	}
 )
 
@@ -75,14 +75,12 @@ func (Timestamp) DataType(engine string) string {
 
 func ParseTimestampFromString(s string) (d Timestamp, err error) {
 	for layout, cst := range supportedLayouts {
-		// fallback
 		t, e := time.ParseInLocation(layout, s, cst)
 		if e == nil {
 			return Timestamp(t), nil
 		}
 		err = e
 	}
-
 	return
 }
 
