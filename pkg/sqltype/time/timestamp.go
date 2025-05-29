@@ -1,6 +1,7 @@
 package time
 
 import (
+	"cmp"
 	"database/sql"
 	"database/sql/driver"
 	"encoding"
@@ -17,8 +18,7 @@ var (
 )
 
 var (
-	CST          = time.UTC
-	OutputLayout = time.RFC3339
+	CST = time.UTC
 )
 
 func init() {
@@ -28,8 +28,19 @@ func init() {
 	}
 }
 
-func SetOutput(layout string, location *time.Location) {
-	OutputLayout = layout
+var (
+	outputLayout     = time.RFC3339
+	supportedLayouts = map[string]*time.Location{
+		time.RFC3339: nil,
+	}
+)
+
+func AddSupportedLayout(layout string, location *time.Location) {
+	supportedLayouts[layout] = cmp.Or(location, CST)
+}
+
+func SetOutputLayout(layout string, location *time.Location) {
+	outputLayout = layout
 
 	if location != nil {
 		CST = location
@@ -62,19 +73,17 @@ func (Timestamp) DataType(engine string) string {
 	return "bigint"
 }
 
-func ParseTimestampFromString(s string) (Timestamp, error) {
-	if OutputLayout != time.RFC3339 {
-		t, err := time.ParseInLocation(OutputLayout, s, CST)
-		if err == nil {
+func ParseTimestampFromString(s string) (d Timestamp, err error) {
+	for layout, cst := range supportedLayouts {
+		// fallback
+		t, e := time.ParseInLocation(layout, s, cst)
+		if e == nil {
 			return Timestamp(t), nil
 		}
+		err = e
 	}
-	// fallback
-	t, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return TimestampUnixZero, err
-	}
-	return Timestamp(t), nil
+
+	return
 }
 
 func ParseTimestampFromStringWithLayout(input, layout string) (Timestamp, error) {
@@ -124,7 +133,7 @@ func (dt Timestamp) String() string {
 	if dt.IsZero() {
 		return ""
 	}
-	return time.Time(dt).In(CST).Format(OutputLayout)
+	return time.Time(dt).In(CST).Format(outputLayout)
 }
 
 func (dt Timestamp) Format(layout string) string {
