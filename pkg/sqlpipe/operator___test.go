@@ -149,7 +149,6 @@ LIMIT 10
 FOR UPDATE SKIP LOCKED
 `))
 			})
-
 		})
 
 		t.Run("then limit", func(t *testing.T) {

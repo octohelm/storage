@@ -12,7 +12,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	"github.com/octohelm/storage/testdata/model"
-	modelfilter "github.com/octohelm/storage/testdata/model/filter/v2"
+	modelfilter "github.com/octohelm/storage/testdata/model/filter"
 )
 
 type Repo struct {
@@ -29,7 +29,6 @@ func TestSourceExecutor(t *testing.T) {
 		t.Run("empty insert", func(t *testing.T) {
 			err := repo.User.From(
 				sqlpipe.ValueSeq(func(yield func(*model.User) bool) {
-
 				}),
 			).Commit(ctx)
 			testutil.Expect(t, err, testutil.Be[error](nil))

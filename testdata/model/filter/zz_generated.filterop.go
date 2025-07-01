@@ -5,7 +5,6 @@ DON'T EDIT THIS FILE
 package filter
 
 import (
-	datatypes "github.com/octohelm/storage/deprecated/pkg/datatypes"
 	filter "github.com/octohelm/storage/pkg/filter"
 	sqlpipe "github.com/octohelm/storage/pkg/sqlpipe"
 	sqlpipefilter "github.com/octohelm/storage/pkg/sqlpipe/filter"
@@ -65,7 +64,7 @@ func (f *UserByAge) Next(src sqlpipe.Source[model.User]) sqlpipe.Source[model.Us
 }
 
 type UserByCreatedAt struct {
-	CreatedAt *filter.Filter[datatypes.Datetime] `name:"user~createdAt,omitzero" in:"query"`
+	CreatedAt *filter.Filter[model.Datetime] `name:"user~createdAt,omitzero" in:"query"`
 }
 
 func (f *UserByCreatedAt) OperatorType() sqlpipe.OperatorType {
@@ -113,7 +112,7 @@ func (f *OrgByName) Next(src sqlpipe.Source[model.Org]) sqlpipe.Source[model.Org
 }
 
 type OrgByCreatedAt struct {
-	CreatedAt *filter.Filter[datatypes.Datetime] `name:"org~createdAt,omitzero" in:"query"`
+	CreatedAt *filter.Filter[model.Datetime] `name:"org~createdAt,omitzero" in:"query"`
 }
 
 func (f *OrgByCreatedAt) OperatorType() sqlpipe.OperatorType {

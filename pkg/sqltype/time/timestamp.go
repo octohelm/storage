@@ -17,9 +17,7 @@ var (
 	TimestampUnixZero = Timestamp(time.Unix(0, 0))
 )
 
-var (
-	CST = time.UTC
-)
+var CST = time.UTC
 
 func init() {
 	cst, _ := time.LoadLocation("Asia/Shanghai")

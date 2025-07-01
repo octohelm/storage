@@ -5,7 +5,6 @@ DON'T EDIT THIS FILE
 package aggregate
 
 import (
-	datatypes "github.com/octohelm/storage/deprecated/pkg/datatypes"
 	sqlbuilder "github.com/octohelm/storage/pkg/sqlbuilder"
 	modelscoped "github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	model "github.com/octohelm/storage/testdata/model"
@@ -41,7 +40,7 @@ type tableCountedUser struct {
 	// 年龄
 	Age modelscoped.TypedColumn[CountedUser, int64]
 
-	CreatedAt modelscoped.TypedColumn[CountedUser, datatypes.Datetime]
+	CreatedAt modelscoped.TypedColumn[CountedUser, model.Datetime]
 
 	UpdatedAt modelscoped.TypedColumn[CountedUser, int64]
 
@@ -61,7 +60,7 @@ var CountedUserT = &tableCountedUser{
 	Username:  modelscoped.CastTypedColumn[CountedUser, string](modelscoped.FromModel[CountedUser]().F("Username")),
 	Gender:    modelscoped.CastTypedColumn[CountedUser, model.Gender](modelscoped.FromModel[CountedUser]().F("Gender")),
 	Age:       modelscoped.CastTypedColumn[CountedUser, int64](modelscoped.FromModel[CountedUser]().F("Age")),
-	CreatedAt: modelscoped.CastTypedColumn[CountedUser, datatypes.Datetime](modelscoped.FromModel[CountedUser]().F("CreatedAt")),
+	CreatedAt: modelscoped.CastTypedColumn[CountedUser, model.Datetime](modelscoped.FromModel[CountedUser]().F("CreatedAt")),
 	UpdatedAt: modelscoped.CastTypedColumn[CountedUser, int64](modelscoped.FromModel[CountedUser]().F("UpdatedAt")),
 	DeletedAt: modelscoped.CastTypedColumn[CountedUser, int64](modelscoped.FromModel[CountedUser]().F("DeletedAt")),
 	Count:     modelscoped.CastTypedColumn[CountedUser, int](modelscoped.FromModel[CountedUser]().F("Count")),

@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/octohelm/storage/deprecated/pkg/dal"
 	"github.com/octohelm/storage/pkg/er"
 	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -114,7 +113,7 @@ func (c *collector) columns(ctx context.Context, table sqlbuilder.Table, m sqlbu
 
 func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m sqlbuilder.Model) iter.Seq[*er.OrderedConstraint] {
 	softDeletedField := ""
-	if x, ok := m.(dal.ModelWithSoftDelete); ok {
+	if x, ok := m.(sqltype.WithSoftDelete); ok {
 		softDeletedField, _ = x.SoftDeleteFieldAndZeroValue()
 	}
 

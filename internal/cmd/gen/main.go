@@ -10,7 +10,6 @@ import (
 
 	_ "github.com/octohelm/enumeration/devpkg/enumgen"
 	_ "github.com/octohelm/gengo/devpkg/runtimedocgen"
-	_ "github.com/octohelm/storage/deprecated/devpkg/filtergen"
 	_ "github.com/octohelm/storage/devpkg/filteropgen"
 	_ "github.com/octohelm/storage/devpkg/tablegen"
 )

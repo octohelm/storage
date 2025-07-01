@@ -5,8 +5,9 @@ import (
 	"github.com/octohelm/storage/testdata/model"
 )
 
-// +gengo:filter
+// +gengo:filterop
 type filterOf struct {
 	model.User
 	model.Org
+	model.OrgUser
 }

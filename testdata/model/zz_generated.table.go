@@ -5,17 +5,12 @@ DON'T EDIT THIS FILE
 package model
 
 import (
-	datatypes "github.com/octohelm/storage/deprecated/pkg/datatypes"
 	sqlbuilder "github.com/octohelm/storage/pkg/sqlbuilder"
 	modelscoped "github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 )
 
 func (Org) TableName() string {
 	return "t_org"
-}
-
-func (Org) GetKind() string {
-	return "Org"
 }
 
 func (Org) PrimaryKey() []string {
@@ -40,6 +35,10 @@ func (Org) Indexes() sqlbuilder.Indexes {
 	}
 }
 
+func (Org) GetKind() string {
+	return "Org"
+}
+
 func (tableOrg) New() sqlbuilder.Model {
 	return &Org{}
 }
@@ -53,7 +52,7 @@ type tableOrg struct {
 
 	Name modelscoped.TypedColumn[Org, string]
 
-	CreatedAt modelscoped.TypedColumn[Org, datatypes.Datetime]
+	CreatedAt modelscoped.TypedColumn[Org, Datetime]
 
 	UpdatedAt modelscoped.TypedColumn[Org, int64]
 
@@ -70,7 +69,7 @@ var OrgT = &tableOrg{
 
 	ID:        modelscoped.CastTypedColumn[Org, OrgID](modelscoped.FromModel[Org]().F("ID")),
 	Name:      modelscoped.CastTypedColumn[Org, string](modelscoped.FromModel[Org]().F("Name")),
-	CreatedAt: modelscoped.CastTypedColumn[Org, datatypes.Datetime](modelscoped.FromModel[Org]().F("CreatedAt")),
+	CreatedAt: modelscoped.CastTypedColumn[Org, Datetime](modelscoped.FromModel[Org]().F("CreatedAt")),
 	UpdatedAt: modelscoped.CastTypedColumn[Org, int64](modelscoped.FromModel[Org]().F("UpdatedAt")),
 	DeletedAt: modelscoped.CastTypedColumn[Org, int64](modelscoped.FromModel[Org]().F("DeletedAt")),
 
@@ -82,10 +81,6 @@ var OrgT = &tableOrg{
 
 func (OrgUser) TableName() string {
 	return "t_org_user"
-}
-
-func (OrgUser) GetKind() string {
-	return "OrgUser"
 }
 
 func (OrgUser) PrimaryKey() []string {
@@ -101,6 +96,10 @@ func (OrgUser) UniqueIndexes() sqlbuilder.Indexes {
 			"OrgID",
 		},
 	}
+}
+
+func (OrgUser) GetKind() string {
+	return "OrgUser"
 }
 
 func (tableOrgUser) New() sqlbuilder.Model {
@@ -141,10 +140,6 @@ func (User) TableName() string {
 	return "t_user"
 }
 
-func (User) GetKind() string {
-	return "User"
-}
-
 func (User) PrimaryKey() []string {
 	return []string{
 		"ID",
@@ -175,6 +170,10 @@ func (User) Indexes() sqlbuilder.Indexes {
 	}
 }
 
+func (User) GetKind() string {
+	return "User"
+}
+
 func (tableUser) New() sqlbuilder.Model {
 	return &User{}
 }
@@ -197,7 +196,7 @@ type tableUser struct {
 	// 年龄
 	Age modelscoped.TypedColumn[User, int64]
 
-	CreatedAt modelscoped.TypedColumn[User, datatypes.Datetime]
+	CreatedAt modelscoped.TypedColumn[User, Datetime]
 
 	UpdatedAt modelscoped.TypedColumn[User, int64]
 
@@ -219,7 +218,7 @@ var UserT = &tableUser{
 	Username:  modelscoped.CastTypedColumn[User, string](modelscoped.FromModel[User]().F("Username")),
 	Gender:    modelscoped.CastTypedColumn[User, Gender](modelscoped.FromModel[User]().F("Gender")),
 	Age:       modelscoped.CastTypedColumn[User, int64](modelscoped.FromModel[User]().F("Age")),
-	CreatedAt: modelscoped.CastTypedColumn[User, datatypes.Datetime](modelscoped.FromModel[User]().F("CreatedAt")),
+	CreatedAt: modelscoped.CastTypedColumn[User, Datetime](modelscoped.FromModel[User]().F("CreatedAt")),
 	UpdatedAt: modelscoped.CastTypedColumn[User, int64](modelscoped.FromModel[User]().F("UpdatedAt")),
 	DeletedAt: modelscoped.CastTypedColumn[User, int64](modelscoped.FromModel[User]().F("DeletedAt")),
 

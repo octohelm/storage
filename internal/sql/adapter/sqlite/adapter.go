@@ -8,13 +8,11 @@ import (
 	"fmt"
 	"net/url"
 
-	"modernc.org/sqlite"
-
-	"github.com/octohelm/storage/pkg/sqlfrag"
-
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/loggingdriver"
 	"github.com/octohelm/storage/pkg/dberr"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+	"modernc.org/sqlite"
 )
 
 func init() {

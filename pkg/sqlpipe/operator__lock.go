@@ -2,11 +2,12 @@ package sqlpipe
 
 import (
 	"context"
+	"iter"
+
 	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	"iter"
 )
 
 type OnLockConflict uint8

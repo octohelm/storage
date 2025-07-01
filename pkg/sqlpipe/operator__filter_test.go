@@ -8,7 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	"github.com/octohelm/storage/testdata/model"
-	modelfilter "github.com/octohelm/storage/testdata/model/filter/v2"
+	modelfilter "github.com/octohelm/storage/testdata/model/filter"
 	testingx "github.com/octohelm/x/testing"
 )
 

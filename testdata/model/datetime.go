@@ -1,4 +1,4 @@
-package datatypes
+package model
 
 import (
 	"database/sql"
@@ -10,7 +10,6 @@ import (
 
 var DatetimeZero = Datetime(time.Time{})
 
-// openapi:strfmt date-time
 type Datetime time.Time
 
 func (Datetime) DataType(e string) string {
@@ -23,6 +22,8 @@ func ParseDatetimeFromString(s string) (dt Datetime, err error) {
 	dt = Datetime(t)
 	return
 }
+
+var CST = time.FixedZone("CST", 8*60*60)
 
 func ParseDatetimeFromStringWithFormatterInCST(s, formatter string) (dt Datetime, err error) {
 	var t time.Time

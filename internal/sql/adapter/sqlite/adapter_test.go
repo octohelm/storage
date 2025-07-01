@@ -7,13 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	sqlbuildercatalog "github.com/octohelm/storage/pkg/sqlbuilder/catalog"
-
-	"github.com/octohelm/storage/pkg/migrator"
-	"github.com/octohelm/storage/testdata/model"
-
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/testutil"
+	"github.com/octohelm/storage/pkg/migrator"
+	sqlbuildercatalog "github.com/octohelm/storage/pkg/sqlbuilder/catalog"
+	"github.com/octohelm/storage/testdata/model"
 )
 
 func NewAdapter(t testing.TB) adapter.Adapter {
