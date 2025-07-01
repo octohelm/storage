@@ -4,6 +4,6 @@
 
 ## Structural Data
 
-Sql helpers just for sqlite3 / postgres(11+)
+Sql helpers just for sqlite3 / duckdb / postgres(16+)
 
 ## Content 

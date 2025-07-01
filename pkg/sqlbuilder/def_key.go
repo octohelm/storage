@@ -87,7 +87,22 @@ func GetKeyDef(col Key) KeyDef {
 	return nil
 }
 
-func AsKeyColumnsTableDef(key Key) sqlfrag.Fragment {
+func KeyColumnOnly() func(o *opt) {
+	return func(o *opt) {
+		o.KeyColumnOnly = true
+	}
+}
+
+type opt struct {
+	KeyColumnOnly bool
+}
+
+func AsKeyColumnsTableDef(key Key, optionFns ...func(o *opt)) sqlfrag.Fragment {
+	o := &opt{}
+	for _, optFn := range optionFns {
+		optFn(o)
+	}
+
 	keyDef := GetKeyDef(key)
 	cc := ColumnCollect(key.Cols())
 	fieldNameAndOptions := keyDef.FieldNameAndOptions()
@@ -110,11 +125,13 @@ func AsKeyColumnsTableDef(key Key) sqlfrag.Fragment {
 						return
 					}
 
-					if options := fo.Options(); len(options) > 0 {
-						if !yield(" "+strings.Join(options, " "), nil) {
+					if !o.KeyColumnOnly {
+						if options := fo.Options(); len(options) > 0 {
+							if !yield(" "+strings.Join(options, " "), nil) {
+								return
+							}
 							return
 						}
-						return
 					}
 
 					continue

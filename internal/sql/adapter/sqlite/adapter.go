@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"database/sql/driver"
@@ -26,7 +27,6 @@ func Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 type sqliteAdapter struct {
 	dialect
 	adapter.DB
-	mutexSet
 }
 
 func (sqliteAdapter) DriverName() string {
@@ -58,12 +58,10 @@ func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter
 		return nil, fmt.Errorf("invalid schema %s", dsn)
 	}
 
-	dbUri := dsn.Path + "?" + dsn.Query().Encode()
+	query := dsn.Query()
+	dbUri := dsn.Path
 
-	connector := &driverContextWithMutex{
-		DriverContext: a.Connector(),
-		Mutex:         a.of(dbUri),
-	}
+	connector := a.Connector()
 
 	conn, err := connector.OpenConnector(dbUri)
 	if err != nil {
@@ -71,15 +69,34 @@ func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter
 	}
 
 	db := sql.OpenDB(conn)
+	db.SetMaxOpenConns(1)
 
-	return &sqliteAdapter{
+	adaptor := &sqliteAdapter{
 		DB: adapter.Wrap(db, func(err error) error {
 			if isErrorConflict(err) {
 				return dberr.New(dberr.ErrTypeConflict, err.Error())
 			}
 			return err
 		}),
-	}, nil
+	}
+
+	journalMode := cmp.Or(query.Get("journal_mode"), "WAL")
+	busyTimeout := cmp.Or(query.Get("busy_timeout"), "5000")
+	synchronous := cmp.Or(query.Get("synchronous"), "NORMAL")
+
+	if _, err := adaptor.Exec(ctx, sqlfrag.Pair(fmt.Sprintf("PRAGMA journal_mode = %s", journalMode))); err != nil {
+		return nil, err
+	}
+
+	if _, err := adaptor.Exec(ctx, sqlfrag.Pair(fmt.Sprintf("PRAGMA synchronous = %s", synchronous))); err != nil {
+		return nil, err
+	}
+
+	if _, err := adaptor.Exec(ctx, sqlfrag.Pair(fmt.Sprintf("PRAGMA busy_timeout = %s", busyTimeout))); err != nil {
+		return nil, err
+	}
+
+	return adaptor, nil
 }
 
 func isErrorConflict(err error) bool {
@@ -88,17 +105,4 @@ func isErrorConflict(err error) bool {
 		return true
 	}
 	return false
-}
-
-func (a *sqliteAdapter) createDatabase(ctx context.Context, dbName string, dsn url.URL) error {
-	dsn.Path = ""
-
-	adaptor, err := a.Open(ctx, &dsn)
-	if err != nil {
-		return err
-	}
-	defer adaptor.Close()
-
-	_, err = adaptor.Exec(context.Background(), sqlfrag.Pair(fmt.Sprintf("CREATE DATABASE %s", dbName)))
-	return err
 }

@@ -1,20 +1,18 @@
 package postgres
 
 import (
+	"fmt"
 	"net/url"
-	"slices"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/octohelm/storage/pkg/sqlbuilder"
-
-	"github.com/davecgh/go-spew/spew"
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/testutil"
 	"github.com/octohelm/storage/pkg/migrator"
 	sqlbuildercatalog "github.com/octohelm/storage/pkg/sqlbuilder/catalog"
 	"github.com/octohelm/storage/testdata/model"
+	"github.com/octohelm/x/testing/bdd"
 )
 
 func NewAdapter(t testing.TB) adapter.Adapter {
@@ -36,36 +34,48 @@ func NewAdapter(t testing.TB) adapter.Adapter {
 	return a
 }
 
-func Test(t *testing.T) {
+func TestCatalog(t *testing.T) {
 	a := NewAdapter(t)
 
-	t.Run("#Catalog", func(t *testing.T) {
+	bdd.FromT(t).Given("a db", func(b bdd.T) {
 		ctx := testutil.NewContext(t)
+
 		tables, err := a.Catalog(ctx)
-		testutil.Expect(t, err, testutil.Be[error](nil))
-		spew.Dump(slices.Sorted(sqlbuilder.TableNames(tables)))
+		b.Then("could got catalog",
+			bdd.NoError(err),
+		)
+
+		for table := range tables.Tables() {
+			fmt.Println(table.TableName())
+		}
 	})
 }
 
 func TestMigrate(t *testing.T) {
-	a := NewAdapter(t)
+	adt := NewAdapter(t)
 
-	t.Run("Create Catalog", func(t *testing.T) {
+	bdd.FromT(t).Given("a db", func(b bdd.T) {
 		ctx := testutil.NewContext(t)
 
-		cat := sqlbuildercatalog.From(&model.User{})
-		err := migrator.Migrate(ctx, a, cat)
-		testutil.Expect(t, err, testutil.Be[error](nil))
+		b.When("do migrate", func(b bdd.T) {
+			v1 := sqlbuildercatalog.From(&model.User{})
 
-		t.Run("Migrate To TableV2", func(t *testing.T) {
-			catV2 := sqlbuildercatalog.From(&model.UserV2{})
+			b.Then("success",
+				bdd.NoError(migrator.Migrate(ctx, adt, v1)),
+			)
 
-			err := migrator.Migrate(ctx, a, catV2)
-			testutil.Expect(t, err, testutil.Be[error](nil))
+			b.When("do migrate v2", func(b bdd.T) {
+				v2 := sqlbuildercatalog.From(&model.UserV2{})
 
-			t.Run("Rollback", func(t *testing.T) {
-				err := migrator.Migrate(ctx, a, cat)
-				testutil.Expect(t, err, testutil.Be[error](nil))
+				b.Then("success",
+					bdd.NoError(migrator.Migrate(ctx, adt, v2)),
+				)
+
+				b.When("rollback", func(b bdd.T) {
+					b.Then("success",
+						bdd.NoError(migrator.Migrate(ctx, adt, v1)),
+					)
+				})
 			})
 		})
 	})
