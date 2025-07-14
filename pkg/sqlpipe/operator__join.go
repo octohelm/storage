@@ -2,6 +2,7 @@ package sqlpipe
 
 import (
 	"context"
+	"github.com/octohelm/storage/pkg/sqltype"
 	"iter"
 	"strings"
 
@@ -224,7 +225,7 @@ func (j *joinSourcerOperator[M, B, S, T]) ApplyToFrom(s SourceCanPatcher[M]) {
 }
 
 func (j *joinSourcerOperator[M, B, S, T]) mayPatchWhere(where sqlfrag.Fragment) sqlfrag.Fragment {
-	if len(j.fromConditions) > 0 {
+	if len(j.fromConditions) > 0 || sqltype.HasSoftDelete[S]() {
 		onSrc := From[S]().Pipe(j.fromConditions...)
 
 		return sqlbuilder.And(where, sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {

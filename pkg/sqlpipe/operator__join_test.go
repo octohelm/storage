@@ -35,9 +35,9 @@ func TestSourceFromWithJoin(t *testing.T) {
 		testingx.Expect[sqlfrag.Fragment](t, orgUser, testutil.BeFragment(`
 SELECT *
 FROM t_org_user
-JOIN t_user ON t_org_user.f_user_id = t_user.f_id
+JOIN t_user ON (t_org_user.f_user_id = t_user.f_id) AND (t_user.f_deleted_at = ?)
 JOIN t_org ON (t_org_user.f_org_id = t_org.f_id) AND ((t_org.f_id <> ?) AND (t_org.f_deleted_at = ?))
-`, model.OrgID(0), int64(0)))
+`, model.OrgID(0), int64(0), int64(0)))
 	})
 
 	t.Run("then where", func(t *testing.T) {
@@ -57,9 +57,9 @@ JOIN t_org ON (t_org_user.f_org_id = t_org.f_id) AND ((t_org.f_id <> ?) AND (t_o
 		testingx.Expect[sqlfrag.Fragment](t, filtered, testutil.BeFragment(`
 SELECT *
 FROM t_org_user
-JOIN t_org ON t_org_user.f_org_id = t_org.f_id
-JOIN t_user ON t_org_user.f_user_id = t_user.f_id
+JOIN t_org ON (t_org_user.f_org_id = t_org.f_id) AND (t_org.f_deleted_at = ?)
+JOIN t_user ON (t_org_user.f_user_id = t_user.f_id) AND (t_user.f_deleted_at = ?)
 WHERE (t_user.f_name = ?) OR (t_org.f_name <> ?)
-`, "x", "x"))
+`, int64(0), int64(0), "x", "x"))
 	})
 }

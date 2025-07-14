@@ -1,14 +1,9 @@
 package sqltype
 
-import "database/sql/driver"
-
-type WithCreationTime interface {
-	MarkCreatedAt()
-}
-
-type WithModificationTime interface {
-	MarkModifiedAt()
-}
+import (
+	"database/sql/driver"
+	"github.com/octohelm/storage/pkg/sqlbuilder"
+)
 
 type WithSoftDelete interface {
 	SoftDeleteFieldAndZeroValue() (string, driver.Value)
@@ -20,4 +15,9 @@ type DeletedAtMarker interface {
 
 type SoftDeleteValueGetter interface {
 	GetDeletedAt() driver.Value
+}
+
+func HasSoftDelete[M sqlbuilder.Model]() bool {
+	_, ok := any(new(M)).(WithSoftDelete)
+	return ok
 }

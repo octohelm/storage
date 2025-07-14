@@ -30,6 +30,9 @@ type fragmentMatcher[A sqlfrag.Fragment] struct {
 	query     string
 	args      []any
 	checkArgs bool
+
+	queryNotEqual bool
+	argsNotEqual  bool
 }
 
 func (m *fragmentMatcher[A]) Negative() bool {
@@ -49,7 +52,19 @@ func (m *fragmentMatcher[A]) Match(actual A) bool {
 		return m.query == q
 	}
 
-	return m.query == q && (!m.checkArgs || reflect.DeepEqual(m.args, args))
+	if m.query == q {
+		return true
+	}
+
+	m.queryNotEqual = true
+
+	if m.checkArgs {
+		return reflect.DeepEqual(m.args, args)
+	}
+
+	m.argsNotEqual = true
+
+	return false
 }
 
 func (m *fragmentMatcher[A]) FormatActual(actual A) string {
@@ -57,9 +72,26 @@ func (m *fragmentMatcher[A]) FormatActual(actual A) string {
 		return ""
 	}
 	q, args := sqlfrag.Collect(context.Background(), actual)
-	return fmt.Sprintf("%s | %v", q, args)
+
+	if m.queryNotEqual && m.argsNotEqual {
+		return fmt.Sprintf("%s | %v", q, args)
+	}
+
+	if m.queryNotEqual {
+		return q
+	}
+
+	return fmt.Sprintf("%v", args)
 }
 
 func (m *fragmentMatcher[A]) FormatExpected() string {
-	return fmt.Sprintf("%s | %v", m.query, m.args)
+	if m.queryNotEqual && m.argsNotEqual {
+		return fmt.Sprintf("%s | %v", m.query, m.args)
+	}
+
+	if m.queryNotEqual {
+		return m.query
+	}
+
+	return fmt.Sprintf("%v", m.args)
 }
