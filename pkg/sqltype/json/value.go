@@ -39,7 +39,7 @@ func (v Value[T]) As(a *T) {
 
 func (v *Value[T]) UnmarshalJSON(data []byte) error {
 	t := new(T)
-	if err := json.Unmarshal(data, t, jsonv1.OmitEmptyWithLegacyDefinition(true)); err != nil {
+	if err := json.Unmarshal(data, t, jsonv1.OmitEmptyWithLegacySemantics(true)); err != nil {
 		return err
 	}
 	*v = Value[T]{
@@ -49,7 +49,7 @@ func (v *Value[T]) UnmarshalJSON(data []byte) error {
 }
 
 func (v Value[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.v, jsonv1.OmitEmptyWithLegacyDefinition(true))
+	return json.Marshal(v.v, jsonv1.OmitEmptyWithLegacySemantics(true))
 }
 
 func (Value[T]) DataType(driverName string) string {

@@ -35,7 +35,7 @@ func (v Object[T]) As(a *T) {
 
 func (v *Object[T]) UnmarshalJSON(data []byte) error {
 	t := new(T)
-	if err := json.Unmarshal(data, t, jsonv1.OmitEmptyWithLegacyDefinition(true)); err != nil {
+	if err := json.Unmarshal(data, t, jsonv1.OmitEmptyWithLegacySemantics(true)); err != nil {
 		return err
 	}
 	*v = Object[T]{
@@ -45,7 +45,7 @@ func (v *Object[T]) UnmarshalJSON(data []byte) error {
 }
 
 func (v Object[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.Data, jsonv1.OmitEmptyWithLegacyDefinition(true))
+	return json.Marshal(v.Data, jsonv1.OmitEmptyWithLegacySemantics(true))
 }
 
 func (Object[T]) DataType(driverName string) string {
