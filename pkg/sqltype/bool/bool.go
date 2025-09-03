@@ -1,6 +1,10 @@
 package bool
 
-import "github.com/go-json-experiment/json"
+import (
+	"strconv"
+
+	"github.com/go-json-experiment/json"
+)
 
 type Bool int
 
@@ -53,6 +57,14 @@ func (v Bool) MarshalText() ([]byte, error) {
 }
 
 func (v *Bool) UnmarshalText(data []byte) (err error) {
+	if len(data) != 0 && data[0] == '"' {
+		raw, err := strconv.Unquote(string(data))
+		if err != nil {
+			return err
+		}
+		data = []byte(raw)
+	}
+
 	switch string(data) {
 	case "false":
 		*v = BOOL_FALSE
