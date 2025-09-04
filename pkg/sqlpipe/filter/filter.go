@@ -13,74 +13,76 @@ import (
 
 func AsWhere[M sqlpipe.Model, T comparable](col modelscoped.TypedColumn[M, T], f *filter.Filter[T]) sqlpipe.SourceOperator[M] {
 	return sqlpipe.NewWhere(sqlpipe.FilterOpAnd, col, func(v sqlbuilder.Column) sqlfrag.Fragment {
-		return asWhere(col, f)
+		return BuildWhere(f, func(op filter.Op, seq iter.Seq[T], create func(seq iter.Seq[T]) sqlbuilder.ColumnValuer[T]) sqlfrag.Fragment {
+			return col.V(create(seq))
+		})
 	})
 }
 
-func asWhere[M sqlpipe.Model, T comparable](col modelscoped.TypedColumn[M, T], f *filter.Filter[T]) sqlfrag.Fragment {
+func BuildWhere[T comparable](f *filter.Filter[T], apply func(op filter.Op, seq iter.Seq[T], create func(seq iter.Seq[T]) sqlbuilder.ColumnValuer[T]) sqlfrag.Fragment) sqlfrag.Fragment {
 	if f == nil || f.IsZero() {
 		return nil
 	}
-	switch f.Op() {
+
+	op := f.Op()
+	switch op {
 	case filter.OP__AND:
 		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlfrag.Fragment, bool) {
-			return asWhere(col, f), true
+			return BuildWhere[T](f, apply), true
 		})
 		return sqlbuilder.AndSeq(rules)
 	case filter.OP__OR:
 		rules := filter.MapFilter(f.Args(), func(f *filter.Filter[T]) (sqlfrag.Fragment, bool) {
-			return asWhere(col, f), true
+			return BuildWhere[T](f, apply), true
 		})
 		return sqlbuilder.OrSeq(rules)
-	case filter.OP__NOTIN:
-		return col.V(sqlbuilder.NotInSeq(Values(f)))
-	case filter.OP__IN:
-		return col.V(sqlbuilder.InSeq(Values(f)))
-	case filter.OP__EQ:
-		if v, ok := pickValue(f); ok {
-			return col.V(sqlbuilder.Eq(v))
-		}
-	case filter.OP__NEQ:
-		if v, ok := pickValue(f); ok {
-			return col.V(sqlbuilder.Neq(v))
-		}
-	case filter.OP__GT:
-		if v, ok := pickValue(f); ok {
-			return col.V(sqlbuilder.Gt(v))
-		}
-	case filter.OP__GTE:
-		if v, ok := pickValue(f); ok {
-			return col.V(sqlbuilder.Gte(v))
-		}
-	case filter.OP__LT:
-		if v, ok := pickValue(f); ok {
-			return col.V(sqlbuilder.Lt(v))
-		}
-	case filter.OP__LTE:
-		if v, ok := pickValue(f); ok {
-			return col.V(sqlbuilder.Lte(v))
-		}
-	case filter.OP__PREFIX:
-		if v, ok := pickValue(f); ok {
-			return col.Fragment("# LIKE ?", fmt.Sprintf("%v", v)+"%")
-		}
-	case filter.OP__SUFFIX:
-		if v, ok := pickValue(f); ok {
-			return col.Fragment("# LIKE ?", "%"+fmt.Sprintf("%v", v))
-		}
-	case filter.OP__CONTAINS:
-		if v, ok := pickValue(f); ok {
-			return col.Fragment("# LIKE ?", "%"+fmt.Sprintf("%v", v)+"%")
-		}
-	case filter.OP__NOTCONTAINS:
-		if v, ok := pickValue(f); ok {
-			return col.Fragment("# NOT LIKE ?", "%"+fmt.Sprintf("%v", v)+"%")
-		}
 	default:
+		return apply(op, Values(f), func(seq iter.Seq[T]) sqlbuilder.ColumnValuer[T] {
+			switch op {
+			case filter.OP__IN:
+				return sqlbuilder.InSeq(seq)
+			case filter.OP__NOTIN:
+				return sqlbuilder.NotInSeq(seq)
+			default:
+				for v := range seq {
+					switch op {
+					case filter.OP__EQ:
+						return sqlbuilder.Eq(v)
+					case filter.OP__NEQ:
+						return sqlbuilder.Neq(v)
+					case filter.OP__GT:
+						return sqlbuilder.Gt(v)
+					case filter.OP__GTE:
+						return sqlbuilder.Gte(v)
+					case filter.OP__LT:
+						return sqlbuilder.Lt(v)
+					case filter.OP__LTE:
+						return sqlbuilder.Lte(v)
+					case filter.OP__PREFIX:
+						return func(col sqlbuilder.Column) sqlfrag.Fragment {
+							return col.Fragment("# LIKE ?", fmt.Sprintf("%v", v)+"%")
+						}
+					case filter.OP__SUFFIX:
+						return func(col sqlbuilder.Column) sqlfrag.Fragment {
+							return col.Fragment("# LIKE ?", "%"+fmt.Sprintf("%v", v))
+						}
+					case filter.OP__CONTAINS:
+						return func(col sqlbuilder.Column) sqlfrag.Fragment {
+							return col.Fragment("# LIKE ?", "%"+fmt.Sprintf("%v", v)+"%")
+						}
+					case filter.OP__NOTCONTAINS:
+						return func(col sqlbuilder.Column) sqlfrag.Fragment {
+							return col.Fragment("# NOT LIKE ?", "%"+fmt.Sprintf("%v", v)+"%")
+						}
+					default:
 
+					}
+				}
+			}
+
+			return nil
+		})
 	}
-
-	return nil
 }
 
 func SubFilters[T comparable](f *filter.Filter[T]) iter.Seq[*filter.Filter[T]] {
@@ -111,11 +113,4 @@ func Values[T comparable](f *filter.Filter[T]) iter.Seq[T] {
 			}
 		}
 	}
-}
-
-func pickValue[T comparable](f *filter.Filter[T]) (T, bool) {
-	for v := range Values(f) {
-		return v, true
-	}
-	return *new(T), false
 }

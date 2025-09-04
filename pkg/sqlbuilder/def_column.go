@@ -222,13 +222,19 @@ func (c *column[T]) By(ops ...ColumnValuer[T]) Assignment {
 	if len(ops) == 0 {
 		return nil
 	}
-	values := make([]any, len(ops))
-	for i := range ops {
-		values[i] = ops[i](c)
+	values := make([]any, 0, len(ops))
+	for _, op := range ops {
+		if op == nil {
+			continue
+		}
+		values = append(values, op(c))
 	}
 	return ColumnsAndValues(c, values...)
 }
 
 func (c *column[T]) V(operator ColumnValuer[T]) sqlfrag.Fragment {
+	if operator == nil {
+		return nil
+	}
 	return operator(c)
 }
