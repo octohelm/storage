@@ -23,7 +23,7 @@ type SqlPrinter struct {
 func (p *SqlPrinter) String() string {
 	s, err := InterpolateParams(p.query, p.args, time.Local)
 	if err != nil {
-		panic(err)
+		return "invalid: " + err.Error()
 	}
 	return s
 }
@@ -34,7 +34,7 @@ func InterpolateParams(query string, args []driver.NamedValue, loc *time.Locatio
 	}
 
 	if len(args) >= 65535 {
-		return "", fmt.Errorf("too many args: %d", len(args))
+		return "", fmt.Errorf("too many args: %d, query: %s", len(args), query)
 	}
 
 	buf := make([]byte, 0)
