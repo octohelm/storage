@@ -39,7 +39,7 @@ func (m *fragmentMatcher[A]) Negative() bool {
 	return false
 }
 
-func (m *fragmentMatcher[A]) Name() string {
+func (m *fragmentMatcher[A]) Action() string {
 	return "Be Frag"
 }
 
@@ -51,7 +51,6 @@ func (m *fragmentMatcher[A]) Match(actual A) bool {
 	if len(m.args) == 0 && len(args) == 0 {
 		return m.query == q
 	}
-
 	if m.query == q {
 		return true
 	}
@@ -67,7 +66,7 @@ func (m *fragmentMatcher[A]) Match(actual A) bool {
 	return false
 }
 
-func (m *fragmentMatcher[A]) FormatActual(actual A) string {
+func (m *fragmentMatcher[A]) NormalizeActual(actual A) any {
 	if sqlfrag.IsNil(actual) {
 		return ""
 	}
@@ -84,7 +83,7 @@ func (m *fragmentMatcher[A]) FormatActual(actual A) string {
 	return fmt.Sprintf("%v", args)
 }
 
-func (m *fragmentMatcher[A]) FormatExpected() string {
+func (m *fragmentMatcher[A]) NormalizedExpected() any {
 	if m.queryNotEqual && m.argsNotEqual {
 		return fmt.Sprintf("%s | %v", m.query, m.args)
 	}
