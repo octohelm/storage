@@ -133,5 +133,5 @@ func commentAndDesc(docs []string) (comment string, desc []string) {
 			desc = append(desc, s)
 		}
 	}
-	return
+	return comment, desc
 }

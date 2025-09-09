@@ -71,5 +71,5 @@ func (v *Bool) UnmarshalText(data []byte) (err error) {
 	case "true":
 		*v = BOOL_TRUE
 	}
-	return
+	return err
 }

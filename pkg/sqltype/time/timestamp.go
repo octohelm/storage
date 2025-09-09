@@ -79,7 +79,7 @@ func ParseTimestampFromString(s string) (d Timestamp, err error) {
 		}
 		err = e
 	}
-	return
+	return d, err
 }
 
 func ParseTimestampFromStringWithLayout(input, layout string) (Timestamp, error) {
@@ -151,7 +151,7 @@ func (dt *Timestamp) UnmarshalText(data []byte) (err error) {
 		return nil
 	}
 	*dt, err = ParseTimestampFromString(str)
-	return
+	return err
 }
 
 func (dt Timestamp) IsZero() bool {

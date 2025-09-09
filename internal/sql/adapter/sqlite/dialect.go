@@ -138,7 +138,7 @@ func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fr
 		}
 	}
 
-	return
+	return exprs
 }
 
 func (c *dialect) DropTable(t sqlbuilder.Table) sqlfrag.Fragment {

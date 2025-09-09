@@ -2,9 +2,10 @@ package sqlpipe
 
 import (
 	"context"
-	"github.com/octohelm/storage/pkg/sqltype"
 	"iter"
 	"strings"
+
+	"github.com/octohelm/storage/pkg/sqltype"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"

@@ -72,5 +72,5 @@ func Open(ctx context.Context, dsn string) (a Adapter, err error) {
 		return nil, fmt.Errorf("missing adapter for %s", u.Scheme)
 	}
 
-	return
+	return a, err
 }

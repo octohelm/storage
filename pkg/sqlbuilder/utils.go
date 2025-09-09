@@ -148,7 +148,7 @@ func resolveIndexNameAndMethod(n string) (name string, method string) {
 	if len(nameAndMethod) > 1 {
 		method = nameAndMethod[1]
 	}
-	return
+	return name, method
 }
 
 // ParseIndexDefine

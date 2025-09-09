@@ -109,7 +109,7 @@ func (c *loggerConn) QueryContext(ctx context.Context, query string, args []driv
 	}()
 
 	rows, err = c.Conn.(driver.QueryerContext).QueryContext(context.Background(), replaceValueHolder(query), args)
-	return
+	return rows, err
 }
 
 func (c *loggerConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (result driver.Result, err error) {
@@ -133,7 +133,7 @@ func (c *loggerConn) ExecContext(ctx context.Context, query string, args []drive
 	}()
 
 	result, err = c.Conn.(driver.ExecerContext).ExecContext(context.Background(), replaceValueHolder(query), args)
-	return
+	return result, err
 }
 
 func replaceValueHolder(query string) string {
