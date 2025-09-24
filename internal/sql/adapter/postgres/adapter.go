@@ -175,7 +175,7 @@ func isErrorUnknownDatabase(err error) bool {
 }
 
 func (a *pgAdapter) createDatabase(ctx context.Context, dbName string, dsn url.URL) error {
-	dsn.Path = ""
+	dsn.Path = "/postgres"
 
 	adaptor, err := a.Open(ctx, &dsn)
 	if err != nil {
