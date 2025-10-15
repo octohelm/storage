@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-courier/logr"
-	"github.com/go-courier/logr/slog"
+	"github.com/octohelm/x/logr"
+	"github.com/octohelm/x/logr/slog"
 )
 
 func NewContext(t testing.TB) context.Context {

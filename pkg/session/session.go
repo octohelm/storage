@@ -9,13 +9,26 @@ import (
 	contextx "github.com/octohelm/x/context"
 )
 
+type OptionFunc func(*option)
+
+func ReadOnly() OptionFunc {
+	return func(o *option) {
+		o.ReadyOnly = true
+	}
+}
+
+type option struct {
+	ReadyOnly bool
+}
+
 type Session interface {
 	// Name of database
 	Name() string
 	T(m any) sqlbuilder.Table
+
 	Tx(ctx context.Context, fn func(ctx context.Context) error) error
 
-	Adapter() adapter.Adapter
+	Adapter(options ...OptionFunc) adapter.Adapter
 }
 
 func New(a adapter.Adapter, name string) Session {
@@ -25,12 +38,32 @@ func New(a adapter.Adapter, name string) Session {
 	}
 }
 
-type session struct {
-	name    string
-	adapter adapter.Adapter
+func NewWithReadOnly(a adapter.Adapter, ro adapter.Adapter, name string) Session {
+	return &session{
+		name:      name,
+		adapter:   a,
+		adapterRo: ro,
+	}
 }
 
-func (s *session) Adapter() adapter.Adapter {
+type session struct {
+	name      string
+	adapter   adapter.Adapter
+	adapterRo adapter.Adapter
+}
+
+func (s *session) Adapter(optFns ...OptionFunc) adapter.Adapter {
+	if s.adapterRo != nil {
+		opt := &option{}
+		for _, optFn := range optFns {
+			optFn(opt)
+		}
+
+		if opt.ReadyOnly {
+			return s.adapterRo
+		}
+	}
+
 	return s.adapter
 }
 
@@ -56,6 +89,14 @@ type TableWrapper interface {
 	Unwrap() sqlbuilder.Model
 }
 
+func MustFor(ctx context.Context, nameOrTable any) Session {
+	s := For(ctx, nameOrTable)
+	if s == nil {
+		panic(fmt.Errorf("invalid section target %#v", nameOrTable))
+	}
+	return s
+}
+
 func For(ctx context.Context, nameOrTable any) Session {
 	if u, ok := nameOrTable.(TableWrapper); ok {
 		return For(ctx, u.Unwrap())
@@ -71,14 +112,6 @@ func For(ctx context.Context, nameOrTable any) Session {
 	}
 
 	return nil
-}
-
-func MustFor(ctx context.Context, nameOrTable any) Session {
-	s := For(ctx, nameOrTable)
-	if s == nil {
-		panic(fmt.Errorf("invalid section target %#v", nameOrTable))
-	}
-	return s
 }
 
 type contextSession struct {

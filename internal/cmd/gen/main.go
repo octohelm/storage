@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/go-courier/logr"
-	"github.com/go-courier/logr/slog"
 	"github.com/octohelm/gengo/pkg/gengo"
+	"github.com/octohelm/x/logr"
+	"github.com/octohelm/x/logr/slog"
 
 	_ "github.com/octohelm/enumeration/devpkg/enumgen"
 	_ "github.com/octohelm/gengo/devpkg/runtimedocgen"

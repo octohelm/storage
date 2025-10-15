@@ -5,10 +5,11 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
-	"github.com/go-courier/logr"
+	"github.com/octohelm/x/logr"
 )
 
 type ErrorLevel func(error error) int
@@ -42,10 +43,27 @@ type loggerConnector struct {
 }
 
 func (c *loggerConnector) OpenConnector(dsn string) (driver.Connector, error) {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	o := &opt{
+		name:       c.opt.name,
+		errorLevel: c.opt.errorLevel,
+	}
+
+	q := u.Query()
+	if q.Get("_ro") == "true" {
+		o.name += "::ro"
+		q.Del("_ro")
+		u.RawQuery = q.Encode()
+	}
+
 	return &loggerConnector{
 		driver: c.driver,
-		opt:    c.opt,
-		dsn:    dsn,
+		opt:    o,
+		dsn:    u.String(),
 	}, nil
 }
 
@@ -94,7 +112,10 @@ func (c *loggerConn) QueryContext(ctx context.Context, query string, args []driv
 	defer func() {
 		q := interpolateParams(query, args)
 
-		l := logger.WithValues("driver", c.opt.name, "sql", q)
+		l := logger.WithValues(
+			"driver", c.opt.name,
+			"sql", q,
+		)
 		if err != nil {
 			if c.opt.ErrorLevel(err) > 0 {
 				l.Error(fmt.Errorf("query failed: %w", err))
@@ -118,7 +139,9 @@ func (c *loggerConn) ExecContext(ctx context.Context, query string, args []drive
 
 	defer func() {
 		q := interpolateParams(query, args)
-		l := logger.WithValues("driver", c.opt.name, "sql", q)
+		l := logger.WithValues(
+			"driver", c.opt.name, "sql", q,
+		)
 		if err != nil {
 			if c.opt.ErrorLevel(err) > 0 {
 				l.Error(fmt.Errorf("exec failed: %w", err))

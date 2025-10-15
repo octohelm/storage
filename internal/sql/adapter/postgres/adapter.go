@@ -82,6 +82,9 @@ var notRuntimeParams = map[string]struct{}{
 	"target_session_attrs": {},
 	"service":              {},
 	"servicefile":          {},
+
+	//
+	"_ro": {},
 }
 
 func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {

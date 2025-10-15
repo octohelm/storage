@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
-	"sync"
 
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
+	syncx "github.com/octohelm/x/sync"
 )
 
 type DB interface {
@@ -45,7 +45,7 @@ type Dialect interface {
 	DataType(columnDef sqlbuilder.ColumnDef) sqlfrag.Fragment
 }
 
-var adapters = sync.Map{}
+var adapters = syncx.Map[string, Adapter]{}
 
 func Register(a Adapter, aliases ...string) {
 	adapters.Store(a.DriverName(), a)
@@ -60,13 +60,12 @@ func Open(ctx context.Context, dsn string) (a Adapter, err error) {
 		return nil, err
 	}
 
-	adapters.Range(func(key, value any) bool {
-		if key.(string) == u.Scheme {
+	for key, value := range adapters.Range {
+		if key == u.Scheme {
 			a, err = value.(Connector).Open(ctx, u)
-			return false
+			break
 		}
-		return true
-	})
+	}
 
 	if a == nil && err == nil {
 		return nil, fmt.Errorf("missing adapter for %s", u.Scheme)

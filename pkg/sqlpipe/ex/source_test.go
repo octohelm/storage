@@ -13,6 +13,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	"github.com/octohelm/storage/testdata/model"
 	modelfilter "github.com/octohelm/storage/testdata/model/filter"
+	"github.com/octohelm/x/testing/bdd"
 )
 
 type Repo struct {
@@ -50,9 +51,10 @@ func TestSourceExecutor(t *testing.T) {
 			users := make([]*model.User, 0)
 
 			ex := FromSource(values)
-			testutil.Expect(t, ex.Range(ctx, func(u *model.User) {
+
+			for u := range ex.Items(ctx) {
 				users = append(users, u)
-			}), testutil.Be[error](nil))
+			}
 
 			testutil.Expect(t, len(users), testutil.Be(100))
 
@@ -62,9 +64,9 @@ func TestSourceExecutor(t *testing.T) {
 				)
 
 				updatedUsers := make([]*model.User, 0)
-				testutil.Expect(t, ex.Range(ctx, func(u *model.User) {
+				for u := range ex.Items(ctx) {
 					updatedUsers = append(updatedUsers, u)
-				}), testutil.Be[error](nil))
+				}
 
 				testutil.Expect(t, len(updatedUsers), testutil.Be(100))
 			})
@@ -164,7 +166,8 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	}
 
 	if endpoint != "" {
-		db.Endpoint = *must(sessiondb.ParseEndpoint(endpoint))
+		db.Endpoint = *bdd.Must(sessiondb.ParseEndpoint(endpoint))
+		db.Readonly.Endpoint = *bdd.Must(sessiondb.ParseEndpoint(endpoint))
 	}
 
 	db.ApplyCatalog(name, cat)
@@ -190,11 +193,4 @@ func ContextWithDatabase(t testing.TB, name string, endpoint string) context.Con
 	})
 
 	return ctx
-}
-
-func must[T any](x T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-	return x
 }

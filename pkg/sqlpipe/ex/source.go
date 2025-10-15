@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"iter"
 	"slices"
+	"sync"
 
+	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/scanner"
 	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
@@ -37,13 +39,6 @@ type SourceExecutor[M sqlpipe.Model] interface {
 	ListTo(ctx context.Context, adder Adder[M]) error
 	// CountTo execute as count
 	CountTo(ctx context.Context, x *int64) error
-
-	// Item
-	// Deprecated use Items instead
-	Item(ctx context.Context) iter.Seq2[*M, error]
-	// Range execute then range
-	// Deprecated use Items instead
-	Range(ctx context.Context, fn func(*M)) error
 }
 
 type Adder[M sqlpipe.Model] interface {
@@ -59,6 +54,20 @@ func FromSource[M sqlpipe.Model](src sqlpipe.Source[M]) SourceExecutor[M] {
 type Executor[M sqlpipe.Model] struct {
 	src       sqlpipe.Source[M]
 	operators []sqlpipe.SourceOperator[M]
+
+	once      sync.Once
+	prepared  sqlpipe.Source[M]
+	forCommit bool
+}
+
+func (e *Executor[M]) adapterOf(ctx context.Context, s session.Session) adapter.Adapter {
+	if e.forCommit {
+		return s.Adapter()
+	}
+	if adapter.InTx(ctx) {
+		return s.Adapter()
+	}
+	return s.Adapter(session.ReadOnly())
 }
 
 // IsNil if true will omit in sql building
@@ -113,18 +122,31 @@ func (e *Executor[M]) session(ctx context.Context) session.Session {
 }
 
 func (e *Executor[M]) source() sqlpipe.Source[M] {
-	s := e.src
-	if s == nil {
-		s = sqlpipe.From[M]()
-	}
+	e.once.Do(func() {
+		s := e.src
+		if s == nil {
+			s = sqlpipe.From[M]()
+		}
 
-	if len(e.operators) > 0 {
-		return s.Pipe(slices.SortedFunc(flatten(slices.Values(e.operators)), func(a sqlpipe.SourceOperator[M], b sqlpipe.SourceOperator[M]) int {
-			return cmp.Compare(a.OperatorType(), b.OperatorType())
-		})...)
-	}
+		if len(e.operators) > 0 {
+			operators := slices.SortedFunc(flatten(slices.Values(e.operators)), func(a sqlpipe.SourceOperator[M], b sqlpipe.SourceOperator[M]) int {
+				return cmp.Compare(a.OperatorType(), b.OperatorType())
+			})
 
-	return s
+			for _, op := range operators {
+				if op.OperatorType() == sqlpipe.OperatorCommit {
+					e.forCommit = true
+					break
+				}
+			}
+
+			s = s.Pipe(operators...)
+		}
+
+		e.prepared = s
+	})
+
+	return e.prepared
 }
 
 type collector[M sqlpipe.Model] struct {
@@ -176,7 +198,9 @@ func flatten[M sqlpipe.Model](opSeq iter.Seq[sqlpipe.SourceOperator[M]]) iter.Se
 
 // Commit execute sql
 func (e *Executor[M]) Commit(ctx context.Context) error {
-	_, err := e.session(ctx).Adapter().Exec(ctx, e.source())
+	// always for mutating
+	e.forCommit = true
+	_, err := e.adapterOf(ctx, e.session(ctx)).Exec(ctx, e.source())
 	return err
 }
 
@@ -189,7 +213,7 @@ func (e *Executor[M]) Items(ctx context.Context) iter.Seq2[*M, error] {
 	)
 
 	x := scanner.RecvFunc[M](func(ctx context.Context, recv func(v *M) error) error {
-		rows, err := s.Adapter().Query(internal.FlagContext.Inject(ctx, flags.ForReturning), ex)
+		rows, err := e.adapterOf(ctx, s).Query(internal.FlagContext.Inject(ctx, flags.ForReturning), ex)
 		if err != nil {
 			return err
 		}
@@ -222,7 +246,7 @@ func (e *Executor[M]) CountTo(ctx context.Context, x *int64) error {
 		exiternal.ForCount[M](),
 	)
 
-	rows, err := s.Adapter().Query(ctx, ex)
+	rows, err := e.adapterOf(ctx, s).Query(ctx, ex)
 	if err != nil {
 		return err
 	}
@@ -243,29 +267,11 @@ func (e *Executor[M]) ListTo(ctx context.Context, listAdder Adder[M]) error {
 // FindOne execute then scan as Model or error
 // notice this will return nil when not result found
 func (e *Executor[M]) FindOne(ctx context.Context) (*M, error) {
-	for item, err := range e.PipeE(sqlpipe.Limit[M](1)).Item(ctx) {
+	for item, err := range e.PipeE(sqlpipe.Limit[M](1)).Items(ctx) {
 		if err != nil {
 			return nil, err
 		}
 		return item, err
 	}
 	return nil, nil
-}
-
-// Item
-// Deprecated use Items instead
-func (e *Executor[M]) Item(ctx context.Context) iter.Seq2[*M, error] {
-	return e.Items(ctx)
-}
-
-// Range
-// Deprecated use Items instead
-func (e *Executor[M]) Range(ctx context.Context, fn func(m *M)) error {
-	for item, err := range e.Items(ctx) {
-		if err != nil {
-			return err
-		}
-		fn(item)
-	}
-	return nil
 }
