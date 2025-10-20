@@ -25,13 +25,3 @@ func SqlDoFromContext(ctx context.Context) SqlDo {
 	}
 	return nil
 }
-
-func InTx(ctx context.Context) bool {
-	sqlDo, ok := ctx.Value(sqlDoContext{}).(SqlDo)
-	if ok {
-		if _, ok := sqlDo.(*sql.Tx); ok {
-			return true
-		}
-	}
-	return false
-}

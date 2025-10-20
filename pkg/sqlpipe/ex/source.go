@@ -64,7 +64,7 @@ func (e *Executor[M]) adapterOf(ctx context.Context, s session.Session) adapter.
 	if e.forCommit {
 		return s.Adapter()
 	}
-	if adapter.InTx(ctx) {
+	if session.InTx(ctx) {
 		return s.Adapter()
 	}
 	return s.Adapter(session.ReadOnly())

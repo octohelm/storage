@@ -35,8 +35,8 @@ type Database struct {
 	name   string
 	tables *sqlbuilder.Tables
 
-	db   adapter.Adapter
-	dbRo adapter.Adapter
+	db   session.Adapter
+	dbRo session.Adapter
 }
 
 func (d *Database) SetDefaults() {
@@ -70,7 +70,7 @@ func (d *Database) Init(ctx context.Context) error {
 		return err
 	}
 
-	db, err := adapter.Open(ctx, endpoint.String())
+	db, err := session.Open(ctx, endpoint.String())
 	if err != nil {
 		return err
 	}

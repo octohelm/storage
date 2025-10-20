@@ -28,10 +28,10 @@ type Session interface {
 
 	Tx(ctx context.Context, fn func(ctx context.Context) error) error
 
-	Adapter(options ...OptionFunc) adapter.Adapter
+	Adapter(options ...OptionFunc) Adapter
 }
 
-func New(a adapter.Adapter, name string) Session {
+func New(a Adapter, name string) Session {
 	return &session{
 		name:    name,
 		adapter: a,
