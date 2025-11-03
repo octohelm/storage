@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: docker.io/library/postgres:16.4
+        image: docker.io/library/postgres:18
         env:
           POSTGRES_PASSWORD: ""
           POSTGRES_HOST_AUTH_METHOD: trust
@@ -23,10 +23,10 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: extractions/setup-just@v2
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: extractions/setup-just@v4
+      - uses: actions/setup-go@v6
         with:
-          go-version: '^1.24'
+          go-version: '^1.25'
 
       - run: just test-race

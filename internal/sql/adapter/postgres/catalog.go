@@ -106,7 +106,12 @@ ORDER BY conrelid::regclass::text, contype DESC;
 		for _, idxSchema := range indexList {
 			t := cat.Table(idxSchema.TABLE_NAME)
 
-			t.(sqlbuilder.KeyCollectionManager).AddKey(idxSchema.ToKey(t))
+			key := idxSchema.ToKey(t)
+			if key == nil {
+				continue
+			}
+
+			t.(sqlbuilder.KeyCollectionManager).AddKey(key)
 		}
 	}
 
@@ -185,6 +190,13 @@ func (indexSchema) TableName() string {
 }
 
 func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
+	// ignore pg 18 not_null indexes
+	// https://www.enterprisedb.com/blog/changes-not-null-postgres-18?utm_source=chatgpt.com
+	// https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-NOT-NULL
+	if strings.HasPrefix(idxSchema.INDEX_DEF, "NOT NULL ") {
+		return nil
+	}
+
 	isUnique := strings.Contains(idxSchema.INDEX_DEF, "UNIQUE")
 	method := ""
 	name := ""
@@ -197,9 +209,9 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 		name = "PRIMARY"
 		colParts = idxSchema.INDEX_DEF[len("PRIMARY KEY"):]
 	} else {
+		// USING <method> (f_col_1,f_col_2)
 		name = strings.ToLower(idxSchema.INDEX_NAME[len(table.TableName())+1:])
 		method = strings.ToUpper(reUsing.FindString(idxSchema.INDEX_DEF)[6:])
-		// USING
 		colParts = strings.TrimSpace(reUsing.Split(idxSchema.INDEX_DEF, 2)[1])
 	}
 
