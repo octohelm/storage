@@ -4,8 +4,9 @@ import (
 	"iter"
 	"slices"
 
-	"github.com/octohelm/storage/internal/xiter"
 	slicesx "github.com/octohelm/x/slices"
+
+	"github.com/octohelm/storage/internal/xiter"
 )
 
 // +gengo:enum

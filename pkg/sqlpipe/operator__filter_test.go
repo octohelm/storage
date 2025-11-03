@@ -3,13 +3,14 @@ package sqlpipe_test
 import (
 	"testing"
 
+	testingx "github.com/octohelm/x/testing"
+
 	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	"github.com/octohelm/storage/testdata/model"
 	modelfilter "github.com/octohelm/storage/testdata/model/filter"
-	testingx "github.com/octohelm/x/testing"
 )
 
 func TestWhereInSelectFrom(t *testing.T) {

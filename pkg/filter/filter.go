@@ -6,8 +6,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/octohelm/storage/pkg/filter/internal/directive"
 	slicesx "github.com/octohelm/x/slices"
+
+	"github.com/octohelm/storage/pkg/filter/internal/directive"
 )
 
 type Filter[T comparable] struct {

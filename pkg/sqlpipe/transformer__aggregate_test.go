@@ -3,13 +3,13 @@ package sqlpipe_test
 import (
 	"testing"
 
+	testingx "github.com/octohelm/x/testing"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/pkg/sqlpipe"
-	testingx "github.com/octohelm/x/testing"
-
 	"github.com/octohelm/storage/testdata/model"
 	modelaggregate "github.com/octohelm/storage/testdata/model/aggregate"
 )

@@ -1,22 +1,23 @@
 module github.com/octohelm/storage
 
-go 1.25.1
+go 1.25.3
 
 tool (
+	github.com/octohelm/storage/internal/cmd/fmt
 	github.com/octohelm/storage/internal/cmd/gen
-	mvdan.cc/gofumpt
 )
 
+
+// +gengo:import:group=0_controlled
 require (
 	github.com/octohelm/enumeration v0.0.0-20250115091102-ddf41951d733
-	github.com/octohelm/gengo v0.0.0-20250928050614-7aa009184957
-	github.com/octohelm/x v0.0.0-20251009020353-8be04f917d90
+	github.com/octohelm/gengo v0.0.0-20251031090256-3806c0e4d0f8
+	github.com/octohelm/x v0.0.0-20251028032356-02d7b8d1c824
 )
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/davecgh/go-spew v1.1.1
-	github.com/go-json-experiment/json v0.0.0-20250910080747-cc2cfa0554c3
+	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
 	golang.org/x/sync v0.17.0
@@ -41,5 +42,5 @@ require (
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	mvdan.cc/gofumpt v0.9.1 // indirect
+	mvdan.cc/gofumpt v0.9.2 // indirect
 )

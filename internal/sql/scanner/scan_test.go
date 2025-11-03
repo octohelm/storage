@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
+
 	"github.com/octohelm/storage/internal/testutil"
 	"github.com/octohelm/storage/pkg/dberr"
-
-	"github.com/DATA-DOG/go-sqlmock"
 )
 
 type T struct {

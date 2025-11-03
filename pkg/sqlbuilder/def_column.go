@@ -8,9 +8,10 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/octohelm/x/types"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder/internal/columndef"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-	"github.com/octohelm/x/types"
 )
 
 type Column interface {

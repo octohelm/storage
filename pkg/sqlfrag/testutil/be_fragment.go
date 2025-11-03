@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/octohelm/storage/pkg/sqlfrag"
-
 	testingx "github.com/octohelm/x/testing"
+
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func BeFragmentForQuery(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {

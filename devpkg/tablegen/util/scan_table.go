@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/octohelm/gengo/pkg/gengo"
+	typesx "github.com/octohelm/x/types"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
-	typesx "github.com/octohelm/x/types"
 )
 
 func toDefaultTableName(name string, tableGroup string) string {

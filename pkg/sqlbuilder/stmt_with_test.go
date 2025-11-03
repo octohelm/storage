@@ -3,12 +3,11 @@ package sqlbuilder_test
 import (
 	"testing"
 
-	"github.com/octohelm/storage/pkg/sqlfrag"
-
-	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
+	testingx "github.com/octohelm/x/testing"
 
 	. "github.com/octohelm/storage/pkg/sqlbuilder"
-	testingx "github.com/octohelm/x/testing"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 )
 
 func TestWithStmt(t *testing.T) {

@@ -2,6 +2,9 @@ package nullable
 
 import (
 	"database/sql"
+)
+
+import (
 	_ "unsafe"
 )
 

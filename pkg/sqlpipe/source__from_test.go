@@ -3,10 +3,11 @@ package sqlpipe
 import (
 	"testing"
 
+	testingx "github.com/octohelm/x/testing"
+
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/testdata/model"
-	testingx "github.com/octohelm/x/testing"
 )
 
 func TestSourceFrom(t *testing.T) {

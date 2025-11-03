@@ -4,10 +4,9 @@ import (
 	"context"
 	"iter"
 
-	"github.com/octohelm/storage/pkg/sqlfrag"
-
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 

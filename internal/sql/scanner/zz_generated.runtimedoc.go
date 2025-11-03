@@ -4,7 +4,9 @@ DON'T EDIT THIS FILE
 */
 package scanner
 
-import _ "embed"
+import (
+	_ "embed"
+)
 
 // nolint:deadcode,unused
 func runtimeDoc(v any, prefix string, names ...string) ([]string, bool) {

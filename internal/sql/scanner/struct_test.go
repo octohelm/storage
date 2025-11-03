@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+
 	"github.com/octohelm/storage/internal/sql/scanner/nullable"
 )
 

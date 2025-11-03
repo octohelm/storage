@@ -1,6 +1,8 @@
 package db
 
-import "net/url"
+import (
+	"net/url"
+)
 
 type EndpointOverrides struct {
 	// Overwrite dbname when not empty

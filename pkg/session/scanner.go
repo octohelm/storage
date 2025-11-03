@@ -1,6 +1,8 @@
 package session
 
-import "github.com/octohelm/storage/internal/sql/scanner"
+import (
+	"github.com/octohelm/storage/internal/sql/scanner"
+)
 
 var Scan = scanner.Scan
 

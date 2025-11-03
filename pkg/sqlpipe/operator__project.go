@@ -4,10 +4,11 @@ import (
 	"context"
 	"iter"
 
+	slicesx "github.com/octohelm/x/slices"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	slicesx "github.com/octohelm/x/slices"
 )
 
 func Returning[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {

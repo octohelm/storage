@@ -3,8 +3,9 @@ package internal
 import (
 	"context"
 
-	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 	contextx "github.com/octohelm/x/context"
+
+	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
 var FlagContext = contextx.New[flags.Flag]()

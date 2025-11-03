@@ -5,11 +5,12 @@ import (
 	"iter"
 	"slices"
 
+	slicesx "github.com/octohelm/x/slices"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/modelscoped"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
-	slicesx "github.com/octohelm/x/slices"
 )
 
 func AggregateGroupBy[S Model, O Model](src Source[S], by iter.Seq[modelscoped.Column[S]], cols ...modelscoped.Column[O]) Source[O] {

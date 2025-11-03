@@ -8,7 +8,7 @@ test-race:
     CGO_ENABLED=1 go test -count=1 -v -race ./...
 
 fmt:
-    go tool gofumpt -l -w .
+    go tool fmt .
 
 dep:
     go mod tidy

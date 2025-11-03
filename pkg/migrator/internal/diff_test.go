@@ -8,13 +8,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	testingx "github.com/octohelm/x/testing"
+
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/adapter/sqlite"
 	"github.com/octohelm/storage/pkg/migrator/internal"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	"github.com/octohelm/storage/testdata/model"
-	testingx "github.com/octohelm/x/testing"
 )
 
 func newAdapter(t testing.TB) adapter.Adapter {

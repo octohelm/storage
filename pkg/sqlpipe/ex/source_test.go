@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
+	"github.com/octohelm/x/testing/bdd"
+
 	"github.com/octohelm/storage/internal/testutil"
 	"github.com/octohelm/storage/pkg/filter"
 	"github.com/octohelm/storage/pkg/session"
@@ -13,7 +16,6 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe"
 	"github.com/octohelm/storage/testdata/model"
 	modelfilter "github.com/octohelm/storage/testdata/model/filter"
-	"github.com/octohelm/x/testing/bdd"
 )
 
 type Repo struct {

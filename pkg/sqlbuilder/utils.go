@@ -7,8 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 	typesx "github.com/octohelm/x/types"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 )
 
 func GetColumnName(fieldName, tagValue string) string {

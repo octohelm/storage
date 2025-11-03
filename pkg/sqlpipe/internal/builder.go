@@ -6,6 +6,9 @@ import (
 	"iter"
 	"time"
 
+	"github.com/octohelm/x/reflect"
+	slicesx "github.com/octohelm/x/slices"
+
 	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
@@ -13,8 +16,6 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 	"github.com/octohelm/storage/pkg/sqltype"
 	sqltypetime "github.com/octohelm/storage/pkg/sqltype/time"
-	"github.com/octohelm/x/reflect"
-	slicesx "github.com/octohelm/x/slices"
 )
 
 func BuildStmt[M sqlbuilder.Model](ctx context.Context, patchers ...StmtPatcher[M]) sqlfrag.Fragment {

@@ -1,6 +1,8 @@
 package sqlbuilder
 
-import "github.com/octohelm/storage/pkg/sqlbuilder/internal"
+import (
+	"github.com/octohelm/storage/pkg/sqlbuilder/internal"
+)
 
 type Model = internal.Model
 

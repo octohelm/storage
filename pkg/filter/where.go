@@ -6,8 +6,10 @@ import (
 	"slices"
 
 	"github.com/go-json-experiment/json"
-	"github.com/octohelm/storage/pkg/filter/internal/directive"
+
 	slicesx "github.com/octohelm/x/slices"
+
+	"github.com/octohelm/storage/pkg/filter/internal/directive"
 )
 
 func Where[T comparable](name string, rules ...TypedRule[T]) TypedRule[T] {

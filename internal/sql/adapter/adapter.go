@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"net/url"
 
+	syncx "github.com/octohelm/x/sync"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-	syncx "github.com/octohelm/x/sync"
 )
 
 type DB interface {

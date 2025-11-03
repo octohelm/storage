@@ -1,6 +1,8 @@
 package xiter
 
-import "iter"
+import (
+	"iter"
+)
 
 func Of[T any](values ...T) iter.Seq[T] {
 	return func(yield func(T) bool) {

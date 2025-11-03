@@ -9,10 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	typex "github.com/octohelm/x/types"
+
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-	typex "github.com/octohelm/x/types"
 )
 
 var _ adapter.Dialect = (*dialect)(nil)

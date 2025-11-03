@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"testing"
 
+	testingx "github.com/octohelm/x/testing"
+
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
 	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
-	testingx "github.com/octohelm/x/testing"
 )
 
 func TestPostgresDialect(t *testing.T) {

@@ -1,6 +1,8 @@
 package filter
 
-import "iter"
+import (
+	"iter"
+)
 
 func MapFilter[T comparable, A Arg, O any](args iter.Seq[A], where func(a *Filter[T]) (O, bool)) iter.Seq[O] {
 	return MapWhere[A, O](args, func(arg Arg) (O, bool) {

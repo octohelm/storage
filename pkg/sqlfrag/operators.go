@@ -1,6 +1,8 @@
 package sqlfrag
 
-import "iter"
+import (
+	"iter"
+)
 
 func NonNil[F Fragment](fragSeq iter.Seq[F]) iter.Seq[Fragment] {
 	return func(yield func(Fragment) bool) {

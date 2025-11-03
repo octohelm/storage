@@ -3,11 +3,11 @@ package sqlbuilder_test
 import (
 	"testing"
 
-	"github.com/octohelm/storage/pkg/sqlfrag"
-	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 	testingx "github.com/octohelm/x/testing"
 
 	. "github.com/octohelm/storage/pkg/sqlbuilder"
+	"github.com/octohelm/storage/pkg/sqlfrag"
+	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 )
 
 func TestJoin(t *testing.T) {

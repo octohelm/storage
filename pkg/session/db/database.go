@@ -11,7 +11,9 @@ import (
 	"github.com/octohelm/storage/pkg/migrator"
 	"github.com/octohelm/storage/pkg/session"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
+)
 
+import (
 	_ "github.com/octohelm/storage/internal/sql/adapter/postgres"
 	_ "github.com/octohelm/storage/internal/sql/adapter/sqlite"
 )

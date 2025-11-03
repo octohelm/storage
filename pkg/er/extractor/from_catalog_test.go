@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
+	testingx "github.com/octohelm/x/testing"
+
 	"github.com/octohelm/storage/pkg/er/extractor"
 	"github.com/octohelm/storage/pkg/session"
 	sessiondb "github.com/octohelm/storage/pkg/session/db"
 	"github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/testdata/model"
-	testingx "github.com/octohelm/x/testing"
 )
 
 func TestFromCatalog(t *testing.T) {

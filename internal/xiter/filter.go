@@ -1,6 +1,8 @@
 package xiter
 
-import "iter"
+import (
+	"iter"
+)
 
 func Filter[V any](seq iter.Seq[V], filter func(e V) bool) iter.Seq[V] {
 	return func(yield func(V) bool) {

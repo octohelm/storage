@@ -7,12 +7,11 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/octohelm/storage/pkg/sqlfrag"
-
-	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
+	reflectx "github.com/octohelm/x/reflect"
 
 	"github.com/octohelm/storage/internal/sql/scanner/nullable"
-	reflectx "github.com/octohelm/x/reflect"
+	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
+	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func scanTo(ctx context.Context, rows *sql.Rows, v interface{}) error {

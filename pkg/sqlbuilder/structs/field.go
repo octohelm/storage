@@ -10,10 +10,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/octohelm/storage/pkg/sqlbuilder/internal"
-	"github.com/octohelm/storage/pkg/sqlbuilder/internal/columndef"
 	reflectx "github.com/octohelm/x/reflect"
 	typesx "github.com/octohelm/x/types"
+
+	"github.com/octohelm/storage/pkg/sqlbuilder/internal"
+	"github.com/octohelm/storage/pkg/sqlbuilder/internal/columndef"
 )
 
 func Fields(ctx context.Context, typ typesx.Type) []*Field {
