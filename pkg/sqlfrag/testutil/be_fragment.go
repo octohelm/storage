@@ -4,29 +4,31 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	testingx "github.com/octohelm/x/testing"
+	"github.com/octohelm/x/testing/snapshot"
 
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
 func BeFragmentForQuery(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {
-	return &fragmentMatcher[sqlfrag.Fragment]{
+	return &fragmentMatcher{
 		query: strings.TrimSpace(query),
 		args:  args,
 	}
 }
 
 func BeFragment(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {
-	return &fragmentMatcher[sqlfrag.Fragment]{
+	return &fragmentMatcher{
 		query:     strings.TrimSpace(query),
 		args:      args,
 		checkArgs: true,
 	}
 }
 
-type fragmentMatcher[A sqlfrag.Fragment] struct {
+type fragmentMatcher struct {
 	query     string
 	args      []any
 	checkArgs bool
@@ -35,22 +37,28 @@ type fragmentMatcher[A sqlfrag.Fragment] struct {
 	argsNotEqual  bool
 }
 
-func (m *fragmentMatcher[A]) Negative() bool {
+func (m *fragmentMatcher) Negative() bool {
 	return false
 }
 
-func (m *fragmentMatcher[A]) Action() string {
+func (m *fragmentMatcher) Action() string {
 	return "Be Frag"
 }
 
-func (m *fragmentMatcher[A]) Match(actual A) bool {
+func (m *fragmentMatcher) Match(actual sqlfrag.Fragment) bool {
 	if sqlfrag.IsNil(actual) {
 		return m.query == ""
 	}
+
 	q, args := sqlfrag.Collect(context.Background(), actual)
 	if len(m.args) == 0 && len(args) == 0 {
-		return m.query == q
+		if m.query == q {
+			return true
+		}
+		m.queryNotEqual = true
+		return false
 	}
+
 	if m.query == q {
 		return true
 	}
@@ -58,7 +66,9 @@ func (m *fragmentMatcher[A]) Match(actual A) bool {
 	m.queryNotEqual = true
 
 	if m.checkArgs {
-		return reflect.DeepEqual(m.args, args)
+		if reflect.DeepEqual(m.args, args) {
+			return true
+		}
 	}
 
 	m.argsNotEqual = true
@@ -66,31 +76,48 @@ func (m *fragmentMatcher[A]) Match(actual A) bool {
 	return false
 }
 
-func (m *fragmentMatcher[A]) NormalizeActual(actual A) any {
+func (m *fragmentMatcher) NormalizeActual(actual sqlfrag.Fragment) any {
 	if sqlfrag.IsNil(actual) {
 		return ""
 	}
+
 	q, args := sqlfrag.Collect(context.Background(), actual)
 
 	if m.queryNotEqual && m.argsNotEqual {
-		return fmt.Sprintf("%s | %v", q, args)
+		return slices.Concat(
+			snapshot.LinesFromBytes([]byte(q)),
+			linesFromArgs(args),
+		)
 	}
 
 	if m.queryNotEqual {
-		return q
+		return snapshot.LinesFromBytes([]byte(q))
 	}
 
-	return fmt.Sprintf("%v", args)
+	return linesFromArgs(args)
 }
 
-func (m *fragmentMatcher[A]) NormalizedExpected() any {
+var _ testingx.MatcherWithNormalizedExpected = &fragmentMatcher{}
+
+func (m *fragmentMatcher) NormalizedExpected() any {
 	if m.queryNotEqual && m.argsNotEqual {
-		return fmt.Sprintf("%s | %v", m.query, m.args)
+		return slices.Concat(
+			snapshot.LinesFromBytes([]byte(m.query)),
+			linesFromArgs(m.args),
+		)
 	}
 
 	if m.queryNotEqual {
-		return m.query
+		return snapshot.LinesFromBytes([]byte(m.query))
 	}
 
-	return fmt.Sprintf("%v", m.args)
+	return linesFromArgs(m.args)
+}
+
+func linesFromArgs(args []any) snapshot.Lines {
+	lines := make(snapshot.Lines, 0, len(args))
+	for _, arg := range args {
+		lines = append(lines, fmt.Sprintf("%v", arg))
+	}
+	return lines
 }

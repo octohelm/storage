@@ -20,9 +20,9 @@ type User struct {
 	// 用户名
 	Username string `db:"f_username,default=''"`
 	// 性别
-	Gender Gender `db:"f_gender,default='0'"`
+	Gender Gender `db:"f_gender,default=0"`
 	// 年龄
-	Age int64 `db:"f_age,default='0'"`
+	Age int64 `db:"f_age,default=0"`
 
 	OperateTimeWithDeleted
 }

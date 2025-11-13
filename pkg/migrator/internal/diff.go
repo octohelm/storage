@@ -129,10 +129,10 @@ func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlb
 					continue
 				}
 
-				prevColType, _ := sqlfrag.Collect(context.Background(), dialect.DataType(sqlbuilder.GetColumnDef(currentCol)))
-				currentColType, _ := sqlfrag.Collect(context.Background(), dialect.DataType(sqlbuilder.GetColumnDef(nextCol)))
+				currentColType, _ := sqlfrag.Collect(context.Background(), dialect.DataType(sqlbuilder.GetColumnDef(currentCol), currentTable))
+				nextColType, _ := sqlfrag.Collect(context.Background(), dialect.DataType(sqlbuilder.GetColumnDef(nextCol), nextTable))
 
-				if !strings.EqualFold(prevColType, currentColType) {
+				if !strings.EqualFold(currentColType, nextColType) {
 					d.columns[nextCol.Name()] = modifyTableColumn
 					d.migrate(modifyTableColumn, nextCol.Name(), dialect.ModifyColumn(nextCol, currentCol))
 				}

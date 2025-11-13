@@ -5,11 +5,11 @@ import "github.com/octohelm/storage/pkg/sqlbuilder"
 type UserV2 struct {
 	ID       UserID `db:"f_id,autoincrement"`
 	Nickname string `db:"f_nickname,size=255,default=''"`
-	Gender   Gender `db:"f_gender,default='0'"`
+	Gender   Gender `db:"f_gender,default=0"`
 	Name     string `db:"f_name,deprecated=f_real_name"`
 	RealName string `db:"f_real_name,size=255,default=''"`
 	// for modify testing
-	Age      int8   `db:"f_age,default='0'"`
+	Age      int8   `db:"f_age,default=0"`
 	Username string `db:"f_username,deprecated"`
 }
 

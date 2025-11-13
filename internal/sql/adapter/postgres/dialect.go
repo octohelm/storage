@@ -105,7 +105,7 @@ func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fr
 						return
 					}
 
-					for q, args := range c.DataType(def).Frag(ctx) {
+					for q, args := range c.DataType(def, t).Frag(ctx) {
 						if !yield(q, args) {
 							return
 						}
@@ -147,10 +147,12 @@ func (c *dialect) TruncateTable(t sqlbuilder.Table) sqlfrag.Fragment {
 }
 
 func (c *dialect) AddColumn(col sqlbuilder.Column) sqlfrag.Fragment {
+	t := sqlbuilder.GetColumnTable(col)
+
 	return sqlfrag.Pair("\nALTER TABLE @table ADD COLUMN @col @dataType;", sqlfrag.NamedArgSet{
-		"table":    sqlbuilder.GetColumnTable(col),
+		"table":    t,
 		"col":      col,
-		"dataType": c.DataType(sqlbuilder.GetColumnDef(col)),
+		"dataType": c.DataType(sqlbuilder.GetColumnDef(col), t),
 	})
 }
 
@@ -222,7 +224,7 @@ func (c *dialect) DropColumn(col sqlbuilder.Column) sqlfrag.Fragment {
 	})
 }
 
-func (c *dialect) DataType(columnType sqlbuilder.ColumnDef) sqlfrag.Fragment {
+func (c *dialect) DataType(columnType sqlbuilder.ColumnDef, t sqlbuilder.Table) sqlfrag.Fragment {
 	dbDataType := dealias(c.dbDataType(columnType.Type, columnType))
 	return sqlfrag.Pair(dbDataType + autocompleteSize(dbDataType, columnType) + c.dataTypeModify(columnType, dbDataType))
 }

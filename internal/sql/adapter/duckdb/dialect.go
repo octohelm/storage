@@ -1,4 +1,4 @@
-package sqlite
+package duckdb
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ var _ adapter.Dialect = (*dialect)(nil)
 type dialect struct{}
 
 func (dialect) DriverName() string {
-	return "sqlite"
+	return "duckdb"
 }
 
 func (c *dialect) AddIndex(key sqlbuilder.Key) sqlfrag.Fragment {
@@ -54,8 +54,20 @@ func (c *dialect) DropIndex(key sqlbuilder.Key) sqlfrag.Fragment {
 }
 
 func (c *dialect) CreateTableIsNotExists(t sqlbuilder.Table) (exprs []sqlfrag.Fragment) {
-	exprs = append(exprs, sqlfrag.Pair("\nCREATE TABLE IF NOT EXISTS @table (@def\n);", sqlfrag.NamedArgSet{
+
+	exprs = append(exprs, sqlfrag.Pair("@seq\nCREATE TABLE IF NOT EXISTS @table (@def\n);", sqlfrag.NamedArgSet{
 		"table": t,
+		"seq": sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
+			return func(yield func(string, []any) bool) {
+				for col := range t.Cols() {
+					def := sqlbuilder.GetColumnDef(col)
+					if def.AutoIncrement {
+						yield(fmt.Sprintf("\nCREATE SEQUENCE IF NOT EXISTS 'seq_%s' START 1;", t.TableName()), nil)
+						return
+					}
+				}
+			}
+		}),
 		"def": sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
 			return func(yield func(string, []any) bool) {
 				var autoIncrement sqlbuilder.Column
@@ -147,12 +159,6 @@ func (c *dialect) DropTable(t sqlbuilder.Table) sqlfrag.Fragment {
 	})
 }
 
-func (c *dialect) TruncateTable(t sqlbuilder.Table) sqlfrag.Fragment {
-	return sqlfrag.Pair("\nTRUNCATE TABLE @table;", sqlfrag.NamedArgSet{
-		"table": t,
-	})
-}
-
 func (c *dialect) AddColumn(col sqlbuilder.Column) sqlfrag.Fragment {
 	t := sqlbuilder.GetColumnTable(col)
 
@@ -171,36 +177,57 @@ func (c *dialect) RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) 
 	})
 }
 
-func (c *dialect) ModifyColumn(col sqlbuilder.Column, prevCol sqlbuilder.Column) sqlfrag.Fragment {
-	def := sqlbuilder.GetColumnDef(col)
+func (c *dialect) ModifyColumn(col sqlbuilder.Column, prev sqlbuilder.Column) sqlfrag.Fragment {
+	colDef := sqlbuilder.GetColumnDef(col)
+	prevDef := sqlbuilder.GetColumnDef(prev)
 
-	// incr id never modified
-	if def.AutoIncrement {
+	if colDef.AutoIncrement {
 		return nil
 	}
 
-	prevTmpCol := sqlbuilder.Col(
-		"__"+prevCol.Name(),
-		sqlbuilder.ColDef(sqlbuilder.GetColumnDef(prevCol)),
-	).Of(sqlbuilder.GetColumnTable(prevCol))
+	dbDataType := c.dataType(colDef.Type, colDef, sqlbuilder.GetColumnTable(col))
+	prevDbDataType := c.dataType(prevDef.Type, prevDef, sqlbuilder.GetColumnTable(prev))
 
-	return sqlfrag.JoinValues("",
-		sqlfrag.Pair("\nALTER TABLE @table RENAME COLUMN @prevCol TO @tmpCol;", sqlfrag.NamedArgSet{
-			"table":   sqlbuilder.GetColumnTable(prevCol),
-			"prevCol": prevCol,
-			"tmpCol":  prevTmpCol,
-		}),
+	actions := make([]sqlfrag.Fragment, 0)
 
-		c.AddColumn(col),
+	if dbDataType != prevDbDataType {
+		actions = append(actions, sqlfrag.Pair(
+			"ALTER COLUMN ? TYPE ? /* FROM ? */",
+			col, sqlfrag.Const(dbDataType), sqlfrag.Const(prevDbDataType),
+		))
+	}
 
-		sqlfrag.Pair("\nUPDATE @table SET @col = @tmpCol;", sqlfrag.NamedArgSet{
-			"table":  sqlbuilder.GetColumnTable(col),
-			"col":    col,
-			"tmpCol": prevTmpCol,
-		}),
+	if colDef.Null != prevDef.Null {
+		action := "SET"
+		if colDef.Null {
+			action = "DROP"
+		}
 
-		c.DropColumn(prevTmpCol),
-	)
+		actions = append(actions, sqlfrag.Pair(
+			"ALTER COLUMN ? ? NOT NULL",
+			col, sqlfrag.Const(action),
+		))
+	}
+
+	defaultValue := normalizeDefaultValue(colDef.Default, dbDataType)
+	prevDefaultValue := normalizeDefaultValue(prevDef.Default, prevDbDataType)
+
+	if defaultValue != prevDefaultValue {
+		if colDef.Default != nil {
+			actions = append(actions, sqlfrag.Pair("ALTER COLUMN ? SET DEFAULT ? /* FROM ? */", col, sqlfrag.Const(defaultValue), sqlfrag.Const(prevDefaultValue)))
+		} else {
+			actions = append(actions, sqlfrag.Pair("ALTER COLUMN ? DROP DEFAULT", col))
+		}
+	}
+
+	if len(actions) == 0 {
+		return nil
+	}
+
+	return sqlfrag.Pair("\nALTER TABLE @table @actions;", sqlfrag.NamedArgSet{
+		"table":   sqlbuilder.GetColumnTable(col),
+		"actions": sqlfrag.JoinValues(", ", actions...),
+	})
 }
 
 func (c *dialect) DropColumn(col sqlbuilder.Column) sqlfrag.Fragment {
@@ -211,15 +238,15 @@ func (c *dialect) DropColumn(col sqlbuilder.Column) sqlfrag.Fragment {
 }
 
 func (c *dialect) DataType(columnType sqlbuilder.ColumnDef, t sqlbuilder.Table) sqlfrag.Fragment {
-	dbDataType := c.dbDataType(columnType.Type, columnType)
+	dbDataType := c.dbDataType(columnType.Type, columnType, t)
 	return sqlfrag.Pair(dbDataType + c.dataTypeModify(columnType, dbDataType))
 }
 
-func (c *dialect) dataType(typ typex.Type, columnType sqlbuilder.ColumnDef) string {
-	return c.dbDataType(columnType.Type, columnType)
+func (c *dialect) dataType(typ typex.Type, columnType sqlbuilder.ColumnDef, t sqlbuilder.Table) string {
+	return c.dbDataType(columnType.Type, columnType, t)
 }
 
-func (c *dialect) dbDataType(typ typex.Type, columnType sqlbuilder.ColumnDef) string {
+func (c *dialect) dbDataType(typ typex.Type, columnType sqlbuilder.ColumnDef, t sqlbuilder.Table) string {
 	if columnType.DataType != "" {
 		// for type from catalog
 		return columnType.DataType
@@ -234,12 +261,12 @@ func (c *dialect) dbDataType(typ typex.Type, columnType sqlbuilder.ColumnDef) st
 	}
 
 	if columnType.AutoIncrement {
-		return "INTEGER PRIMARY KEY AUTOINCREMENT"
+		return fmt.Sprintf("INTEGER DEFAULT(nextval('seq_%s')) PRIMARY KEY", t.TableName())
 	}
 
 	switch typ.Kind() {
 	case reflect.Ptr:
-		return c.dataType(typ.Elem(), columnType)
+		return c.dataType(typ.Elem(), columnType, t)
 	case reflect.Bool:
 		return "BOOLEAN"
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
@@ -270,13 +297,16 @@ func (c *dialect) dbDataType(typ typex.Type, columnType sqlbuilder.ColumnDef) st
 func (c *dialect) dataTypeModify(columnType sqlbuilder.ColumnDef, dataType string) string {
 	buf := bytes.NewBuffer(nil)
 
-	if !columnType.Null {
-		buf.WriteString(" NOT NULL")
+	if columnType.Default != nil {
+		buf.WriteString(" DEFAULT(")
+		buf.WriteString(normalizeDefaultValue(columnType.Default, dataType))
+		buf.WriteString(")")
 	}
 
-	if columnType.Default != nil {
-		buf.WriteString(" DEFAULT ")
-		buf.WriteString(normalizeDefaultValue(columnType.Default, dataType))
+	if !columnType.Null {
+		if !columnType.AutoIncrement {
+			buf.WriteString(" NOT NULL")
+		}
 	}
 
 	return buf.String()

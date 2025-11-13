@@ -33,7 +33,6 @@ type Adapter interface {
 type Dialect interface {
 	CreateTableIsNotExists(t sqlbuilder.Table) []sqlfrag.Fragment
 	DropTable(t sqlbuilder.Table) sqlfrag.Fragment
-	TruncateTable(t sqlbuilder.Table) sqlfrag.Fragment
 
 	AddColumn(col sqlbuilder.Column) sqlfrag.Fragment
 	RenameColumn(col sqlbuilder.Column, target sqlbuilder.Column) sqlfrag.Fragment
@@ -43,7 +42,7 @@ type Dialect interface {
 	AddIndex(key sqlbuilder.Key) sqlfrag.Fragment
 	DropIndex(key sqlbuilder.Key) sqlfrag.Fragment
 
-	DataType(columnDef sqlbuilder.ColumnDef) sqlfrag.Fragment
+	DataType(columnDef sqlbuilder.ColumnDef, t sqlbuilder.Table) sqlfrag.Fragment
 }
 
 var adapters = syncx.Map[string, Adapter]{}
