@@ -99,23 +99,25 @@ var _ interface {
 } = (*Timestamp)(nil)
 
 func (dt *Timestamp) Scan(value interface{}) error {
-	switch v := value.(type) {
+	switch x := value.(type) {
 	case []byte:
-		n, err := strconv.ParseInt(string(v), 10, 64)
+		v, err := strconv.ParseInt(string(x), 10, 64)
 		if err != nil {
-			return fmt.Errorf("sql.Scan() strfmt.Timestamp from: %#v failed: %s", v, err.Error())
+			return fmt.Errorf("sql.Scan() strfmt.Timestamp from: %#v failed: %w", v, err)
 		}
-		*dt = Timestamp(time.Unix(n, 0))
-	case int64:
 		if v < 0 {
-			*dt = Timestamp{}
-		} else {
-			*dt = Timestamp(time.Unix(v, 0))
+			v = 0
 		}
+		*dt = Timestamp(time.Unix(v, 0))
+	case int64:
+		if x < 0 {
+			x = 0
+		}
+		*dt = Timestamp(time.Unix(x, 0))
 	case nil:
 		*dt = TimestampZero
 	default:
-		return fmt.Errorf("cannot sql.Scan() strfmt.Timestamp from: %#v", v)
+		return fmt.Errorf("cannot sql.Scan() strfmt.Timestamp from: %v", x)
 	}
 	return nil
 }
