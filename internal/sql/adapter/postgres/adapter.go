@@ -108,8 +108,20 @@ func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, er
 			poolParams.Set("pool_max_conns", "10")
 		}
 
+		if !poolParams.Has("pool_min_conns") {
+			poolParams.Set("pool_min_conns", "5")
+		}
+
 		if !poolParams.Has("pool_max_conn_lifetime") {
-			poolParams.Set("pool_max_conn_lifetime", "1h")
+			poolParams.Set("pool_max_conn_lifetime", "30m")
+		}
+
+		if !poolParams.Has("pool_max_conn_idle_time") {
+			poolParams.Set("pool_max_conn_idle_time", "30m")
+		}
+
+		if !poolParams.Has("pool_health_check_period") {
+			poolParams.Set("pool_health_check_period", "30s")
 		}
 
 		dsn.RawQuery = poolParams.Encode()
