@@ -6,10 +6,13 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	randv2 "math/rand/v2"
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -126,11 +129,30 @@ func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, er
 
 		dsn.RawQuery = poolParams.Encode()
 
-		p, err := pgxpool.New(ctx, dsn.String())
+		c, err := pgxpool.ParseConfig(dsn.String())
 		if err != nil {
 			a.perr = err
 			return
 		}
+
+		c.BeforeConnect = func(ctx context.Context, config *pgx.ConnConfig) error {
+			jitter := time.Duration(randv2.IntN(200)) * time.Millisecond
+			t := time.NewTimer(jitter)
+			defer t.Stop()
+			select {
+			case <-t.C:
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+
+		p, err := pgxpool.NewWithConfig(ctx, c)
+		if err != nil {
+			a.perr = err
+			return
+		}
+
 		a.p = p
 	})
 	if a.perr != nil {
