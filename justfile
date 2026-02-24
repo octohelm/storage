@@ -8,6 +8,7 @@ test-race:
     CGO_ENABLED=1 go test -count=1 -v -race ./...
 
 fmt:
+    go fix ./...
     go tool fmt .
 
 dep:

@@ -14,10 +14,10 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
-func scanTo(ctx context.Context, rows *sql.Rows, v interface{}) error {
+func scanTo(ctx context.Context, rows *sql.Rows, v any) error {
 	tpe := reflect.TypeOf(v)
 
-	if tpe.Kind() != reflect.Ptr {
+	if tpe.Kind() != reflect.Pointer {
 		return fmt.Errorf("scanTo target must be a ptr value, but got %T", v)
 	}
 
@@ -39,7 +39,7 @@ func scanTo(ctx context.Context, rows *sql.Rows, v interface{}) error {
 			return nil
 		}
 
-		dest := make([]interface{}, n)
+		dest := make([]any, n)
 		holder := placeholder()
 
 		columnIndexes := map[string]int{}
@@ -74,6 +74,6 @@ func placeholder() sql.Scanner {
 
 type emptyScanner int
 
-func (e *emptyScanner) Scan(value interface{}) error {
+func (e *emptyScanner) Scan(value any) error {
 	return nil
 }

@@ -19,8 +19,8 @@ type Any string
 
 type T2 T
 
-func (t *T2) ColumnReceivers() map[string]interface{} {
-	return map[string]interface{}{
+func (t *T2) ColumnReceivers() map[string]any {
+	return map[string]any{
 		"f_i": &t.I,
 		"f_s": &t.S,
 	}
@@ -30,11 +30,11 @@ type TDataList struct {
 	Data []T
 }
 
-func (*TDataList) New() interface{} {
+func (*TDataList) New() any {
 	return &T{}
 }
 
-func (l *TDataList) Next(v interface{}) error {
+func (l *TDataList) Next(v any) error {
 	t := v.(*T)
 	l.Data = append(l.Data, *t)
 	return nil

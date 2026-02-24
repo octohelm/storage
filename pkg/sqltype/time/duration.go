@@ -96,7 +96,7 @@ func ParseDuration(cand string) (time.Duration, error) {
 	return 0, fmt.Errorf("unable to parse %s as duration", cand)
 }
 
-func (d *Duration) Scan(raw interface{}) error {
+func (d *Duration) Scan(raw any) error {
 	switch v := raw.(type) {
 	case int64:
 		*d = Duration(v)

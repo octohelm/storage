@@ -74,7 +74,7 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 					}
 
 					ft = f.Type()
-					for ft.Kind() == reflect.Ptr {
+					for ft.Kind() == reflect.Pointer {
 						ft = ft.Elem()
 					}
 				}

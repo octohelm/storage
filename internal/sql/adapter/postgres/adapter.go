@@ -51,8 +51,7 @@ func (a *pgAdapter) DriverName() string {
 
 func (a *pgAdapter) Connector() driver.DriverContext {
 	return loggingdriver.Wrap(stdlib.GetPoolConnector(a.p).Driver(), a.DriverName(), func(err error) int {
-		var pqerr *pgconn.PgError
-		if errors.As(err, &pqerr) {
+		if pqerr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			// unique_violation
 			if pqerr.Code == "23505" {
 				return 0
@@ -192,8 +191,7 @@ func (a *pgAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, er
 }
 
 func isErrorConflict(err error) bool {
-	var e *pgconn.PgError
-	if errors.As(err, &e) {
+	if e, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if e.Code == "23505" {
 			return true
 		}
@@ -202,8 +200,7 @@ func isErrorConflict(err error) bool {
 }
 
 func isErrorUnknownDatabase(err error) bool {
-	var e *pgconn.PgError
-	if errors.As(err, &e) {
+	if e, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if e.Code == "3D000" {
 			return true
 		}

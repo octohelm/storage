@@ -21,7 +21,7 @@ func Compose(filters ...any) *Composed {
 
 		if rv.Kind() == reflect.Struct {
 			t := rv.Type()
-			if t.Kind() == reflect.Ptr {
+			if t.Kind() == reflect.Pointer {
 				t = t.Elem()
 			}
 
@@ -50,7 +50,7 @@ func Compose(filters ...any) *Composed {
 						ruleExprIdx: i,
 					})
 
-					if fv.Kind() == reflect.Ptr && fv.IsNil() {
+					if fv.Kind() == reflect.Pointer && fv.IsNil() {
 						continue
 					}
 
@@ -81,7 +81,7 @@ func (t *fieldRuler) New() *ruleWrapper {
 	rv := reflect.New(t.tpe)
 
 	f := rv.Elem().Field(t.ruleExprIdx)
-	if f.Kind() == reflect.Ptr {
+	if f.Kind() == reflect.Pointer {
 		f.Set(reflect.New(f.Type().Elem()))
 	}
 

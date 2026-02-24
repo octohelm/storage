@@ -113,7 +113,7 @@ func (w *fieldWalker) allStructField(ctx context.Context, tpe typesx.Type) iter.
 				fieldType := f.Type()
 
 				if !fieldType.Implements(typesx.FromRType(driverValuer)) {
-					for fieldType.Kind() == reflect.Ptr {
+					for fieldType.Kind() == reflect.Pointer {
 						fieldType = fieldType.Elem()
 					}
 
@@ -191,13 +191,13 @@ func fieldValue(structReflectValue reflect.Value, locs []int) reflect.Value {
 
 	fv := structReflectValue
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		loc := locs[i]
 		fv = fv.Field(loc)
 
 		// last loc should keep ptr value
 		if i < n-1 {
-			for fv.Kind() == reflect.Ptr {
+			for fv.Kind() == reflect.Pointer {
 				// notice the ptr struct ensure only for Ptr Anonymous Field
 				if fv.IsNil() {
 					fv.Set(reflectx.New(fv.Type()))

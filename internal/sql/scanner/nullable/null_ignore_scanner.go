@@ -8,17 +8,17 @@ import (
 	_ "unsafe"
 )
 
-func NewNullIgnoreScanner(dest interface{}) *NullIgnoreScanner {
+func NewNullIgnoreScanner(dest any) *NullIgnoreScanner {
 	return &NullIgnoreScanner{
 		dest: dest,
 	}
 }
 
 type NullIgnoreScanner struct {
-	dest interface{}
+	dest any
 }
 
-func (scanner *NullIgnoreScanner) Scan(src interface{}) error {
+func (scanner *NullIgnoreScanner) Scan(src any) error {
 	if s, ok := scanner.dest.(sql.Scanner); ok {
 		return s.Scan(src)
 	}
@@ -29,4 +29,4 @@ func (scanner *NullIgnoreScanner) Scan(src interface{}) error {
 }
 
 //go:linkname convertAssign database/sql.convertAssign
-func convertAssign(dest, src interface{}) error
+func convertAssign(dest, src any) error

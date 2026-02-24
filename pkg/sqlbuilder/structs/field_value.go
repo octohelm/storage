@@ -33,7 +33,7 @@ func AllFieldValue(ctx context.Context, v any) iter.Seq[*FieldValue] {
 	return func(yield func(*FieldValue) bool) {
 		rv, ok := v.(reflect.Value)
 		if ok {
-			if rv.Kind() == reflect.Ptr && rv.IsNil() {
+			if rv.Kind() == reflect.Pointer && rv.IsNil() {
 				rv.Set(reflectx.New(rv.Type()))
 			}
 			v = rv.Interface()

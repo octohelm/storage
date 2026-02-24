@@ -98,7 +98,7 @@ var _ interface {
 	driver.Valuer
 } = (*Timestamp)(nil)
 
-func (dt *Timestamp) Scan(value interface{}) error {
+func (dt *Timestamp) Scan(value any) error {
 	switch x := value.(type) {
 	case []byte:
 		v, err := strconv.ParseInt(string(x), 10, 64)
@@ -123,10 +123,7 @@ func (dt *Timestamp) Scan(value interface{}) error {
 }
 
 func (dt Timestamp) Value() (driver.Value, error) {
-	s := (time.Time)(dt).Unix()
-	if s < 0 {
-		s = 0
-	}
+	s := max((time.Time)(dt).Unix(), 0)
 	return s, nil
 }
 

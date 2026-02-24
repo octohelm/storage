@@ -33,8 +33,7 @@ func IsErrNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	var sqlErr *SqlError
-	if errors.As(err, &sqlErr) {
+	if sqlErr, ok := errors.AsType[*SqlError](err); ok {
 		return sqlErr.Type == ErrTypeNotFound
 	}
 	return false
@@ -44,8 +43,7 @@ func IsErrConflict(err error) bool {
 	if err == nil {
 		return false
 	}
-	var sqlErr *SqlError
-	if errors.As(err, &sqlErr) {
+	if sqlErr, ok := errors.AsType[*SqlError](err); ok {
 		return sqlErr.Type == ErrTypeConflict
 	}
 	return false
@@ -55,8 +53,7 @@ func IsErrRolledBack(err error) bool {
 	if err == nil {
 		return false
 	}
-	var sqlErr *SqlError
-	if errors.As(err, &sqlErr) {
+	if sqlErr, ok := errors.AsType[*SqlError](err); ok {
 		return sqlErr.Type == ErrTypeRolledBack
 	}
 	return false

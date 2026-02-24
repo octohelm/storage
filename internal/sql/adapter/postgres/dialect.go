@@ -244,7 +244,7 @@ func (c *dialect) dbDataType(typ typex.Type, columnType sqlbuilder.ColumnDef) st
 	}
 
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return c.dataType(typ.Elem(), columnType)
 	case reflect.Bool:
 		return "boolean"
@@ -287,7 +287,7 @@ func (c *dialect) dbDataType(typ typex.Type, columnType sqlbuilder.ColumnDef) st
 		return "timestamp with time zone"
 	}
 
-	panic(fmt.Errorf("unsupport type %s", typ))
+	panic(fmt.Errorf("unsupported type %s", typ))
 }
 
 func (c *dialect) dataTypeModify(columnType sqlbuilder.ColumnDef, dataType string) string {

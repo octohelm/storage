@@ -39,7 +39,7 @@ func TestSourceExecutor(t *testing.T) {
 
 		t.Run("batch insert", func(t *testing.T) {
 			values := sqlpipe.ValueSeq(func(yield func(*model.User) bool) {
-				for i := 0; i < 100; i++ {
+				for i := range 100 {
 					usr := &model.User{
 						Name: uuid.New().String(),
 						Age:  int64(i),

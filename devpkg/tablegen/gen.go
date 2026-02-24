@@ -310,7 +310,7 @@ func (@Type) UniqueIndexes() @sqlbuilderIndexes {
 
 `, snippet.Args{
 			"Type":              snippet.ID(named.Obj()),
-			"sqlbuilderIndexes": snippet.ID(reflect.TypeOf(uniqueIndexes)),
+			"sqlbuilderIndexes": snippet.ID(reflect.TypeFor[sqlbuilder.Indexes]()),
 			"uniqueIndexes":     snippet.Value(uniqueIndexes),
 		})
 	}
@@ -323,7 +323,7 @@ func (@Type) Indexes() @sqlbuilderIndexes {
 
 `, snippet.Args{
 			"Type":              snippet.ID(named.Obj()),
-			"sqlbuilderIndexes": snippet.ID(reflect.TypeOf(indexes)),
+			"sqlbuilderIndexes": snippet.ID(reflect.TypeFor[sqlbuilder.Indexes]()),
 			"indexes":           snippet.Value(indexes),
 		})
 	}

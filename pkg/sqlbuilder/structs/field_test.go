@@ -50,7 +50,7 @@ func init() {
 }
 
 func TestTableFieldsFor(t *testing.T) {
-	fields := Fields(context.Background(), typex.FromRType(reflect.TypeOf(p)))
+	fields := Fields(context.Background(), typex.FromRType(reflect.TypeFor[*P]()))
 
 	rv := reflect.ValueOf(p)
 
@@ -73,7 +73,7 @@ func TestTableFieldsFor(t *testing.T) {
 }
 
 func BenchmarkTableFieldsFor(b *testing.B) {
-	typeP := reflect.TypeOf(p)
+	typeP := reflect.TypeFor[*P]()
 
 	_ = Fields(context.Background(), typex.FromRType(typeP))
 

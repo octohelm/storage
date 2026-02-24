@@ -27,7 +27,7 @@ var schemas sync.Map
 
 func TableFromModel(model any) Table {
 	tpe := reflect.TypeOf(model)
-	if tpe.Kind() != reflect.Ptr {
+	if tpe.Kind() != reflect.Pointer {
 		panic(fmt.Errorf("model %s must be a pointer", tpe.Name()))
 	}
 	tpe = tpe.Elem()

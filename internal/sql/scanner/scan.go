@@ -8,7 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/dberr"
 )
 
-func Scan(ctx context.Context, rows *sql.Rows, v interface{}) error {
+func Scan(ctx context.Context, rows *sql.Rows, v any) error {
 	if rows == nil {
 		return nil
 	}

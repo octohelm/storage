@@ -43,8 +43,7 @@ func (a *sqliteAdapter) Connector() driver.DriverContext {
 		&sqlite.Driver{},
 		a.DriverName(),
 		func(err error) int {
-			var e *sqlite.Error
-			if errors.As(err, &e) {
+			if e, ok := errors.AsType[*sqlite.Error](err); ok {
 				if e.Code() == 2067 {
 					return 0
 				}
@@ -101,8 +100,7 @@ func (a *sqliteAdapter) Open(ctx context.Context, dsn *url.URL) (adapter.Adapter
 }
 
 func isErrorConflict(err error) bool {
-	var e *sqlite.Error
-	if errors.As(err, &e) && e.Code() == 2067 {
+	if e, ok := errors.AsType[*sqlite.Error](err); ok && e.Code() == 2067 {
 		return true
 	}
 	return false

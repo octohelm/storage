@@ -27,7 +27,7 @@ func BenchmarkScanStruct(b *testing.B) {
 			cs, _ := rows.Columns()
 
 			if rows.Next() {
-				dest := make([]interface{}, len(cs))
+				dest := make([]any, len(cs))
 				crs := target.ColumnReceivers()
 				for i := range cs {
 					dest[i] = nullable.NewNullIgnoreScanner(crs[cs[i]])

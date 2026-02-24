@@ -236,7 +236,7 @@ func (c *dialect) dbDataType(typ typex.Type, columnType sqlbuilder.ColumnDef) st
 	}
 
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return c.dataType(typ.Elem(), columnType)
 	case reflect.Bool:
 		return "BOOLEAN"

@@ -50,7 +50,7 @@ var _ sqltype.WithSoftDelete = &CreationUpdationDeletionTime{}
 type CreationUpdationDeletionTime struct {
 	CreationUpdationTime
 	// 删除时间
-	DeletedAt Timestamp `db:"f_deleted_at,default='0'" json:"deletedAt,omitempty"`
+	DeletedAt Timestamp `db:"f_deleted_at,default='0'" json:"deletedAt"`
 }
 
 func (CreationUpdationDeletionTime) SoftDeleteFieldAndZeroValue() (string, driver.Value) {
