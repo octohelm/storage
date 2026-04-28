@@ -11,6 +11,7 @@ import (
 
 var a = &aliases{}
 
+// SafeProjected 生成长度受限且稳定的投影别名。
 func SafeProjected(tableName string, colName string) string {
 	// alias name max length is 63
 	if len(tableName)+len(colName) < 64-2 {

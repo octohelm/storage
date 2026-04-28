@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// OnConflictAddition 表示 ON CONFLICT 附加子句。
 type OnConflictAddition interface {
 	Addition
 
@@ -15,6 +16,7 @@ type OnConflictAddition interface {
 	DoUpdateSet(assignments ...Assignment) OnConflictAddition
 }
 
+// OnConflict 创建 ON CONFLICT 附加子句。
 func OnConflict(columns ColumnSeq) OnConflictAddition {
 	return &onConflict{
 		columns: columns,

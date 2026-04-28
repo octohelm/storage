@@ -5,12 +5,14 @@ import (
 	"iter"
 )
 
+// Insert 创建 INSERT 语句。
 func Insert(modifiers ...string) *StmtInsert {
 	return &StmtInsert{
 		modifiers: modifiers,
 	}
 }
 
+// StmtInsert 表示 INSERT 语句。
 type StmtInsert struct {
 	table       Table
 	modifiers   []string

@@ -7,10 +7,12 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// ReturningAddition 表示 RETURNING 附加子句。
 type ReturningAddition interface {
 	Addition
 }
 
+// Returning 创建 RETURNING 附加子句。
 func Returning(project sqlfrag.Fragment) ReturningAddition {
 	return &returning{project: project}
 }

@@ -9,12 +9,14 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// JoinAddition 表示 JOIN 附加子句。
 type JoinAddition interface {
 	Addition
 	On(joinCondition sqlfrag.Fragment) JoinAddition
 	Using(joinColumnList ...Column) JoinAddition
 }
 
+// Join 创建 JOIN 附加子句。
 func Join(table sqlfrag.Fragment, prefixes ...string) JoinAddition {
 	return &join{
 		prefix: strings.Join(prefixes, " "),
@@ -22,22 +24,27 @@ func Join(table sqlfrag.Fragment, prefixes ...string) JoinAddition {
 	}
 }
 
+// InnerJoin 创建 INNER JOIN 附加子句。
 func InnerJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "INNER")
 }
 
+// LeftJoin 创建 LEFT JOIN 附加子句。
 func LeftJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "LEFT")
 }
 
+// RightJoin 创建 RIGHT JOIN 附加子句。
 func RightJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "RIGHT")
 }
 
+// FullJoin 创建 FULL JOIN 附加子句。
 func FullJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "FULL")
 }
 
+// CrossJoin 创建 CROSS JOIN 附加子句。
 func CrossJoin(table sqlfrag.Fragment) JoinAddition {
 	return Join(table, "CROSS")
 }

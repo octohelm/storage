@@ -8,22 +8,26 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// WithTable 表示值可返回自身绑定的表。
 type WithTable interface {
 	T() Table
 }
 
+// TableCanFragment 表示表支持按模板构造 SQL 片段。
 type TableCanFragment interface {
 	Fragment(query string, args ...any) sqlfrag.Fragment
 
-	// Deprecated
-	// use Fragment instead
+	// Expr 按模板构造 SQL 片段。
+	// Deprecated: 请改用 Fragment。
 	Expr(query string, args ...any) sqlfrag.Fragment
 }
 
+// TableWithTableName 表示表支持派生不同表名的新实例。
 type TableWithTableName interface {
 	WithTableName(name string) Table
 }
 
+// Table 表示 SQL 构建中的表定义。
 type Table interface {
 	TableName() string
 
@@ -36,6 +40,7 @@ type Table interface {
 	sqlfrag.Fragment
 }
 
+// T 按表名和表定义创建 Table。
 func T(tableName string, tableDefinitions ...sqlfrag.Fragment) Table {
 	t := &table{
 		name:             tableName,

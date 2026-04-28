@@ -7,6 +7,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// CombinationAddition 表示 UNION / INTERSECT / EXCEPT 附加子句。
 type CombinationAddition interface {
 	Addition
 
@@ -14,18 +15,21 @@ type CombinationAddition interface {
 	Distinct(stmtSelect SelectStatement) CombinationAddition
 }
 
+// Union 创建 UNION 组合子句。
 func Union() CombinationAddition {
 	return &combination{
 		operator: "UNION",
 	}
 }
 
+// Intersect 创建 INTERSECT 组合子句。
 func Intersect() CombinationAddition {
 	return &combination{
 		operator: "INTERSECT",
 	}
 }
 
+// Expect 创建 EXCEPT 组合子句。
 func Expect() CombinationAddition {
 	return &combination{
 		operator: "EXCEPT",

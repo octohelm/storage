@@ -11,6 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/filter/internal/directive"
 )
 
+// Filter 表示一条具体过滤规则。
 type Filter[T comparable] struct {
 	op   Op
 	args []Arg

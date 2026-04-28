@@ -23,14 +23,10 @@ func main() {
 		panic(err)
 	}
 
-	c, err := gengo.NewContext(&gengo.GeneratorArgs{
-		Entrypoint: []string{
-			cwd,
-		},
+	c, err := gengo.NewExecutor(&gengo.GeneratorArgs{
+		Entrypoint:         []string{cwd},
 		OutputFileBaseName: "zz_generated",
-		Globals: map[string][]string{
-			"gengo:runtimedoc": {},
-		},
+		Globals:            map[string][]string{"gengo:runtimedoc": {}},
 	})
 	if err != nil {
 		panic(err)

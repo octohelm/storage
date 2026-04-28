@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/dberr"
 )
 
+// Scan 把查询结果扫描到目标值、切片或迭代器中。
 func Scan(ctx context.Context, rows *sql.Rows, v any) error {
 	if rows == nil {
 		return nil

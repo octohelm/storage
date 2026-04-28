@@ -1,25 +1,11 @@
-tidy: gen fmt
-    go mod tidy
+# 列出仓库级可用入口。
+[group('meta')]
+default:
+    @just --list --unsorted
 
-test:
-    CGO_ENABLED=1 go test -count=1 -failfast -v ./...
+mod go 'tool/go'
 
-test-race:
-    CGO_ENABLED=1 go test -count=1 -v -race ./...
-
-fmt:
-    go fix ./...
-    go tool fmt .
-
-dep:
-    go mod tidy
-
-update:
-    go get -u ./...
-
-gen:
-    go generate -v ./...
-    go generate -v ./testdata/model/...
-
+# 启动测试依赖数据库。
+[group('runtime')]
 serve-dbs:
     cd hack && docker compose up -d

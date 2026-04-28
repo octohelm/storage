@@ -11,11 +11,13 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// ToString 把片段格式化为 SQL 与参数字符串。
 func ToString(s sqlfrag.Fragment) string {
 	q, args := sqlfrag.Collect(context.Background(), s)
 	return fmt.Sprintf("%s | %v", q, args)
 }
 
+// ColumnsByStruct 根据结构字段生成投影列片段。
 func ColumnsByStruct(v any) sqlfrag.Fragment {
 	return sqlfrag.Func(func(ctx context.Context) iter.Seq2[string, []any] {
 		return func(yield func(string, []any) bool) {

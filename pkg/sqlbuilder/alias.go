@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Alias 为片段显式指定别名。
 func Alias(expr sqlfrag.Fragment, name string) sqlfrag.Fragment {
 	return &exAlias{
 		name:     name,
@@ -31,6 +32,7 @@ func (alias *exAlias) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}))
 }
 
+// MultiMayAutoAlias 为多列表达式开启自动别名模式。
 func MultiMayAutoAlias(columns ...sqlfrag.Fragment) sqlfrag.Fragment {
 	return &exMayAutoAlias{
 		columns: slices.Collect(sqlfrag.NonNil(slices.Values(columns))),

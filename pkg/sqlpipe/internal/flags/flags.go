@@ -19,6 +19,7 @@ const (
 	WithoutPager  Flag = 1 << -withoutPager
 )
 
+// Flag 表示 sqlpipe 构建阶段的标记位集合。
 type Flag uint64
 
 func (f Flag) Is(mode Flag) bool {

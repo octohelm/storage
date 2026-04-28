@@ -10,6 +10,7 @@ import (
 )
 
 // +gengo:enum
+// Op 表示过滤条件的操作符类型。
 type Op uint8
 
 const (
@@ -37,7 +38,7 @@ const (
 	OP__INTERSECTION
 )
 
-// Eq == v
+// Eq 构造等于指定值的过滤条件。
 func Eq[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__EQ,
@@ -47,7 +48,7 @@ func Eq[T comparable](v T) *Filter[T] {
 	}
 }
 
-// Neq != v
+// Neq 构造不等于指定值的过滤条件。
 func Neq[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__NEQ,
@@ -57,7 +58,7 @@ func Neq[T comparable](v T) *Filter[T] {
 	}
 }
 
-// Lt < v
+// Lt 构造小于指定值的过滤条件。
 func Lt[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__LT,
@@ -67,7 +68,7 @@ func Lt[T comparable](v T) *Filter[T] {
 	}
 }
 
-// Lte <= v
+// Lte 构造小于等于指定值的过滤条件。
 func Lte[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__LTE,
@@ -77,7 +78,7 @@ func Lte[T comparable](v T) *Filter[T] {
 	}
 }
 
-// Contains str
+// Contains 构造包含指定值的过滤条件。
 func Contains[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__CONTAINS,
@@ -87,7 +88,7 @@ func Contains[T comparable](v T) *Filter[T] {
 	}
 }
 
-// Prefix str
+// Prefix 构造前缀匹配的过滤条件。
 func Prefix[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__PREFIX,
@@ -97,7 +98,7 @@ func Prefix[T comparable](v T) *Filter[T] {
 	}
 }
 
-// Suffix str
+// Suffix 构造后缀匹配的过滤条件。
 func Suffix[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__SUFFIX,
@@ -107,7 +108,7 @@ func Suffix[T comparable](v T) *Filter[T] {
 	}
 }
 
-// In values
+// In 构造值属于给定集合的过滤条件。
 func In[T comparable](values ...T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__IN,
@@ -117,6 +118,7 @@ func In[T comparable](values ...T) *Filter[T] {
 	}
 }
 
+// InSeq 构造值属于给定序列的过滤条件。
 func InSeq[T comparable](values iter.Seq[T]) *Filter[T] {
 	return &Filter[T]{
 		op: OP__IN,
@@ -126,7 +128,7 @@ func InSeq[T comparable](values iter.Seq[T]) *Filter[T] {
 	}
 }
 
-// Notin values
+// Notin 构造值不属于给定集合的过滤条件。
 func Notin[T comparable](values ...T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__NOTIN,
@@ -136,6 +138,7 @@ func Notin[T comparable](values ...T) *Filter[T] {
 	}
 }
 
+// NotinSeq 构造值不属于给定序列的过滤条件。
 func NotinSeq[T comparable](values iter.Seq[T]) *Filter[T] {
 	return &Filter[T]{
 		op: OP__NOTIN,
@@ -145,7 +148,7 @@ func NotinSeq[T comparable](values iter.Seq[T]) *Filter[T] {
 	}
 }
 
-// Gt > v
+// Gt 构造大于指定值的过滤条件。
 func Gt[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__GT,
@@ -155,7 +158,7 @@ func Gt[T comparable](v T) *Filter[T] {
 	}
 }
 
-// Gte >= v
+// Gte 构造大于等于指定值的过滤条件。
 func Gte[T comparable](v T) *Filter[T] {
 	return &Filter[T]{
 		op: OP__GTE,
@@ -165,6 +168,7 @@ func Gte[T comparable](v T) *Filter[T] {
 	}
 }
 
+// And 构造多个条件的与组合。
 func And[T comparable](filters ...TypedRule[T]) *Filter[T] {
 	return &Filter[T]{
 		op: OP__AND,
@@ -174,6 +178,7 @@ func And[T comparable](filters ...TypedRule[T]) *Filter[T] {
 	}
 }
 
+// Or 构造多个条件的或组合。
 func Or[T comparable](filters ...TypedRule[T]) *Filter[T] {
 	return &Filter[T]{
 		op: OP__OR,
@@ -183,6 +188,7 @@ func Or[T comparable](filters ...TypedRule[T]) *Filter[T] {
 	}
 }
 
+// Intersection 构造多个条件的交集组合。
 func Intersection[T comparable](filters ...TypedRule[T]) *Filter[T] {
 	return &Filter[T]{
 		op: OP__INTERSECTION,
@@ -192,6 +198,7 @@ func Intersection[T comparable](filters ...TypedRule[T]) *Filter[T] {
 	}
 }
 
+// OrRules 用 Rule 构造或组合过滤条件。
 func OrRules(rules ...Rule) Rule {
 	return &Filter[any]{
 		op: OP__OR,

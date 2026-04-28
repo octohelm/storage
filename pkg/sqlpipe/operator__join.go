@@ -12,6 +12,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqltype"
 )
 
+// JoinOn 基于等值列构造 JOIN 操作。
 func JoinOn[M Model, S Model, T comparable](
 	on modelscoped.TypedColumn[M, T],
 	from modelscoped.TypedColumn[S, T],
@@ -27,6 +28,7 @@ func JoinOn[M Model, S Model, T comparable](
 	}
 }
 
+// JoinOnAs 基于别名模型列构造 JOIN 操作。
 func JoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],
@@ -43,6 +45,7 @@ func JoinOnAs[M Model, B Model, S Model, T comparable](
 	}
 }
 
+// FullJoinOn 构造 FULL JOIN 操作。
 func FullJoinOn[M Model, S Model, T comparable](
 	on modelscoped.TypedColumn[M, T],
 	from modelscoped.TypedColumn[S, T],
@@ -58,6 +61,7 @@ func FullJoinOn[M Model, S Model, T comparable](
 	}
 }
 
+// FullJoinOnAs 基于别名模型列构造 FULL JOIN 操作。
 func FullJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],
@@ -73,6 +77,7 @@ func FullJoinOnAs[M Model, B Model, S Model, T comparable](
 	}
 }
 
+// CrossJoinOn 构造 CROSS JOIN 操作。
 func CrossJoinOn[M Model, S Model, T comparable](
 	on modelscoped.TypedColumn[M, T],
 	from modelscoped.TypedColumn[S, T],
@@ -88,6 +93,7 @@ func CrossJoinOn[M Model, S Model, T comparable](
 	}
 }
 
+// CrossJoinOnAs 基于别名模型列构造 CROSS JOIN 操作。
 func CrossJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],
@@ -103,6 +109,7 @@ func CrossJoinOnAs[M Model, B Model, S Model, T comparable](
 	}
 }
 
+// InnerJoinOn 构造 INNER JOIN 操作。
 func InnerJoinOn[M Model, S Model, T comparable](
 	on modelscoped.TypedColumn[M, T],
 	from modelscoped.TypedColumn[S, T],
@@ -118,6 +125,7 @@ func InnerJoinOn[M Model, S Model, T comparable](
 	}
 }
 
+// InnerJoinOnAs 基于别名模型列构造 INNER JOIN 操作。
 func InnerJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],
@@ -133,6 +141,7 @@ func InnerJoinOnAs[M Model, B Model, S Model, T comparable](
 	}
 }
 
+// LeftJoinOn 构造 LEFT JOIN 操作。
 func LeftJoinOn[M Model, S Model, T comparable](
 	on modelscoped.TypedColumn[M, T],
 	from modelscoped.TypedColumn[S, T],
@@ -148,6 +157,7 @@ func LeftJoinOn[M Model, S Model, T comparable](
 	}
 }
 
+// LeftJoinOnAs 基于别名模型列构造 LEFT JOIN 操作。
 func LeftJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],
@@ -163,6 +173,7 @@ func LeftJoinOnAs[M Model, B Model, S Model, T comparable](
 	}
 }
 
+// RightJoinOn 构造 RIGHT JOIN 操作。
 func RightJoinOn[M Model, S Model, T comparable](
 	on modelscoped.TypedColumn[M, T],
 	from modelscoped.TypedColumn[S, T],
@@ -178,6 +189,7 @@ func RightJoinOn[M Model, S Model, T comparable](
 	}
 }
 
+// RightJoinOnAs 基于别名模型列构造 RIGHT JOIN 操作。
 func RightJoinOnAs[M Model, B Model, S Model, T comparable](
 	on modelscoped.TypedColumn[B, T],
 	from modelscoped.TypedColumn[S, T],

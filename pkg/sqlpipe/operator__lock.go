@@ -10,6 +10,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// OnLockConflict 描述行锁冲突时的等待策略。
 type OnLockConflict uint8
 
 const (
@@ -18,22 +19,26 @@ const (
 	OnLockConflictSkipLocked
 )
 
+// LockOption 接收行锁冲突策略配置。
 type LockOption interface {
 	SetOnLockConflict(onLockConflict OnLockConflict)
 }
 
+// SkipLocked 配置行锁子句在冲突时跳过已锁定行。
 func SkipLocked() func(LockOption) {
 	return func(o LockOption) {
 		o.SetOnLockConflict(OnLockConflictSkipLocked)
 	}
 }
 
+// NoWait 配置行锁子句在冲突时立即失败而不是等待。
 func NoWait() func(LockOption) {
 	return func(o LockOption) {
 		o.SetOnLockConflict(OnLockConflictNoWait)
 	}
 }
 
+// ForUpdate 追加 FOR UPDATE 行锁子句。
 func ForUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{
@@ -47,6 +52,7 @@ func ForUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	})
 }
 
+// ForNoKeyUpdate 追加 FOR NO KEY UPDATE 行锁子句。
 func ForNoKeyUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{
@@ -60,6 +66,7 @@ func ForNoKeyUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	})
 }
 
+// ForShare 追加 FOR SHARE 行锁子句。
 func ForShare[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{
@@ -73,6 +80,7 @@ func ForShare[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	})
 }
 
+// ForKeyShare 追加 FOR KEY SHARE 行锁子句。
 func ForKeyShare[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{

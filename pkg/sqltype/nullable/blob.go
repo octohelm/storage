@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// Blob 表示可空二进制字段。
 type Blob []byte
 
 func (v *Blob) Set(str []byte) {

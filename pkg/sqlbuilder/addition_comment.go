@@ -5,6 +5,7 @@ import (
 	"iter"
 )
 
+// Comment 创建 SQL 注释附加项。
 func Comment(c string) Addition {
 	return &comment{text: []byte(c)}
 }

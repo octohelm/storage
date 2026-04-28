@@ -18,39 +18,42 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
+// SourceExecutor 表示带执行能力的数据源。
 type SourceExecutor[M sqlpipe.Model] interface {
 	sqlpipe.Source[M]
 
-	// From to load data source other source for inserting
+	// From 指定一个用于插入来源的上游数据源。
 	From(source sqlpipe.Source[M]) SourceExecutor[M]
-	// PipeE compose operators as SourceExecutor
+	// PipeE 以可执行数据源形式继续组合操作符。
 	PipeE(operators ...sqlpipe.SourceOperator[M]) SourceExecutor[M]
-	// Commit just execute
+	// Commit 直接执行当前数据源。
 	Commit(ctx context.Context) error
 
-	// Items execute and return Model or error
+	// Items 执行查询并按迭代器返回模型或错误。
 	Items(ctx context.Context) iter.Seq2[*M, error]
-	// FindOne execute then scan as Model or error
-	// notice this will return nil when not result found
+	// FindOne 执行查询并返回一条结果；未命中时返回 nil。
 	FindOne(ctx context.Context) (*M, error)
-	// List execute then list as item list
+	// List 执行查询并返回结果列表。
 	List(ctx context.Context) ([]*M, error)
-	// ListTo execute then list to item adder
+	// ListTo 执行查询并把结果逐条写入接收器。
 	ListTo(ctx context.Context, adder Adder[M]) error
-	// CountTo execute as count
+	// CountTo 执行计数查询并写入目标值。
 	CountTo(ctx context.Context, x *int64) error
 }
 
+// Adder 定义列表结果的接收器。
 type Adder[M sqlpipe.Model] interface {
 	Add(m *M)
 }
 
+// FromSource 把普通 Source 包装为可执行数据源。
 func FromSource[M sqlpipe.Model](src sqlpipe.Source[M]) SourceExecutor[M] {
 	return &Executor[M]{
 		src: src,
 	}
 }
 
+// Executor 负责组合操作符并执行数据源。
 type Executor[M sqlpipe.Model] struct {
 	src       sqlpipe.Source[M]
 	operators []sqlpipe.SourceOperator[M]
@@ -70,37 +73,37 @@ func (e *Executor[M]) adapterOf(ctx context.Context, s session.Session) adapter.
 	return s.Adapter(session.ReadOnly())
 }
 
-// IsNil if true will omit in sql building
+// IsNil 返回当前执行器对应的数据源是否可在 SQL 构建时被忽略。
 func (e *Executor[M]) IsNil() bool {
 	return e.source().IsNil()
 }
 
-// Frag  for sql building
+// Frag 返回当前执行器的数据源片段。
 func (e *Executor[M]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	return e.source().Frag(ctx)
 }
 
-// ApplyStmt for Builder
+// ApplyStmt 把当前执行器的数据源应用到构建器。
 func (e *Executor[M]) ApplyStmt(ctx context.Context, s *internal.Builder[M]) *internal.Builder[M] {
 	return e.source().ApplyStmt(ctx, s)
 }
 
-// Tx begin transaction if not in some transaction
+// Tx 在当前会话上开启事务并执行回调。
 func (e *Executor[M]) Tx(ctx context.Context, do func(ctx context.Context) error) error {
 	return e.session(ctx).Tx(ctx, do)
 }
 
-// From to load data source other source for inserting
+// From 指定一个新的上游数据源，并返回新的执行器。
 func (e *Executor[M]) From(src sqlpipe.Source[M]) SourceExecutor[M] {
 	return FromSource(src)
 }
 
-// Pipe compose operators as Source
+// Pipe 以普通 Source 形式继续组合操作符。
 func (e *Executor[M]) Pipe(operators ...sqlpipe.SourceOperator[M]) sqlpipe.Source[M] {
 	return e.source().Pipe(operators...)
 }
 
-// PipeE compose operators as SourceExecutor
+// PipeE 以执行器形式继续组合操作符。
 func (e *Executor[M]) PipeE(operators ...sqlpipe.SourceOperator[M]) SourceExecutor[M] {
 	if operators == nil {
 		return e
@@ -196,7 +199,7 @@ func flatten[M sqlpipe.Model](opSeq iter.Seq[sqlpipe.SourceOperator[M]]) iter.Se
 	}
 }
 
-// Commit execute sql
+// Commit 执行当前 SQL。
 func (e *Executor[M]) Commit(ctx context.Context) error {
 	// always for mutating
 	e.forCommit = true
@@ -204,7 +207,7 @@ func (e *Executor[M]) Commit(ctx context.Context) error {
 	return err
 }
 
-// Items execute sql and returns Model or error as iter.Seq
+// Items 执行 SQL，并以 iter.Seq2 返回模型或错误。
 func (e *Executor[M]) Items(ctx context.Context) iter.Seq2[*M, error] {
 	s := e.session(ctx)
 
@@ -223,7 +226,7 @@ func (e *Executor[M]) Items(ctx context.Context) iter.Seq2[*M, error] {
 	return x.Items(ctx)
 }
 
-// List execute sql and return Model slice
+// List 执行 SQL，并返回模型切片。
 func (e *Executor[M]) List(ctx context.Context) ([]*M, error) {
 	list := make([]*M, 0)
 
@@ -237,7 +240,7 @@ func (e *Executor[M]) List(ctx context.Context) ([]*M, error) {
 	return list, nil
 }
 
-// CountTo execute sql for count and marshal value into int64 ptr
+// CountTo 执行计数 SQL，并把结果写入 int64 指针。
 func (e *Executor[M]) CountTo(ctx context.Context, x *int64) error {
 	s := e.session(ctx)
 
@@ -253,7 +256,7 @@ func (e *Executor[M]) CountTo(ctx context.Context, x *int64) error {
 	return scanner.Scan(ctx, rows, x)
 }
 
-// ListTo execute sql and return add Model into some Adder
+// ListTo 执行 SQL，并把模型逐条写入接收器。
 func (e *Executor[M]) ListTo(ctx context.Context, listAdder Adder[M]) error {
 	for item, err := range e.Items(ctx) {
 		if err != nil {
@@ -264,8 +267,7 @@ func (e *Executor[M]) ListTo(ctx context.Context, listAdder Adder[M]) error {
 	return nil
 }
 
-// FindOne execute then scan as Model or error
-// notice this will return nil when not result found
+// FindOne 执行 SQL，并返回第一条结果；未命中时返回 nil。
 func (e *Executor[M]) FindOne(ctx context.Context) (*M, error) {
 	for item, err := range e.PipeE(sqlpipe.Limit[M](1)).Items(ctx) {
 		if err != nil {

@@ -28,6 +28,7 @@ const (
 
 var _ sqlfrag.Fragment = &Action{}
 
+// Action 表示一条结构迁移动作。
 type Action struct {
 	typ       actionType
 	name      string
@@ -89,6 +90,7 @@ func (d *diff) migrate(typ actionType, name string, fragments ...sqlfrag.Fragmen
 	}
 }
 
+// Diff 比较当前表与目标表，并返回迁移片段。
 func Diff(dialect adapter.Dialect, currentTable sqlbuilder.Table, nextTable sqlbuilder.Table) sqlfrag.Fragment {
 	d := &diff{
 		dialect: dialect,

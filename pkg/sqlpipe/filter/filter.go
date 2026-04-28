@@ -11,6 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe"
 )
 
+// AsWhere 把 filter.Filter 转为 sqlpipe 的 WHERE 操作符。
 func AsWhere[M sqlpipe.Model, T comparable](col modelscoped.TypedColumn[M, T], f *filter.Filter[T]) sqlpipe.SourceOperator[M] {
 	return sqlpipe.NewWhere(sqlpipe.FilterOpAnd, col, func(v sqlbuilder.Column) sqlfrag.Fragment {
 		return BuildWhere(f, func(op filter.Op, seq iter.Seq[T], create func(seq iter.Seq[T]) sqlbuilder.ColumnValuer[T]) sqlfrag.Fragment {
@@ -19,6 +20,7 @@ func AsWhere[M sqlpipe.Model, T comparable](col modelscoped.TypedColumn[M, T], f
 	})
 }
 
+// BuildWhere 把过滤规则树构造成 SQL 条件片段。
 func BuildWhere[T comparable](f *filter.Filter[T], apply func(op filter.Op, seq iter.Seq[T], create func(seq iter.Seq[T]) sqlbuilder.ColumnValuer[T]) sqlfrag.Fragment) sqlfrag.Fragment {
 	if f == nil || f.IsZero() {
 		return nil
@@ -85,6 +87,7 @@ func BuildWhere[T comparable](f *filter.Filter[T], apply func(op filter.Op, seq 
 	}
 }
 
+// SubFilters 返回复合过滤器中的子过滤器。
 func SubFilters[T comparable](f *filter.Filter[T]) iter.Seq[*filter.Filter[T]] {
 	return func(yield func(*filter.Filter[T]) bool) {
 		for arg := range f.Args() {
@@ -102,6 +105,7 @@ func SubFilters[T comparable](f *filter.Filter[T]) iter.Seq[*filter.Filter[T]] {
 	}
 }
 
+// Values 返回过滤器中的字面量值序列。
 func Values[T comparable](f *filter.Filter[T]) iter.Seq[T] {
 	return func(yield func(value T) bool) {
 		for arg := range f.Args() {

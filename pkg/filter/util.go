@@ -4,6 +4,7 @@ import (
 	"iter"
 )
 
+// MapFilter 过滤并映射指定类型的 Filter 参数。
 func MapFilter[T comparable, A Arg, O any](args iter.Seq[A], where func(a *Filter[T]) (O, bool)) iter.Seq[O] {
 	return MapWhere[A, O](args, func(arg Arg) (O, bool) {
 		switch x := arg.(type) {
@@ -16,6 +17,7 @@ func MapFilter[T comparable, A Arg, O any](args iter.Seq[A], where func(a *Filte
 	})
 }
 
+// MapWhere 过滤并映射参数序列。
 func MapWhere[A Arg, O any](args iter.Seq[A], where func(a Arg) (O, bool)) iter.Seq[O] {
 	return func(yield func(O) bool) {
 		for x := range args {
@@ -27,6 +29,7 @@ func MapWhere[A Arg, O any](args iter.Seq[A], where func(a Arg) (O, bool)) iter.
 	}
 }
 
+// First 返回首个命中条件的映射结果。
 func First[A Arg, O any](args iter.Seq[A], where func(a Arg) (O, bool)) (O, bool) {
 	for x := range args {
 		v, ok := where(x)

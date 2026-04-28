@@ -5,6 +5,7 @@ import (
 	"iter"
 )
 
+// Catalog 表示可按表名访问的表目录。
 type Catalog interface {
 	Table(tableName string) Table
 	Tables() iter.Seq[Table]
@@ -15,6 +16,7 @@ type Catalog interface {
 	Require(catalogs ...Catalog)
 }
 
+// TableNames 返回 catalog 中的全部表名。
 func TableNames(c Catalog) iter.Seq[string] {
 	return func(yield func(string) bool) {
 		for t := range c.Tables() {
@@ -27,6 +29,7 @@ func TableNames(c Catalog) iter.Seq[string] {
 
 var _ Catalog = &Tables{}
 
+// Tables 是 Catalog 的有序实现。
 type Tables struct {
 	l      *list.List
 	tables map[string]*list.Element

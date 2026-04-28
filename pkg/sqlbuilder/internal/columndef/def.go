@@ -9,6 +9,7 @@ import (
 	typex "github.com/octohelm/x/types"
 )
 
+// FromTypeAndTag 根据类型和标签解析列定义。
 func FromTypeAndTag(typ typex.Type, nameAndFlags string, st reflect.StructTag) *ColumnDef {
 	ct := &ColumnDef{
 		StructTag: st,
@@ -63,6 +64,7 @@ func FromTypeAndTag(typ typex.Type, nameAndFlags string, st reflect.StructTag) *
 	return ct
 }
 
+// ColumnDef 表示字段映射到数据库列后的定义。
 type ColumnDef struct {
 	Type              typex.Type
 	DataType          string
@@ -79,6 +81,7 @@ type ColumnDef struct {
 	StructTag         reflect.StructTag
 }
 
+// DeprecatedActions 表示字段废弃后的迁移动作。
 type DeprecatedActions struct {
 	RenameTo string `name:"rename"`
 }

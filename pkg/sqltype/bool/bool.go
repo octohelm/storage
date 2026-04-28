@@ -6,6 +6,7 @@ import (
 	"github.com/go-json-experiment/json"
 )
 
+// Bool 表示带 unknown 状态的三值布尔类型。
 type Bool int
 
 const (
@@ -14,6 +15,7 @@ const (
 	BOOL_FALSE        // false
 )
 
+// FromBool 把标准 bool 转为三值 Bool。
 func FromBool(b bool) Bool {
 	if b {
 		return BOOL_TRUE

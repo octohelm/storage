@@ -28,6 +28,7 @@ func toDefaultTableName(name string, tableGroup string) string {
 	return gengo.LowerSnakeCase("t_" + name)
 }
 
+// ScanTable 根据类型声明、注释标签和字段定义构造表结构。
 func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 	tags, _ := c.Package(named.Obj().Pkg().Path()).Doc(named.Obj().Pos())
 
@@ -60,7 +61,7 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 
 		if tsf, ok := p.Field.(*typesx.TStructField); ok {
 			tags, doc := getDoc(tsf)
-			prefix := ""
+			var prefix strings.Builder
 
 			// embedded generics struct
 			if len(p.Loc) > 1 {
@@ -70,7 +71,7 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 					f := ft.Field(i).(*typesx.TStructField)
 
 					if _, doc := getDoc(f); len(doc) > 0 {
-						prefix += doc[0]
+						prefix.WriteString(doc[0])
 					}
 
 					ft = f.Type()
@@ -80,8 +81,8 @@ func ScanTable(c gengo.Context, named *types.Named) (sqlbuilder.Table, error) {
 				}
 			}
 
-			if prefix != "" && len(doc) > 0 {
-				doc[0] = prefix + doc[0]
+			if prefix.String() != "" && len(doc) > 0 {
+				doc[0] = prefix.String() + doc[0]
 			}
 
 			def.Type = p.Type

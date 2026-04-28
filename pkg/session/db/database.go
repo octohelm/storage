@@ -18,20 +18,22 @@ import (
 	_ "github.com/octohelm/storage/internal/sql/adapter/sqlite"
 )
 
+// ReadonlyEndpoint 描述只读数据库端点及其覆盖配置。
 type ReadonlyEndpoint struct {
 	Endpoint Endpoint `flag:",omitzero"`
 
 	EndpointOverrides
 }
 
+// Database 描述一个可初始化、可注入上下文的数据库配置。
 type Database struct {
-	// Endpoint of database
+	// Endpoint 是主数据库连接端点。
 	Endpoint Endpoint `flag:""`
 	EndpointOverrides
 
 	Readonly ReadonlyEndpoint
 
-	// auto migrate before run
+	// EnableMigrate 表示启动前自动执行迁移。
 	EnableMigrate bool `flag:",omitzero"`
 
 	name   string
@@ -41,6 +43,7 @@ type Database struct {
 	dbRo session.Adapter
 }
 
+// SetDefaults 为缺省数据库补齐默认值。
 func (d *Database) SetDefaults() {
 	if d.Endpoint.IsZero() {
 		cwd, _ := os.Getwd()
@@ -50,6 +53,7 @@ func (d *Database) SetDefaults() {
 	}
 }
 
+// ApplyCatalog 为数据库绑定逻辑名与表目录。
 func (d *Database) ApplyCatalog(name string, tables ...sqlbuilder.Catalog) {
 	d.name = name
 	d.tables = &sqlbuilder.Tables{}
@@ -61,6 +65,7 @@ func (d *Database) ApplyCatalog(name string, tables ...sqlbuilder.Catalog) {
 	}
 }
 
+// Init 初始化数据库连接、只读连接与目录注册。
 func (d *Database) Init(ctx context.Context) error {
 	if d.db != nil {
 		return nil
@@ -115,10 +120,12 @@ func (d *Database) Init(ctx context.Context) error {
 	return nil
 }
 
+// DBName 返回数据库逻辑名。
 func (d *Database) DBName() string {
 	return cmp.Or(d.name, d.NameOverwrite, d.Endpoint.Base())
 }
 
+// Session 返回数据库对应的会话对象。
 func (d *Database) Session() session.Session {
 	if d.dbRo != nil {
 		return session.NewWithReadOnly(d.db, d.dbRo, d.name)
@@ -126,14 +133,17 @@ func (d *Database) Session() session.Session {
 	return session.New(d.db, d.name)
 }
 
+// Catalog 返回数据库绑定的表目录。
 func (d *Database) Catalog() sqlbuilder.Catalog {
 	return d.tables
 }
 
+// InjectContext 把数据库会话注入 context。
 func (d *Database) InjectContext(ctx context.Context) context.Context {
 	return session.InjectContext(ctx, d.Session())
 }
 
+// Run 按配置决定是否执行迁移。
 func (d *Database) Run(ctx context.Context) error {
 	if d.EnableMigrate == false {
 		return nil

@@ -8,18 +8,22 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// ColumnCollectionManger 定义列集合的追加能力。
 type ColumnCollectionManger interface {
 	AddCol(cols ...Column)
 }
 
+// ColumnSeq 表示列序列。
 type ColumnSeq interface {
 	Cols() iter.Seq[Column]
 }
 
+// ColumnPicker 按名称或字段名挑选列。
 type ColumnPicker interface {
 	F(name string) Column
 }
 
+// ColumnCollect 把列序列收集为列集合。
 func ColumnCollect(cols iter.Seq[Column]) ColumnCollection {
 	newCols := &columns{}
 	for c := range cols {
@@ -28,6 +32,7 @@ func ColumnCollect(cols iter.Seq[Column]) ColumnCollection {
 	return newCols
 }
 
+// ColumnCollection 表示可枚举、可查找的列集合。
 type ColumnCollection interface {
 	sqlfrag.Fragment
 
@@ -41,6 +46,7 @@ type ColumnCollection interface {
 	Len() int
 }
 
+// Cols 按名称创建列集合。
 func Cols(names ...string) ColumnCollection {
 	cols := &columns{}
 	for _, name := range names {
@@ -49,6 +55,7 @@ func Cols(names ...string) ColumnCollection {
 	return cols
 }
 
+// PickColsByFieldNames 按字段名从 picker 中挑选列集合。
 func PickColsByFieldNames(picker ColumnPicker, names ...string) ColumnCollection {
 	newCols := &columns{}
 	for _, colName := range names {

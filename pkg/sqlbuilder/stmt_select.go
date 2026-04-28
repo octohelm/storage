@@ -7,12 +7,14 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// SelectStatement 表示可作为 SELECT 语句使用的片段。
 type SelectStatement interface {
 	sqlfrag.Fragment
 
 	selectStatement()
 }
 
+// Select 创建 SELECT 语句。
 func Select(sqlExpr sqlfrag.Fragment, modifiers ...sqlfrag.Fragment) *StmtSelect {
 	return &StmtSelect{
 		projects:  sqlExpr,
@@ -20,6 +22,7 @@ func Select(sqlExpr sqlfrag.Fragment, modifiers ...sqlfrag.Fragment) *StmtSelect
 	}
 }
 
+// StmtSelect 表示 SELECT 语句。
 type StmtSelect struct {
 	SelectStatement
 
@@ -110,7 +113,8 @@ func (s *StmtSelect) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
-// Deprecated
+// ForUpdate 返回 FOR UPDATE 附加子句。
+// Deprecated: 请改用 pkg/sqlpipe 中的锁操作符或显式锁附加项。
 func ForUpdate() Addition {
 	return AsAddition(AdditionLock, sqlfrag.Pair("FOR UPDATE"))
 }

@@ -1,3 +1,4 @@
+// Package migrator 提供基于 catalog 差异的数据库结构迁移能力。
 package migrator
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Migrate 按目标 catalog 执行数据库迁移。
 func Migrate(ctx context.Context, a adapter.Adapter, toCatalog sqlbuilder.Catalog) error {
 	fromTables, err := a.Catalog(ctx)
 	if err != nil {
@@ -42,6 +44,7 @@ func Migrate(ctx context.Context, a adapter.Adapter, toCatalog sqlbuilder.Catalo
 	})
 }
 
+// CreateTables 仅按目标 catalog 创建缺失表结构。
 func CreateTables(ctx context.Context, a adapter.Adapter, toCatalog sqlbuilder.Catalog) error {
 	migrations := make([]sqlfrag.Fragment, 0)
 

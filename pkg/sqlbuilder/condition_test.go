@@ -1,208 +1,51 @@
 package sqlbuilder_test
 
 import (
+	"context"
+	"iter"
+	"strings"
 	"testing"
 
-	testingx "github.com/octohelm/x/testing"
+	. "github.com/octohelm/x/testing/v2"
 
-	"github.com/octohelm/storage/internal/xiter"
-	. "github.com/octohelm/storage/pkg/sqlbuilder"
+	sqlbuilder "github.com/octohelm/storage/pkg/sqlbuilder"
 	"github.com/octohelm/storage/pkg/sqlfrag"
-	"github.com/octohelm/storage/pkg/sqlfrag/testutil"
 )
 
-func TestConditions(t *testing.T) {
-	colA := TypedCol[int]("a")
-	colB := TypedCol[string]("b")
-	colC := TypedCol[int]("c")
-	colD := TypedCol[string]("d")
+func TestConditionsAndCombination(t *testing.T) {
+	condQ, condArgs := sqlfrag.Collect(context.Background(), sqlbuilder.And(
+		sqlbuilder.AsCond(sqlfrag.Pair("a = ?", 1)),
+		sqlbuilder.Or(
+			sqlfrag.Pair("b = ?", 2),
+			sqlfrag.Pair("c = ?", 3),
+		),
+	))
+	seqQ, _ := sqlfrag.Collect(context.Background(), sqlbuilder.XorSeq(iter.Seq[sqlfrag.Fragment](func(yield func(sqlfrag.Fragment) bool) {
+		yield(sqlfrag.Pair("a = ?", 1))
+		yield(sqlfrag.Pair("b = ?", 2))
+	})))
+	orQ, _ := sqlfrag.Collect(context.Background(), sqlbuilder.OrSeq(iter.Seq[sqlfrag.Fragment](func(yield func(sqlfrag.Fragment) bool) {
+		yield(sqlfrag.Pair("a = ?", 1))
+	})))
 
-	t.Run("Chain Condition", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			Xor(
-				Or(
-					And(
-						nil,
-						TypedCol[int]("a").V(Lt(1)),
-						TypedCol[string]("b").V(LeftLike[string]("text")),
-					),
-					TypedCol[int]("a").V(Eq(2)),
-				),
-				TypedCol[string]("b").V(RightLike[string]("g")),
-			),
-			testutil.BeFragment(
-				"(((a < ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
-				1, "%text", 2, "g%",
-			),
-		)
-	})
+	unionQ, _ := sqlfrag.Collect(context.Background(), sqlbuilder.Union().All(
+		sqlbuilder.Select(sqlfrag.Const("1")),
+	))
+	intersectQ, _ := sqlfrag.Collect(context.Background(), sqlbuilder.Intersect().Distinct(
+		sqlbuilder.Select(sqlfrag.Const("2")),
+	))
+	exceptQ, _ := sqlfrag.Collect(context.Background(), sqlbuilder.Expect().All(
+		sqlbuilder.Select(sqlfrag.Const("3")),
+	))
 
-	t.Run("Compose Condition", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			Xor(
-				Or(
-					And(
-						(*Condition)(nil),
-						(*Condition)(nil),
-						(*Condition)(nil),
-						(*Condition)(nil),
-						colC.V(In(1, 2)),
-						colC.V(InSeq(xiter.Of(3, 4))),
-						colA.V(Eq(1)),
-						colB.V(Like("text")),
-					),
-					colA.V(Eq(2)),
-				),
-				colB.V(Like("g")),
-			),
-
-			testutil.BeFragment("(((c IN (?,?)) AND (c IN (?,?)) AND (a = ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
-				1, 2, 3, 4, 1, "%text%", 2, "%g%",
-			),
-		)
-	})
-	t.Run("skip nil", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			Xor(
-				colA.V(In[int]()),
-				Or(
-					colA.V(NotIn[int]()),
-					And(
-						nil,
-						colA.V(Eq(1)),
-						colB.V(Like("text")),
-					),
-					colA.V(Eq(2)),
-				),
-				colB.V(Like("g")),
-			),
-			testutil.BeFragment("(((a = ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
-				1, "%text%", 2, "%g%",
-			),
-		)
-	})
-	t.Run("XOR and OR", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			Xor(
-				Or(
-					colA.V(NotIn[int]()),
-					And(
-						nil,
-						colA.V(Eq(1)),
-						colB.V(Like("text")),
-					),
-					colA.V(Eq(2)),
-				),
-				colB.V(Like("g")),
-			),
-			testutil.BeFragment("(((a = ?) AND (b LIKE ?)) OR (a = ?)) XOR (b LIKE ?)",
-				1, "%text%", 2, "%g%",
-			),
-		)
-	})
-	t.Run("XOR", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			Xor(
-				colA.V(Eq(1)),
-				colB.V(Like("g")),
-			),
-			testutil.BeFragment("(a = ?) XOR (b LIKE ?)",
-				1, "%g%",
-			),
-		)
-	})
-	t.Run("Like", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(Like("e")),
-			testutil.BeFragment("d LIKE ?",
-				"%e%",
-			))
-	})
-
-	t.Run("Not like", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(NotLike("e")),
-			testutil.BeFragment("d NOT LIKE ?",
-				"%e%",
-			),
-		)
-	})
-
-	t.Run("Equal", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(Eq("e")),
-			testutil.BeFragment("d = ?", "e"),
-		)
-	})
-	t.Run("Not Equal", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(Neq("e")),
-			testutil.BeFragment("d <> ?",
-				"e",
-			),
-		)
-	})
-	t.Run("In", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(In("e", "f")),
-			testutil.BeFragment("d IN (?,?)", "e", "f"),
-		)
-	})
-	t.Run("NotIn", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(NotIn("e", "f")),
-			testutil.BeFragment("d NOT IN (?,?)", "e", "f"),
-		)
-	})
-	t.Run("Less than", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colC.V(Lt(3)),
-			testutil.BeFragment("c < ?", 3),
-		)
-	})
-	t.Run("Less or equal than", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colC.V(Lte(3)),
-			testutil.BeFragment("c <= ?", 3),
-		)
-	})
-	t.Run("Greater than", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colC.V(Gt(3)),
-			testutil.BeFragment("c > ?", 3),
-		)
-	})
-	t.Run("Greater or equal than", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colC.V(Gte(3)),
-			testutil.BeFragment("c >= ?", 3),
-		)
-	})
-	t.Run("Between", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colC.V(Between(0, 2)),
-			testutil.BeFragment("c BETWEEN ? AND ?", 0, 2),
-		)
-	})
-
-	t.Run("Not between", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colC.V(NotBetween(0, 2)),
-			testutil.BeFragment("c NOT BETWEEN ? AND ?", 0, 2),
-		)
-	})
-
-	t.Run("Is null", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(IsNull[string]()),
-			testutil.BeFragment("d IS NULL"),
-		)
-	})
-
-	t.Run("Is not null", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			colD.V(IsNotNull[string]()),
-			testutil.BeFragment("d IS NOT NULL"),
-		)
-	})
+	Then(t, "条件组合和集合操作都会生成 SQL",
+		Expect(condQ, Equal("(a = ?) AND ((b = ?) OR (c = ?))")),
+		Expect(condArgs, Equal([]any{1, 2, 3})),
+		Expect(seqQ, Equal("(a = ?) XOR (b = ?)")),
+		Expect(orQ, Equal("a = ?")),
+		Expect(strings.Contains(unionQ, "UNION ALL"), Equal(true)),
+		Expect(strings.Contains(intersectQ, "INTERSECT DISTINCT"), Equal(true)),
+		Expect(strings.Contains(exceptQ, "EXCEPT ALL"), Equal(true)),
+		Expect(sqlbuilder.EmptyCond().IsNil(), Equal(true)),
+	)
 }

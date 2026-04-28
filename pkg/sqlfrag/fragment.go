@@ -8,15 +8,18 @@ import (
 	"strings"
 )
 
+// IsNil 判断片段是否为空。
 func IsNil(e Fragment) bool {
 	return e == nil || e.IsNil()
 }
 
+// Fragment 表示可展开为 SQL 文本与参数的片段。
 type Fragment interface {
 	IsNil() bool
 	Frag(ctx context.Context) iter.Seq2[string, []any]
 }
 
+// Collect 收集片段生成的 SQL 文本与参数。
 func Collect(ctx context.Context, f Fragment) (string, []any) {
 	if f.IsNil() {
 		return "", nil

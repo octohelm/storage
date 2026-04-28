@@ -14,6 +14,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Column 表示 SQL 构建中可引用、可投影的列。
 type Column interface {
 	sqlfrag.Fragment
 
@@ -23,6 +24,7 @@ type Column interface {
 	FieldName() string
 }
 
+// GetColumnTable 返回列绑定的表。
 func GetColumnTable(col Column) Table {
 	if w, ok := col.(ColumnWrapper); ok {
 		col = w.Unwrap()
@@ -33,10 +35,12 @@ func GetColumnTable(col Column) Table {
 	return nil
 }
 
+// ColumnWithDef 暴露列定义元信息。
 type ColumnWithDef interface {
 	Def() ColumnDef
 }
 
+// GetColumnDef 返回列绑定的列定义。
 func GetColumnDef(col Column) ColumnDef {
 	if w, ok := col.(ColumnWrapper); ok {
 		col = w.Unwrap()
@@ -47,10 +51,12 @@ func GetColumnDef(col Column) ColumnDef {
 	return ColumnDef{}
 }
 
+// ColumnWithComputed 暴露列的计算表达式。
 type ColumnWithComputed interface {
 	Computed() sqlfrag.Fragment
 }
 
+// GetColumnComputed 返回列绑定的计算表达式。
 func GetColumnComputed(col Column) sqlfrag.Fragment {
 	if w, ok := col.(ColumnWrapper); ok {
 		col = w.Unwrap()
@@ -61,6 +67,7 @@ func GetColumnComputed(col Column) sqlfrag.Fragment {
 	return nil
 }
 
+// MatchColumn 根据字段名或列名判断是否匹配。
 func MatchColumn(col Column, name string) bool {
 	if name == "" {
 		return false
@@ -74,32 +81,38 @@ func MatchColumn(col Column, name string) bool {
 	return col.Name() == name
 }
 
+// ColumnSetter 定义列可被选项函数修改的部分。
 type ColumnSetter interface {
 	SetFieldName(name string)
 	SetColumnDef(def ColumnDef)
 	SetComputed(computed sqlfrag.Fragment)
 }
 
+// ColOptionFunc 定义列选项函数。
 type ColOptionFunc func(c ColumnSetter)
 
+// ColField 设置列对应的结构字段名。
 func ColField(fieldName string) ColOptionFunc {
 	return func(c ColumnSetter) {
 		c.SetFieldName(fieldName)
 	}
 }
 
+// ColComputedBy 设置列的计算表达式。
 func ColComputedBy(aggregate sqlfrag.Fragment) ColOptionFunc {
 	return func(c ColumnSetter) {
 		c.SetComputed(aggregate)
 	}
 }
 
+// ColDef 设置列定义。
 func ColDef(def ColumnDef) ColOptionFunc {
 	return func(c ColumnSetter) {
 		c.SetColumnDef(def)
 	}
 }
 
+// ColTypeOf 根据值类型和标签推导列定义。
 func ColTypeOf(v any, tagValue string) ColOptionFunc {
 	return func(c ColumnSetter) {
 		c.SetColumnDef(
@@ -108,6 +121,7 @@ func ColTypeOf(v any, tagValue string) ColOptionFunc {
 	}
 }
 
+// Col 按名称创建一个基础列。
 func Col(name string, fns ...ColOptionFunc) Column {
 	c := &column[any]{
 		name: strings.ToLower(name),

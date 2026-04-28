@@ -4,6 +4,7 @@ import (
 	"net/url"
 )
 
+// EndpointOverrides 描述连接端点的覆写项。
 type EndpointOverrides struct {
 	// Overwrite dbname when not empty
 	NameOverwrite string `flag:",omitzero"`
@@ -15,6 +16,7 @@ type EndpointOverrides struct {
 	ExtraOverwrite string `flag:",omitzero"`
 }
 
+// PatchEndpoint 把覆写项应用到端点配置。
 func (d *EndpointOverrides) PatchEndpoint(endpoint *Endpoint) error {
 	if name := d.NameOverwrite; name != "" {
 		if endpoint.Scheme != "sqlite" {

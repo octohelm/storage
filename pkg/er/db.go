@@ -1,5 +1,7 @@
+// Package er 定义实体关系结构及其保序表示。
 package er
 
+// Head 表示 ER 节点的通用元信息。
 type Head struct {
 	Name string `json:"-"`
 
@@ -7,12 +9,14 @@ type Head struct {
 	Description string `json:"description,omitzero"`
 }
 
+// Database 表示 ER 数据库结构。
 type Database struct {
 	Head
 
 	Tables map[string]*Table `json:"tables"`
 }
 
+// Table 表示 ER 表结构。
 type Table struct {
 	Head
 
@@ -20,6 +24,7 @@ type Table struct {
 	Constraints map[string]*Constraint `json:"constraints"`
 }
 
+// Column 表示 ER 列结构。
 type Column struct {
 	Head
 
@@ -29,6 +34,7 @@ type Column struct {
 	GoType string `json:"-"`
 }
 
+// Constraint 表示 ER 约束结构。
 type Constraint struct {
 	Head
 
@@ -38,6 +44,7 @@ type Constraint struct {
 	Primary     bool                   `json:"primary,omitzero"`
 }
 
+// ConstraintColumnName 表示约束中的列及附加选项。
 type ConstraintColumnName struct {
 	Name    string   `json:"name"`
 	Options []string `json:"options,omitzero"`

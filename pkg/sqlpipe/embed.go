@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
+// Embed 为 Source 包装提供默认转发实现。
 type Embed[M Model] struct {
 	Underlying Source[M]
 }

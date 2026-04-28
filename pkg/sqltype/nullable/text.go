@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 )
 
+// Text 表示可空文本字段。
 type Text string
 
 func (v *Text) Set(str string) {

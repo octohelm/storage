@@ -7,10 +7,12 @@ import (
 	jsonv1 "github.com/go-json-experiment/json/v1"
 )
 
+// ObjectOf 用指针值创建 Object 包装。
 func ObjectOf[T any](data *T) Object[T] {
 	return Object[T]{Data: data}
 }
 
+// Object 表示 JSON 对象值包装。
 type Object[T any] struct {
 	Data *T `json:",inline"`
 }

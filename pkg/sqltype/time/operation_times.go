@@ -9,6 +9,7 @@ import (
 
 var _ sqltype.WithCreationTime = &CreationTime{}
 
+// CreationTime 定义带创建时间字段的通用结构。
 type CreationTime struct {
 	// 创建时间
 	CreatedAt Timestamp `db:"f_created_at,default='0'" json:"createdAt"`
@@ -23,7 +24,9 @@ func (times *CreationTime) MarkCreatedAt() {
 var _ sqltype.WithModificationTime = &CreationUpdationTime{}
 
 type (
-	CreationUpdationTime     = CreationModificationTime
+	// CreationUpdationTime 是兼容旧命名的更新时间结构别名。
+	CreationUpdationTime = CreationModificationTime
+	// CreationModificationTime 定义同时包含创建和更新时间的通用结构。
 	CreationModificationTime struct {
 		CreationTime
 		// 更新时间
@@ -47,6 +50,7 @@ func (times *CreationUpdationTime) MarkCreatedAt() {
 
 var _ sqltype.WithSoftDelete = &CreationUpdationDeletionTime{}
 
+// CreationUpdationDeletionTime 定义带软删除时间的通用结构。
 type CreationUpdationDeletionTime struct {
 	CreationUpdationTime
 	// 删除时间

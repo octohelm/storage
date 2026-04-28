@@ -7,6 +7,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Where 创建 WHERE 附加项。
 func Where(c sqlfrag.Fragment) Addition {
 	switch x := c.(type) {
 	case *where:

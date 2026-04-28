@@ -9,6 +9,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// InsertFrom 把一个数据源作为另一个模型的插入来源。
 func InsertFrom[S Model, O Model](src Source[S], cols ...modelscoped.Column[O]) Source[O] {
 	return &insertFrom[S, O]{
 		Embed: Embed[S]{

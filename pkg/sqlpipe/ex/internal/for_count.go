@@ -9,6 +9,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
+// ForCount 构造用于计数查询的设置操作符。
 func ForCount[M sqlpipe.Model]() sqlpipe.SourceOperator[M] {
 	return sqlpipe.SourceOperatorFunc[M](sqlpipe.OperatorSetting, func(src sqlpipe.Source[M]) sqlpipe.Source[M] {
 		return &forCount[M]{

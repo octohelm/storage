@@ -12,8 +12,10 @@ import (
 	"github.com/octohelm/x/logr"
 )
 
+// ErrorLevel 根据错误决定日志级别。
 type ErrorLevel func(error error) int
 
+// Wrap 为数据库驱动包一层 SQL 日志记录能力。
 func Wrap(d driver.Driver, name string, errorLevel func(error error) int) driver.DriverContext {
 	return &loggerConnector{
 		driver: d,

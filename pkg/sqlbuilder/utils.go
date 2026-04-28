@@ -12,6 +12,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder/structs"
 )
 
+// GetColumnName 根据字段名和标签值推导列名。
 func GetColumnName(fieldName, tagValue string) string {
 	i := strings.Index(tagValue, ",")
 	if tagValue != "" && (i > 0 || i == -1) {
@@ -25,6 +26,7 @@ func GetColumnName(fieldName, tagValue string) string {
 
 var schemas sync.Map
 
+// TableFromModel 根据模型定义构造对应的表。
 func TableFromModel(model any) Table {
 	tpe := reflect.TypeOf(model)
 	if tpe.Kind() != reflect.Pointer {
@@ -152,7 +154,8 @@ func resolveIndexNameAndMethod(n string) (name string, method string) {
 	return name, method
 }
 
-// ParseIndexDefine
+// ParseIndexDefine 解析索引定义标签文本。
+// 例如：
 // @def index i_xxx,BTREE Name
 // @def index i_xxx,GIST TEST,gist_trgm_ops
 func ParseIndexDefine(def string) *IndexDefine {
@@ -179,6 +182,7 @@ func ParseIndexDefine(def string) *IndexDefine {
 	return &d
 }
 
+// IndexDefine 表示解析后的索引定义。
 type IndexDefine struct {
 	Kind                string
 	Name                string
@@ -193,6 +197,7 @@ func (i IndexDefine) ID() string {
 	return i.Name
 }
 
+// FieldNameAndOptionFromStringSlice 把字符串切片解析为字段选项列表。
 func FieldNameAndOptionFromStringSlice(slices []string) []FieldNameAndOption {
 	fields := make([]FieldNameAndOption, 0, len(slices))
 

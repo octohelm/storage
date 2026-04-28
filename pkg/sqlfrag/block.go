@@ -9,6 +9,7 @@ import (
 	contextx "github.com/octohelm/x/context"
 )
 
+// JoinValues 用分隔符连接一组片段。
 func JoinValues(splitter string, fragments ...Fragment) Fragment {
 	if len(fragments) == 0 {
 		return Join(splitter, nil)
@@ -16,6 +17,7 @@ func JoinValues(splitter string, fragments ...Fragment) Fragment {
 	return Join(splitter, slices.Values(fragments))
 }
 
+// Join 用分隔符连接片段序列。
 func Join(splitter string, fragSeq iter.Seq[Fragment]) Fragment {
 	return &joinFragment{
 		splitter: splitter,
@@ -53,6 +55,7 @@ func (j *joinFragment) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
+// InlineBlock 把片段包装为同行括号块。
 func InlineBlock(fragment Fragment) Fragment {
 	if IsNil(fragment) {
 		return Empty()
@@ -70,6 +73,7 @@ func InlineBlock(fragment Fragment) Fragment {
 	}
 }
 
+// BlockWithoutBrackets 把片段序列包装为不带括号的块。
 func BlockWithoutBrackets(seq iter.Seq[Fragment]) Fragment {
 	if seq == nil {
 		return Empty()
@@ -82,6 +86,7 @@ func BlockWithoutBrackets(seq iter.Seq[Fragment]) Fragment {
 	}
 }
 
+// Block 把片段包装为带括号的块。
 func Block(fragment Fragment) Fragment {
 	if IsNil(fragment) {
 		return Empty()

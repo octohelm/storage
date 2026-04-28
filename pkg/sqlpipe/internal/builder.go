@@ -18,6 +18,7 @@ import (
 	sqltypetime "github.com/octohelm/storage/pkg/sqltype/time"
 )
 
+// BuildStmt 根据补丁器构造最终 SQL 片段。
 func BuildStmt[M sqlbuilder.Model](ctx context.Context, patchers ...StmtPatcher[M]) sqlfrag.Fragment {
 	b := &Builder[M]{}
 	if f, ok := FlagContext.MayFrom(ctx); ok {
@@ -26,18 +27,22 @@ func BuildStmt[M sqlbuilder.Model](ctx context.Context, patchers ...StmtPatcher[
 	return b.ApplyPatchers(ctx, patchers...).BuildStmt(ctx)
 }
 
+// ApplyStmt 把补丁器应用到构建器。
 func ApplyStmt[M sqlbuilder.Model](ctx context.Context, b *Builder[M], patchers ...StmtPatcher[M]) *Builder[M] {
 	return b.ApplyPatchers(ctx, patchers...)
 }
 
+// CollectStmt 收集补丁器生成的 SQL 片段序列。
 func CollectStmt[M sqlbuilder.Model](ctx context.Context, patchers ...StmtPatcher[M]) iter.Seq2[string, []any] {
 	return BuildStmt(ctx, patchers...).Frag(ctx)
 }
 
+// StmtCreator 表示可构造 SQL 片段的对象。
 type StmtCreator interface {
 	BuildStmt(ctx context.Context) sqlfrag.Fragment
 }
 
+// Builder 表示 sqlpipe 内部语句构建器。
 type Builder[M sqlbuilder.Model] struct {
 	flags.Flag
 

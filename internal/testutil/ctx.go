@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/x/logr/slog"
 )
 
+// NewContext 创建带默认日志器的测试上下文。
 func NewContext(t testing.TB) context.Context {
 	t.Helper()
 	ctx := context.Background()

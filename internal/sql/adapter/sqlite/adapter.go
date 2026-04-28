@@ -21,6 +21,7 @@ func init() {
 	adapter.Register(&sqliteAdapter{})
 }
 
+// Open 使用 SQLite 适配器打开连接。
 func Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 	return (&sqliteAdapter{}).Open(ctx, dsn)
 }

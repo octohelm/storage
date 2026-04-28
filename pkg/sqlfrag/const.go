@@ -5,6 +5,7 @@ import (
 	"iter"
 )
 
+// Const 表示不带绑定参数的原始 SQL 片段。
 type Const string
 
 var _ Fragment = Const("")
@@ -21,6 +22,7 @@ func (v Const) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
+// Empty 返回一个不会输出任何内容的片段。
 func Empty() Fragment {
 	return &empty{}
 }

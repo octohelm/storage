@@ -119,4 +119,46 @@ VALUES
 			"1", "2",
 		))
 	})
+
+	t.Run("single value helpers", func(t *testing.T) {
+		src := sqlpipe.Value(&model.User{Name: "1"}, model.UserT.Name)
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+INSERT INTO t_user (f_name)
+VALUES
+	(?)
+`,
+			"1",
+		))
+
+		srcSeq := sqlpipe.ValueSeq(func(yield func(*model.User) bool) {
+			yield(&model.User{Name: "1"})
+		}, model.UserT.Name)
+		testingx.Expect[sqlfrag.Fragment](t, srcSeq, testutil.BeFragment(`
+INSERT INTO t_user (f_name)
+VALUES
+	(?)
+`,
+			"1",
+		))
+	})
+
+	t.Run("omit zero helpers", func(t *testing.T) {
+		src := sqlpipe.ValueOmitZero(&model.User{Name: "1"}, model.UserT.Name)
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+INSERT INTO t_user (f_name,f_created_at)
+VALUES
+	(?,?)
+`))
+
+		srcOmit := sqlpipe.ValueSeqOmit(func(yield func(*model.User) bool) {
+			yield(&model.User{Name: "1"})
+		}, model.UserT.Nickname, model.UserT.Username, model.UserT.Gender, model.UserT.Age, model.UserT.CreatedAt, model.UserT.UpdatedAt, model.UserT.DeletedAt)
+		testingx.Expect[sqlfrag.Fragment](t, srcOmit, testutil.BeFragment(`
+INSERT INTO t_user (f_name)
+VALUES
+	(?)
+`,
+			"1",
+		))
+	})
 }

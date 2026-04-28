@@ -15,6 +15,7 @@ func interpolateParams(query string, args []driver.NamedValue) fmt.Stringer {
 	}
 }
 
+// SqlPrinter 把查询和参数格式化为可读 SQL 文本。
 type SqlPrinter struct {
 	query string
 	args  []driver.NamedValue
@@ -28,6 +29,7 @@ func (p *SqlPrinter) String() string {
 	return s
 }
 
+// InterpolateParams 把占位参数插值到查询文本中。
 func InterpolateParams(query string, args []driver.NamedValue, loc *time.Location) (string, error) {
 	if strings.Count(query, "?") != len(args) {
 		return "", driver.ErrSkip

@@ -11,10 +11,12 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
+// Filter 表示过滤片段。
 type Filter[M Model] interface {
 	sqlfrag.Fragment
 }
 
+// FilterOp 表示过滤组合方式。
 type FilterOp uint8
 
 const (
@@ -22,6 +24,7 @@ const (
 	FilterOpOr
 )
 
+// NewWhere 按显式组合操作构造过滤操作符。
 func NewWhere[M Model, T comparable](op FilterOp, col modelscoped.TypedColumn[M, T], valuer sqlbuilder.ColumnValuer[T]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorFilter, func(src Source[M]) Source[M] {
 		return newFilteredSource[M](src, op, func(ctx context.Context) sqlfrag.Fragment {
@@ -30,6 +33,7 @@ func NewWhere[M Model, T comparable](op FilterOp, col modelscoped.TypedColumn[M,
 	})
 }
 
+// WhereInSelectFrom 构造字段 IN 子查询过滤。
 func WhereInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedColumn[M, T], colSelect modelscoped.TypedColumn[S, T], source Source[S]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorFilter, func(src Source[M]) Source[M] {
 		return newFilteredSource[M](src, FilterOpAnd, func(ctx context.Context) sqlfrag.Fragment {
@@ -54,6 +58,7 @@ func WhereInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedColu
 	})
 }
 
+// WhereNotInSelectFrom 构造字段 NOT IN 子查询过滤。
 func WhereNotInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedColumn[M, T], colSelect modelscoped.TypedColumn[S, T], source Source[S]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorFilter, func(src Source[M]) Source[M] {
 		return newFilteredSource[M](src, FilterOpAnd, func(ctx context.Context) sqlfrag.Fragment {
@@ -78,6 +83,7 @@ func WhereNotInSelectFrom[M Model, S Model, T comparable](col modelscoped.TypedC
 	})
 }
 
+// Where 构造 AND 过滤条件。
 func Where[M Model, T comparable](col modelscoped.TypedColumn[M, T], valuer sqlbuilder.ColumnValuer[T]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorFilter, func(src Source[M]) Source[M] {
 		return newFilteredSource[M](src, FilterOpAnd, func(ctx context.Context) sqlfrag.Fragment {
@@ -86,6 +92,7 @@ func Where[M Model, T comparable](col modelscoped.TypedColumn[M, T], valuer sqlb
 	})
 }
 
+// OrWhere 构造 OR 过滤条件。
 func OrWhere[M Model, T comparable](col modelscoped.TypedColumn[M, T], valuer sqlbuilder.ColumnValuer[T]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorFilter, func(src Source[M]) Source[M] {
 		return newFilteredSource[M](src, FilterOpOr, func(ctx context.Context) sqlfrag.Fragment {
@@ -94,6 +101,7 @@ func OrWhere[M Model, T comparable](col modelscoped.TypedColumn[M, T], valuer sq
 	})
 }
 
+// CastWhere 为不同模型类型的列构造 AND 过滤条件。
 func CastWhere[M Model, U Model, T comparable](col modelscoped.TypedColumn[U, T], valuer sqlbuilder.ColumnValuer[T]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorFilter, func(src Source[M]) Source[M] {
 		return newFilteredSource[M](src, FilterOpAnd, func(ctx context.Context) sqlfrag.Fragment {
@@ -102,6 +110,7 @@ func CastWhere[M Model, U Model, T comparable](col modelscoped.TypedColumn[U, T]
 	})
 }
 
+// CastOrWhere 为不同模型类型的列构造 OR 过滤条件。
 func CastOrWhere[M Model, U Model, T comparable](col modelscoped.TypedColumn[U, T], valuer sqlbuilder.ColumnValuer[T]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorFilter, func(src Source[M]) Source[M] {
 		return newFilteredSource[M](src, FilterOpOr, func(ctx context.Context) sqlfrag.Fragment {

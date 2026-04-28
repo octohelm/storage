@@ -11,6 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// DistinctOn 为数据源追加 DISTINCT ON 投影。
 func DistinctOn[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorProject, func(src Source[M]) Source[M] {
 		if len(cols) == 0 {

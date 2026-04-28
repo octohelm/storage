@@ -8,14 +8,17 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
+// FromPatcher 定义对 FROM 数据源的补丁能力。
 type FromPatcher[M Model] interface {
 	ApplyToFrom(s SourceCanPatcher[M])
 }
 
+// SourceCanPatcher 表示数据源可接收 FROM 补丁。
 type SourceCanPatcher[M Model] interface {
 	AddPatchers(patchers ...internal.StmtPatcher[M])
 }
 
+// FromAll 创建包含全部记录语义的起始数据源。
 func FromAll[M Model](patchers ...FromPatcher[M]) Source[M] {
 	s := &sourceFrom[M]{}
 	s.Flag = flags.IncludesAll
@@ -27,6 +30,7 @@ func FromAll[M Model](patchers ...FromPatcher[M]) Source[M] {
 	return s
 }
 
+// From 创建起始数据源。
 func From[M Model](patchers ...FromPatcher[M]) Source[M] {
 	s := &sourceFrom[M]{}
 

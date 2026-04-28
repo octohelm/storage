@@ -8,6 +8,7 @@ import (
 	encodingx "github.com/octohelm/x/encoding"
 )
 
+// Lit 把普通值包装为过滤字面量。
 func Lit[T comparable](v T) Value[T] {
 	return &lit[T]{
 		value: v,

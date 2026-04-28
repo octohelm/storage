@@ -9,12 +9,14 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Assignment 表示赋值片段。
 type Assignment interface {
 	sqlfrag.Fragment
 
 	SqlAssignment()
 }
 
+// ColumnsAndValues 按列和对应值构造赋值片段。
 func ColumnsAndValues(columnOrColumns sqlfrag.Fragment, values ...any) Assignment {
 	lenOfColumn := 1
 	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
@@ -28,6 +30,7 @@ func ColumnsAndValues(columnOrColumns sqlfrag.Fragment, values ...any) Assignmen
 	}
 }
 
+// ColumnsAndCollect 按列和序列值构造赋值片段。
 func ColumnsAndCollect(columnOrColumns sqlfrag.Fragment, seq iter.Seq[any]) Assignment {
 	lenOfColumn := 1
 	if canLen, ok := columnOrColumns.(interface{ Len() int }); ok {
@@ -41,6 +44,7 @@ func ColumnsAndCollect(columnOrColumns sqlfrag.Fragment, seq iter.Seq[any]) Assi
 	}
 }
 
+// Assignments 表示一组赋值片段。
 type Assignments []Assignment
 
 func (assignments Assignments) IsNil() bool {

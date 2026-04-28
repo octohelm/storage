@@ -6,12 +6,14 @@ import (
 	"iter"
 )
 
+// LimitAddition 表示带 offset 配置能力的 LIMIT 附加项。
 type LimitAddition interface {
 	Addition
 
 	Offset(offset int64) LimitAddition
 }
 
+// Limit 创建 LIMIT 附加项。
 func Limit(rowCount int64) LimitAddition {
 	return &limit{rowCount: rowCount}
 }

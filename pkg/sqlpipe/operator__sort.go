@@ -10,24 +10,28 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// CastAscSort 为不同模型类型的列追加升序排序。
 func CastAscSort[M Model, U Model](col modelscoped.Column[U], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
 		return newSortedSource(src, sqlbuilder.AscOrder(col, ex...))
 	})
 }
 
+// CastDescSort 为不同模型类型的列追加降序排序。
 func CastDescSort[M Model, U Model](col modelscoped.Column[U], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
 		return newSortedSource(src, sqlbuilder.DescOrder(col, ex...))
 	})
 }
 
+// AscSort 为当前模型列追加升序排序。
 func AscSort[M Model](col modelscoped.Column[M], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
 		return newSortedSource(src, sqlbuilder.AscOrder(col, ex...))
 	})
 }
 
+// DescSort 为当前模型列追加降序排序。
 func DescSort[M Model](col modelscoped.Column[M], ex ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSort, func(src Source[M]) Source[M] {
 		return newSortedSource(src, sqlbuilder.DescOrder(col, ex...))

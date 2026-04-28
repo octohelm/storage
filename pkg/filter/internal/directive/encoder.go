@@ -7,6 +7,7 @@ import (
 	"github.com/go-json-experiment/json"
 )
 
+// MarshalDirective 把函数名和参数编码为 directive 文本。
 func MarshalDirective(funcName string, args ...any) ([]byte, error) {
 	b := bytes.NewBuffer(nil)
 

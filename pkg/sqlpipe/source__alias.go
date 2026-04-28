@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// As 把数据源包装为带别名的子查询来源。
 func As[M Model](src Source[M], name string, opts ...FromPatcher[M]) Source[M] {
 	s := &sourceAlias[M]{
 		embed: Embed[M]{

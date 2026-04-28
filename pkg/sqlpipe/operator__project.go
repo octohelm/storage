@@ -11,6 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// Returning 为数据源追加 RETURNING 投影。
 func Returning[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorProject, func(src Source[M]) Source[M] {
 		if len(cols) == 0 {
@@ -35,6 +36,7 @@ func Returning[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 	})
 }
 
+// Select 为数据源指定显式投影列。
 func Select[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorProject, func(src Source[M]) Source[M] {
 		if len(cols) == 0 {
@@ -51,6 +53,7 @@ func Select[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 	})
 }
 
+// CastSelect 为不同模型类型的列集合指定投影。
 func CastSelect[M Model, U Model](cols ...modelscoped.Column[U]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorProject, func(src Source[M]) Source[M] {
 		if len(cols) == 0 {
@@ -67,6 +70,7 @@ func CastSelect[M Model, U Model](cols ...modelscoped.Column[U]) SourceOperator[
 	})
 }
 
+// Project 直接用片段列表指定投影。
 func Project[M Model](projects ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorProject, func(src Source[M]) Source[M] {
 		return &projectedSource[M]{
@@ -78,6 +82,7 @@ func Project[M Model](projects ...sqlfrag.Fragment) SourceOperator[M] {
 	})
 }
 
+// DefaultProject 设置默认投影。
 func DefaultProject[M Model](projects ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSetting, func(src Source[M]) Source[M] {
 		return &projectedSource[M]{

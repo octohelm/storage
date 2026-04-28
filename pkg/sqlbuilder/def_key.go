@@ -9,34 +9,41 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// PrimaryKey 创建主键定义。
 func PrimaryKey(columns ColumnCollection, optFns ...IndexOptionFunc) Key {
 	return UniqueIndex("PRIMARY", columns, optFns...)
 }
 
+// UniqueIndex 创建唯一索引定义。
 func UniqueIndex(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key {
 	return Index(name, columns, append(optFns, IndexUnique(true))...)
 }
 
+// IndexOptionFunc 定义索引选项函数。
 type IndexOptionFunc func(k *key)
 
+// IndexUnique 设置索引是否唯一。
 func IndexUnique(unique bool) IndexOptionFunc {
 	return func(k *key) {
 		k.isUnique = unique
 	}
 }
 
+// IndexUsing 设置索引使用的方法。
 func IndexUsing(method string) IndexOptionFunc {
 	return func(k *key) {
 		k.method = method
 	}
 }
 
+// IndexFieldNameAndOptions 直接设置索引列及其附加选项。
 func IndexFieldNameAndOptions(colNameAndOptions ...FieldNameAndOption) IndexOptionFunc {
 	return func(k *key) {
 		k.fieldNameAndOptions = colNameAndOptions
 	}
 }
 
+// Index 创建普通索引定义。
 func Index(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key {
 	k := &key{
 		name: strings.ToLower(name),
@@ -55,6 +62,7 @@ func Index(name string, columns ColumnCollection, optFns ...IndexOptionFunc) Key
 	return k
 }
 
+// GetKeyTable 返回索引绑定的表。
 func GetKeyTable(key Key) Table {
 	if withDef, ok := key.(WithTable); ok {
 		return withDef.T()
@@ -62,6 +70,7 @@ func GetKeyTable(key Key) Table {
 	return nil
 }
 
+// Key 表示表上的索引或主键定义。
 type Key interface {
 	sqlfrag.Fragment
 
@@ -75,11 +84,13 @@ type Key interface {
 	ColumnSeq
 }
 
+// KeyDef 暴露索引定义的额外元信息。
 type KeyDef interface {
 	Method() string
 	FieldNameAndOptions() []FieldNameAndOption
 }
 
+// GetKeyDef 返回索引的定义元信息。
 func GetKeyDef(col Key) KeyDef {
 	if keyDef, ok := col.(KeyDef); ok {
 		return keyDef
@@ -87,6 +98,7 @@ func GetKeyDef(col Key) KeyDef {
 	return nil
 }
 
+// KeyColumnOnly 配置只输出索引列定义。
 func KeyColumnOnly() func(o *opt) {
 	return func(o *opt) {
 		o.KeyColumnOnly = true
@@ -97,6 +109,7 @@ type opt struct {
 	KeyColumnOnly bool
 }
 
+// AsKeyColumnsTableDef 把索引列定义格式化为表定义片段。
 func AsKeyColumnsTableDef(key Key, optionFns ...func(o *opt)) sqlfrag.Fragment {
 	o := &opt{}
 	for _, optFn := range optionFns {

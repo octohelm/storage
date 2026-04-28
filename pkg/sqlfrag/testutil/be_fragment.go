@@ -11,6 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// BeFragmentForQuery 返回仅校验 SQL 文本的片段匹配器。
 func BeFragmentForQuery(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {
 	return &fragmentMatcher[sqlfrag.Fragment]{
 		query: strings.TrimSpace(query),
@@ -18,6 +19,7 @@ func BeFragmentForQuery(query string, args ...any) testingx.Matcher[sqlfrag.Frag
 	}
 }
 
+// BeFragment 返回同时校验 SQL 文本与参数的片段匹配器。
 func BeFragment(query string, args ...any) testingx.Matcher[sqlfrag.Fragment] {
 	return &fragmentMatcher[sqlfrag.Fragment]{
 		query:     strings.TrimSpace(query),

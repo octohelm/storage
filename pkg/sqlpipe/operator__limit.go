@@ -8,18 +8,22 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// Offset 为 Limit 操作补充 offset 配置。
 func Offset(offset int64) LimitOptionFunc {
 	return func(o LimitOption) {
 		o.SetOffset(offset)
 	}
 }
 
+// LimitOptionFunc 表示 Limit 的选项函数。
 type LimitOptionFunc = func(o LimitOption)
 
+// LimitOption 接收 Limit 数据源的附加配置。
 type LimitOption interface {
 	SetOffset(offset int64)
 }
 
+// Limit 为数据源追加 LIMIT/OFFSET 语义。
 func Limit[M Model](limit int64, optFns ...LimitOptionFunc) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLimit, func(src Source[M]) Source[M] {
 		if limit < 0 {

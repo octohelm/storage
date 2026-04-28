@@ -1,5 +1,6 @@
 package directive
 
+// Directive 表示一个通用 directive 结构。
 type Directive struct {
 	Args []any
 	Name string

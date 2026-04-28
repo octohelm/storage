@@ -12,6 +12,7 @@ import (
 	"github.com/octohelm/storage/pkg/filter/internal/directive"
 )
 
+// Where 按字段名和规则构造 where 过滤条件。
 func Where[T comparable](name string, rules ...TypedRule[T]) TypedRule[T] {
 	return &where[T]{
 		name: name,

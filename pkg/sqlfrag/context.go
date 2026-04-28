@@ -5,10 +5,12 @@ import (
 	"iter"
 )
 
+// ContextInjector 定义片段上下文注入能力。
 type ContextInjector interface {
 	InjectContext(ctx context.Context) context.Context
 }
 
+// WithContextInjector 为片段包装上下文注入器。
 func WithContextInjector(injector ContextInjector, fragment Fragment) Fragment {
 	return &contextInjectorFragment{
 		injector: injector,

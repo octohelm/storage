@@ -34,17 +34,21 @@ var (
 	durationMatcher = regexp.MustCompile(`((\d+)\s*([A-Za-zµ]+))`)
 )
 
+// IsDuration 判断字符串能否被解析为时长。
 func IsDuration(str string) bool {
 	_, err := ParseDuration(str)
 	return err == nil
 }
 
+// Duration 表示可序列化、可扫描的时长值。
 type Duration time.Duration
 
+// IsZero 判断时长是否为零。
 func (d Duration) IsZero() bool {
 	return d == 0
 }
 
+// OpenAPISchemaFormat 返回 OpenAPI 使用的格式名。
 func (Duration) OpenAPISchemaFormat() string {
 	return "duration"
 }
@@ -62,6 +66,7 @@ func (d *Duration) UnmarshalText(data []byte) error { // validation is performed
 	return nil
 }
 
+// ParseDuration 解析兼容标准格式与扩展单位写法的时长字符串。
 func ParseDuration(cand string) (time.Duration, error) {
 	if dur, err := time.ParseDuration(cand); err == nil {
 		return dur, nil

@@ -7,12 +7,14 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// GroupByAddition 表示带 HAVING 扩展能力的 GROUP BY 附加子句。
 type GroupByAddition interface {
 	Addition
 
 	Having(cond sqlfrag.Fragment) GroupByAddition
 }
 
+// GroupBy 创建 GROUP BY 附加子句。
 func GroupBy(groups ...sqlfrag.Fragment) GroupByAddition {
 	return &groupBy{
 		groups: groups,

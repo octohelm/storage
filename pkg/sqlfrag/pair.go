@@ -8,6 +8,7 @@ import (
 	"text/scanner"
 )
 
+// Pair 按模板与参数构造 SQL 片段。
 func Pair(query string, args ...any) Fragment {
 	if len(args) == 0 {
 		return Const(query)

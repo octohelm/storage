@@ -9,6 +9,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal"
 )
 
+// DoDelete 把数据源转换为软删除提交操作。
 func DoDelete[M Model]() SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		return &updateOrDeleteSource[M]{
@@ -22,6 +23,7 @@ func DoDelete[M Model]() SourceOperator[M] {
 	})
 }
 
+// DoDeleteHard 把数据源转换为硬删除提交操作。
 func DoDeleteHard[M Model]() SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		return &updateOrDeleteSource[M]{
@@ -35,6 +37,7 @@ func DoDeleteHard[M Model]() SourceOperator[M] {
 	})
 }
 
+// DoUpdate 为指定列追加更新赋值。
 func DoUpdate[M Model, T any](col modelscoped.TypedColumn[M, T], valuer sqlbuilder.ColumnValuer[T]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		switch x := src.(type) {
@@ -58,6 +61,7 @@ func DoUpdate[M Model, T any](col modelscoped.TypedColumn[M, T], valuer sqlbuild
 	})
 }
 
+// DoUpdateSet 按给定模型值和列集合构造更新。
 func DoUpdateSet[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		s := &updateOrDeleteSource[M]{
@@ -80,6 +84,7 @@ func DoUpdateSet[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator
 	})
 }
 
+// DoUpdateSetOmit 按给定模型值构造更新，并忽略指定列。
 func DoUpdateSetOmit[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		s := &updateOrDeleteSource[M]{
@@ -103,6 +108,7 @@ func DoUpdateSetOmit[M Model](m *M, columns ...modelscoped.Column[M]) SourceOper
 	})
 }
 
+// DoUpdateSetOmitZero 按给定模型值构造更新，并忽略零值字段。
 func DoUpdateSetOmitZero[M Model](m *M, exclude ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		s := &updateOrDeleteSource[M]{

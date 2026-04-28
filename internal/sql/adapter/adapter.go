@@ -12,6 +12,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// DB 定义了存储适配器依赖的最小数据库操作集合。
 type DB interface {
 	Exec(ctx context.Context, expr sqlfrag.Fragment) (sql.Result, error)
 	Query(ctx context.Context, expr sqlfrag.Fragment) (*sql.Rows, error)
@@ -19,10 +20,12 @@ type DB interface {
 	Close() error
 }
 
+// Connector 根据解析后的 DSN 打开一个 Adapter。
 type Connector interface {
 	Open(ctx context.Context, dsn *url.URL) (Adapter, error)
 }
 
+// Adapter 表示带有结构探查能力的驱动适配器。
 type Adapter interface {
 	DB
 	DriverName() string
@@ -30,6 +33,7 @@ type Adapter interface {
 	Catalog(ctx context.Context) (*sqlbuilder.Tables, error)
 }
 
+// Dialect 负责为具体数据库方言构造 DDL 片段。
 type Dialect interface {
 	CreateTableIsNotExists(t sqlbuilder.Table) []sqlfrag.Fragment
 	DropTable(t sqlbuilder.Table) sqlfrag.Fragment
@@ -48,6 +52,7 @@ type Dialect interface {
 
 var adapters = syncx.Map[string, Adapter]{}
 
+// Register 按驱动名及别名注册适配器。
 func Register(a Adapter, aliases ...string) {
 	adapters.Store(a.DriverName(), a)
 	for i := range aliases {
@@ -55,6 +60,7 @@ func Register(a Adapter, aliases ...string) {
 	}
 }
 
+// Open 根据 DSN scheme 选择已注册适配器并打开连接。
 func Open(ctx context.Context, dsn string) (a Adapter, err error) {
 	u, err := url.Parse(dsn)
 	if err != nil {

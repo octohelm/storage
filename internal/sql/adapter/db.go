@@ -9,6 +9,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Wrap 把 *sql.DB 包装为仓库内部统一使用的 DB 接口。
 func Wrap(d *sql.DB, convertErr func(err error) error) DB {
 	return &db{
 		DB: d,

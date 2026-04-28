@@ -17,6 +17,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder/internal/columndef"
 )
 
+// Fields 返回类型中参与表映射的字段列表。
 func Fields(ctx context.Context, typ typesx.Type) []*Field {
 	return defaultStructFieldsFactory.TableFieldsFor(ctx, typ)
 }
@@ -50,6 +51,7 @@ func (tf *fieldsFactory) TableFieldsFor(ctx context.Context, typ typesx.Type) []
 	return tfs
 }
 
+// AllStructField 遍历结构体的全部可导出字段定义。
 func AllStructField(ctx context.Context, tpe typesx.Type) iter.Seq[*Field] {
 	if tpe.Kind() != reflect.Struct {
 		panic(fmt.Errorf("model %s must be a struct", tpe.Name()))
@@ -157,6 +159,7 @@ func (w *fieldWalker) allStructField(ctx context.Context, tpe typesx.Type) iter.
 	}
 }
 
+// Field 表示结构字段对应的表字段定义。
 type Field struct {
 	Name       string
 	FieldName  string

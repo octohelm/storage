@@ -13,6 +13,7 @@ import (
 	"github.com/octohelm/x/container/list"
 )
 
+// OrderedDatabase 表示保序的 ER 数据库结构。
 type OrderedDatabase struct {
 	Head
 
@@ -29,6 +30,7 @@ func (d *OrderedDatabase) OneOf() []any {
 	}
 }
 
+// OrderedTable 表示保序的 ER 表结构。
 type OrderedTable struct {
 	Head
 
@@ -36,6 +38,7 @@ type OrderedTable struct {
 	Constraints record[string, *OrderedConstraint] `json:"constraints"`
 }
 
+// OrderedColumn 表示保序的 ER 列结构。
 type OrderedColumn struct {
 	Head
 
@@ -45,6 +48,7 @@ type OrderedColumn struct {
 	GoType string `json:"-"`
 }
 
+// OrderedConstraint 表示保序的 ER 约束结构。
 type OrderedConstraint struct {
 	Head
 

@@ -9,12 +9,14 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Addition 表示可挂载到语句上的附加子句。
 type Addition interface {
 	sqlfrag.Fragment
 
 	AdditionType() AdditionType
 }
 
+// AdditionType 表示附加子句的种类。
 type AdditionType int
 
 const (
@@ -31,8 +33,10 @@ const (
 	AdditionComment
 )
 
+// Additions 表示一组附加子句。
 type Additions []Addition
 
+// CompareAddition 按附加子句类型排序。
 func CompareAddition(a Addition, b Addition) int {
 	return cmp.Compare(a.AdditionType(), b.AdditionType())
 }
@@ -61,6 +65,7 @@ func (additions Additions) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
+// AsAddition 把任意片段包装为指定类型的附加子句。
 func AsAddition(additionType AdditionType, fragment sqlfrag.Fragment) Addition {
 	return &addition{
 		additionType: additionType,

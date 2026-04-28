@@ -8,20 +8,24 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// EmptyCond 返回一个空条件。
 func EmptyCond() SqlCondition {
 	return (*Condition)(nil)
 }
 
+// SqlCondition 表示可组合的 SQL 条件。
 type SqlCondition interface {
 	sqlfrag.Fragment
 
 	SqlConditionMarker
 }
 
+// SqlConditionMarker 用于标识条件类型。
 type SqlConditionMarker interface {
 	asCondition()
 }
 
+// AsCond 把片段包装为 Condition。
 func AsCond(ex sqlfrag.Fragment) *Condition {
 	if c, ok := ex.(*Condition); ok {
 		return c
@@ -29,6 +33,7 @@ func AsCond(ex sqlfrag.Fragment) *Condition {
 	return &Condition{expr: ex}
 }
 
+// Condition 表示单个 SQL 条件片段。
 type Condition struct {
 	expr sqlfrag.Fragment
 
@@ -47,26 +52,32 @@ func (c *Condition) IsNil() bool {
 	return c == nil || sqlfrag.IsNil(c.expr)
 }
 
+// And 用 AND 组合多个条件。
 func And(conditions ...sqlfrag.Fragment) SqlCondition {
 	return composedCondition("AND", progressCondition(conditions))
 }
 
+// AndSeq 用 AND 组合一个条件序列。
 func AndSeq(conditions iter.Seq[sqlfrag.Fragment]) SqlCondition {
 	return composedCondition("AND", progressCondition(slices.Collect(conditions)))
 }
 
+// Or 用 OR 组合多个条件。
 func Or(conditions ...sqlfrag.Fragment) SqlCondition {
 	return composedCondition("OR", progressCondition(conditions))
 }
 
+// OrSeq 用 OR 组合一个条件序列。
 func OrSeq(conditions iter.Seq[sqlfrag.Fragment]) SqlCondition {
 	return composedCondition("OR", progressCondition(slices.Collect(conditions)))
 }
 
+// Xor 用 XOR 组合多个条件。
 func Xor(conditions ...sqlfrag.Fragment) SqlCondition {
 	return composedCondition("XOR", progressCondition(conditions))
 }
 
+// XorSeq 用 XOR 组合一个条件序列。
 func XorSeq(conditions iter.Seq[sqlfrag.Fragment]) SqlCondition {
 	return composedCondition("XOR", progressCondition(slices.Collect(conditions)))
 }
@@ -98,6 +109,7 @@ func composedCondition(op string, conditions []SqlCondition) SqlCondition {
 	return &ComposedCondition{op: op, conditions: conditions}
 }
 
+// ComposedCondition 表示由多个条件组合成的复合条件。
 type ComposedCondition struct {
 	SqlConditionMarker
 

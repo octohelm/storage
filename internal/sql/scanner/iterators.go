@@ -8,6 +8,7 @@ import (
 	reflectx "github.com/octohelm/x/reflect"
 )
 
+// Recv 将类型化回调适配为 ScanIterator。
 func Recv[T any](next func(v *T) error) ScanIterator {
 	return &typedScanner[T]{next: next}
 }
@@ -24,6 +25,7 @@ func (t *typedScanner[T]) Next(v any) error {
 	return t.next(v.(*T))
 }
 
+// RecvFunc 通过 recv 推送类型化结果，并暴露为 iter.Seq2。
 type RecvFunc[M any] func(ctx context.Context, recv func(v *M) error) error
 
 func (recv RecvFunc[M]) Items(c context.Context) iter.Seq2[*M, error] {
@@ -67,6 +69,7 @@ func (recv RecvFunc[M]) Items(c context.Context) iter.Seq2[*M, error] {
 	}
 }
 
+// ScanIterator 负责分配扫描目标并接收扫描结果。
 type ScanIterator interface {
 	// New a ptr value for scan
 	New() any
@@ -74,6 +77,7 @@ type ScanIterator interface {
 	Next(v any) error
 }
 
+// ScanIteratorFor 为已有迭代器、切片或单值目标构造 ScanIterator。
 func ScanIteratorFor(v any) (ScanIterator, error) {
 	switch x := v.(type) {
 	case ScanIterator:
@@ -92,6 +96,7 @@ func ScanIteratorFor(v any) (ScanIterator, error) {
 	}
 }
 
+// SliceScanIterator 会把每次扫描结果追加到目标切片中。
 type SliceScanIterator struct {
 	elemType reflect.Type
 	rv       reflect.Value
@@ -106,6 +111,7 @@ func (s *SliceScanIterator) Next(v any) error {
 	return nil
 }
 
+// SingleScanIterator 至多把一个扫描结果写入目标值。
 type SingleScanIterator struct {
 	target     any
 	hasResults bool

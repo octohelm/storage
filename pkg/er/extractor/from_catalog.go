@@ -14,6 +14,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqltype"
 )
 
+// FromCatalog 根据 catalog 和 session 提取 ER 数据库结构。
 func FromCatalog(ctx context.Context, s session.Session, catalog sqlbuilder.Catalog) *er.OrderedDatabase {
 	erd := &er.OrderedDatabase{
 		Head: er.Head{

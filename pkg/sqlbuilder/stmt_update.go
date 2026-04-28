@@ -9,8 +9,10 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// UpdateNeedLimitByWhere 表示 UPDATE 缺少 where 限制时的错误。
 var UpdateNeedLimitByWhere = errors.New("no where limit for update")
 
+// Update 创建 UPDATE 语句。
 func Update(table Table, modifiers ...string) *StmtUpdate {
 	return &StmtUpdate{
 		table:     table,
@@ -18,6 +20,7 @@ func Update(table Table, modifiers ...string) *StmtUpdate {
 	}
 }
 
+// StmtUpdate 表示 UPDATE 语句。
 type StmtUpdate struct {
 	table     Table
 	from      Table

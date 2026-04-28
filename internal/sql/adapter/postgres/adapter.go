@@ -27,6 +27,7 @@ func init() {
 	adapter.Register(&pgAdapter{}, "postgresql")
 }
 
+// Open 使用 PostgreSQL 适配器打开连接。
 func Open(ctx context.Context, dsn *url.URL) (adapter.Adapter, error) {
 	return (&pgAdapter{}).Open(ctx, dsn)
 }

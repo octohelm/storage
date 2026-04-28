@@ -7,10 +7,12 @@ import (
 	jsonv1 "github.com/go-json-experiment/json/v1"
 )
 
+// ValueOf 用指针值创建 Value 包装。
 func ValueOf[T any](v *T) Value[T] {
 	return Value[T]{v: v}
 }
 
+// Value 表示可空的 JSON 值包装。
 type Value[T any] struct {
 	v *T
 }

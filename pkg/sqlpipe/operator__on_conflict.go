@@ -11,6 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlpipe/internal/flags"
 )
 
+// OnConflictDoNothing 为插入源追加 ON CONFLICT DO NOTHING。
 func OnConflictDoNothing[M sqlbuilder.Model](cols modelscoped.ColumnSeq[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorOnConflict, func(src Source[M]) Source[M] {
 		return &onConflictSource[M]{
@@ -22,6 +23,7 @@ func OnConflictDoNothing[M sqlbuilder.Model](cols modelscoped.ColumnSeq[M]) Sour
 	})
 }
 
+// OnConflictDoUpdateSet 为插入源追加 ON CONFLICT DO UPDATE SET。
 func OnConflictDoUpdateSet[M sqlbuilder.Model](cols modelscoped.ColumnSeq[M], toUpdates ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorOnConflict, func(src Source[M]) Source[M] {
 		return &onConflictSource[M]{
@@ -34,6 +36,7 @@ func OnConflictDoUpdateSet[M sqlbuilder.Model](cols modelscoped.ColumnSeq[M], to
 	})
 }
 
+// OnConflictDoWith 使用自定义函数构造 ON CONFLICT 行为。
 func OnConflictDoWith[M sqlbuilder.Model](
 	cols modelscoped.ColumnSeq[M],
 	with func(onConflictAddition sqlbuilder.OnConflictAddition) sqlbuilder.OnConflictAddition,

@@ -13,6 +13,7 @@ import (
 	"github.com/octohelm/storage/pkg/filter/internal/directive"
 )
 
+// Compose 根据结构体中的规则表达式组合查询条件。
 func Compose(filters ...any) *Composed {
 	c := &Composed{}
 
@@ -108,6 +109,7 @@ func (r *ruleWrapper) UnmarshalDirective(dec *directive.Decoder) error {
 	return r.rule.UnmarshalDirective(dec)
 }
 
+// Composed 表示组合后的过滤条件集合。
 type Composed struct {
 	Filters []any
 

@@ -7,10 +7,12 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// Delete 创建 DELETE 语句。
 func Delete() *StmtDelete {
 	return &StmtDelete{}
 }
 
+// StmtDelete 表示 DELETE 语句。
 type StmtDelete struct {
 	table     Table
 	additions Additions

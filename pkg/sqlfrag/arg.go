@@ -1,3 +1,4 @@
+// Package sqlfrag 提供可组合的 SQL 片段抽象及其参数收集能力。
 package sqlfrag
 
 import (
@@ -12,19 +13,19 @@ import (
 	reflectx "github.com/octohelm/x/reflect"
 )
 
+// NamedArg 复用标准库的命名参数类型。
 type NamedArg = sql.NamedArg
 
+// NamedArgSet 表示按名称组织的参数集合。
 type NamedArgSet map[string]any
 
-// CustomValueArg
-// replace ? as some query snippet
-//
-// examples:
-// ? => ST_GeomFromText(?)
+// CustomValueArg 用于把 `?` 参数位置替换成自定义 SQL 片段。
+// 例如可把 `?` 扩展为 `ST_GeomFromText(?)`。
 type CustomValueArg interface {
 	ValueEx() string
 }
 
+// Values 把一个值序列展开为逗号分隔的占位参数片段。
 type Values[T any] iter.Seq[T]
 
 func (seq Values[T]) IsNil() bool {

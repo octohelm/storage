@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 )
 
+// Array 表示 JSON 数组值。
 type Array[T any] []T
 
 func (v Array[T]) IsZero() bool {

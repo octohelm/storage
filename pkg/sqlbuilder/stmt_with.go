@@ -8,16 +8,20 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// BuildSubQuery 根据给定表定义构造子查询。
 type BuildSubQuery func(table Table) sqlfrag.Fragment
 
+// WithRecursive 创建递归 CTE 语句。
 func WithRecursive(t Table, build BuildSubQuery) *WithStmt {
 	return With(t, build, "RECURSIVE")
 }
 
+// With 创建普通 CTE 语句。
 func With(t Table, build BuildSubQuery, modifiers ...string) *WithStmt {
 	return (&WithStmt{modifiers: modifiers}).With(t, build)
 }
 
+// WithStmt 表示一条 WITH/CTE 语句。
 type WithStmt struct {
 	modifiers []string
 	tables    []Table

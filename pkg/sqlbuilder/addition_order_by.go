@@ -8,6 +8,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlfrag"
 )
 
+// DistinctOn 创建 DISTINCT ON 投影修饰片段。
 func DistinctOn(on ...sqlfrag.Fragment) sqlfrag.Fragment {
 	return &distinctOn{on: on}
 }
@@ -38,6 +39,7 @@ func (o *distinctOn) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
+// OrderBy 创建 ORDER BY 附加子句。
 func OrderBy(orders ...Order) Addition {
 	finalOrders := make([]Order, 0)
 
@@ -79,26 +81,32 @@ func (o *orderBy) Frag(ctx context.Context) iter.Seq2[string, []any] {
 	}
 }
 
+// NullsFirst 创建 NULLS FIRST 排序修饰片段。
 func NullsFirst() sqlfrag.Fragment {
 	return sqlfrag.Pair(" NULLS FIRST")
 }
 
+// NullsLast 创建 NULLS LAST 排序修饰片段。
 func NullsLast() sqlfrag.Fragment {
 	return sqlfrag.Pair(" NULLS LAST")
 }
 
+// DefaultOrder 创建不显式指定方向的排序表达式。
 func DefaultOrder(target sqlfrag.Fragment, ex ...sqlfrag.Fragment) Order {
 	return &order{target: target, ex: ex}
 }
 
+// AscOrder 创建升序排序表达式。
 func AscOrder(target sqlfrag.Fragment, ex ...sqlfrag.Fragment) Order {
 	return &order{target: target, typ: "ASC", ex: ex}
 }
 
+// DescOrder 创建降序排序表达式。
 func DescOrder(target sqlfrag.Fragment, ex ...sqlfrag.Fragment) Order {
 	return &order{target: target, typ: "DESC", ex: ex}
 }
 
+// Order 表示 ORDER BY 中的单个排序项。
 type Order interface {
 	sqlfrag.Fragment
 

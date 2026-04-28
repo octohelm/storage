@@ -4,6 +4,7 @@ import (
 	"iter"
 )
 
+// NonNil 过滤掉空片段。
 func NonNil[F Fragment](fragSeq iter.Seq[F]) iter.Seq[Fragment] {
 	return func(yield func(Fragment) bool) {
 		for frag := range fragSeq {
@@ -18,6 +19,7 @@ func NonNil[F Fragment](fragSeq iter.Seq[F]) iter.Seq[Fragment] {
 	}
 }
 
+// Map 把输入序列映射为片段序列。
 func Map[I any, O Fragment](seq iter.Seq[I], mapper func(i I) O) iter.Seq[Fragment] {
 	return func(yield func(Fragment) bool) {
 		for item := range seq {

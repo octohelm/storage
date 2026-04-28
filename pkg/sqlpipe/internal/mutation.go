@@ -14,6 +14,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqltype"
 )
 
+// DeleteType 表示删除模式。
 type DeleteType uint
 
 const (
@@ -22,6 +23,7 @@ const (
 	DeleteTypeSoft
 )
 
+// Mutation 表示插入、更新或删除的写入源。
 type Mutation[M sqlbuilder.Model] struct {
 	ForDelete DeleteType
 	ForUpdate bool
@@ -35,11 +37,13 @@ type Mutation[M sqlbuilder.Model] struct {
 	Values      iter.Seq[*M]
 }
 
+// OmitZero 描述忽略零值字段的配置。
 type OmitZero[M sqlbuilder.Model] struct {
 	Enabled bool
 	Exclude []modelscoped.Column[M]
 }
 
+// Strict 描述严格列集合配置。
 type Strict[M sqlbuilder.Model] struct {
 	Omit    bool
 	Columns []modelscoped.Column[M]

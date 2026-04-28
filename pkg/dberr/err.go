@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// New 创建一个 SqlError。
 func New(tpe errType, msg string) *SqlError {
 	return &SqlError{
 		Type: tpe,
@@ -12,6 +13,7 @@ func New(tpe errType, msg string) *SqlError {
 	}
 }
 
+// SqlError 表示数据库层统一错误。
 type SqlError struct {
 	Type errType
 	Msg  string
@@ -29,6 +31,7 @@ var (
 	ErrTypeRolledBack errType = "RolledBack"
 )
 
+// IsErrNotFound 判断错误是否为未找到。
 func IsErrNotFound(err error) bool {
 	if err == nil {
 		return false
@@ -39,6 +42,7 @@ func IsErrNotFound(err error) bool {
 	return false
 }
 
+// IsErrConflict 判断错误是否为冲突。
 func IsErrConflict(err error) bool {
 	if err == nil {
 		return false
@@ -49,6 +53,7 @@ func IsErrConflict(err error) bool {
 	return false
 }
 
+// IsErrRolledBack 判断错误是否为事务回滚。
 func IsErrRolledBack(err error) bool {
 	if err == nil {
 		return false

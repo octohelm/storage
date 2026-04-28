@@ -11,6 +11,7 @@ import (
 	"github.com/octohelm/storage/pkg/sqlbuilder/internal"
 )
 
+// AllFieldValueOmitZero 返回所有非零字段值，并可排除指定字段。
 func AllFieldValueOmitZero(ctx context.Context, v any, excludeFields ...string) iter.Seq[*FieldValue] {
 	excludeValues := make(map[string]bool, len(excludeFields))
 
@@ -29,6 +30,7 @@ func AllFieldValueOmitZero(ctx context.Context, v any, excludeFields ...string) 
 	}
 }
 
+// AllFieldValue 返回模型中的全部字段值。
 func AllFieldValue(ctx context.Context, v any) iter.Seq[*FieldValue] {
 	return func(yield func(*FieldValue) bool) {
 		rv, ok := v.(reflect.Value)
@@ -85,6 +87,7 @@ func AllFieldValue(ctx context.Context, v any) iter.Seq[*FieldValue] {
 	}
 }
 
+// FieldValue 表示字段定义及其当前值。
 type FieldValue struct {
 	Field     Field
 	TableName string

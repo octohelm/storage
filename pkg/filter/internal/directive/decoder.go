@@ -6,20 +6,24 @@ import (
 	"text/scanner"
 )
 
+// Marshaler 表示可编码为 directive 文本的对象。
 type Marshaler interface {
 	MarshalDirective() ([]byte, error)
 }
 
+// Unmarshaler 表示可从 directive 文本解码的对象。
 type Unmarshaler interface {
 	UnmarshalDirective(*Decoder) error
 }
 
+// UnmarshalerFunc 允许直接用函数实现 Unmarshaler。
 type UnmarshalerFunc func(*Decoder) error
 
 func (fn UnmarshalerFunc) UnmarshalDirective(d *Decoder) error {
 	return fn(d)
 }
 
+// NewDecoder 创建 directive 解码器。
 func NewDecoder(r io.Reader) *Decoder {
 	d := &Decoder{}
 	d.unmarshalers = map[string]Newer{}
@@ -27,6 +31,7 @@ func NewDecoder(r io.Reader) *Decoder {
 	return d
 }
 
+// Decoder 表示 directive 文本解码器。
 type Decoder struct {
 	unmarshalers map[string]Newer
 	s            scanner.Scanner
@@ -39,8 +44,10 @@ type Decoder struct {
 	tmp bytes.Buffer
 }
 
+// Newer 定义生成 Unmarshaler 的工厂函数。
 type Newer func() Unmarshaler
 
+// DefaultDirectiveNewer 是默认 directive 构造器名。
 const DefaultDirectiveNewer = "_default"
 
 func (d *Decoder) RegisterDirectiveNewer(directiveName string, fn Newer) {
@@ -108,6 +115,7 @@ func (d *Decoder) Next() (Kind, []byte) {
 	return d.Next()
 }
 
+// Kind 表示 directive token 类型。
 type Kind int
 
 const (
@@ -118,6 +126,7 @@ const (
 	EOF
 )
 
+// RawValue 表示未经解析的原始字节值。
 type RawValue []byte
 
 func (v RawValue) MarshalDirective() ([]byte, error) {
