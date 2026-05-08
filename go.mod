@@ -11,11 +11,11 @@ tool (
 // +gengo:import:group=0_controlled
 require (
 	// +skill:enumeration-guideline
-	github.com/octohelm/enumeration v0.0.0-20260508083658-4717c31ed563
+	github.com/octohelm/enumeration v0.0.0-20260508105338-2e799c70cf82
 	// +skill:gengo-guideline
-	github.com/octohelm/gengo v0.0.0-20260508082215-12ad0e3d1026
+	github.com/octohelm/gengo v0.0.0-20260508104904-5ab1a7f587f6
 	// +skill:testing-guideline
-	github.com/octohelm/x v0.0.0-20260508075008-3bb151cb7bd8
+	github.com/octohelm/x v0.0.0-20260508104609-6b72a870e0d2
 )
 
 require (
