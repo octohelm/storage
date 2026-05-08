@@ -72,7 +72,8 @@ func TestDurationParser(t *testing.T) {
 		b.Given(str, func(b bdd.T) {
 			b.When("parse", func(b bdd.T) {
 				r, err := ParseDuration(str)
-				b.Then("no error",
+				b.Then(
+					"no error",
 					bdd.NoError(err),
 					bdd.Equal(dur, r),
 				)

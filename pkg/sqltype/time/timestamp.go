@@ -135,7 +135,7 @@ func (dt *Timestamp) Scan(value any) error {
 }
 
 func (dt Timestamp) Value() (driver.Value, error) {
-	s := max((time.Time)(dt).Unix(), 0)
+	s := max(time.Time(dt).Unix(), 0)
 	return s, nil
 }
 

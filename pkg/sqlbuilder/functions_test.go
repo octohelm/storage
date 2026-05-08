@@ -21,7 +21,8 @@ func TestFunctions(t *testing.T) {
 	lastQ, _ := sqlfrag.Collect(context.Background(), sqlbuilder.Last(sqlfrag.Const("f_name")))
 	sumQ, _ := sqlfrag.Collect(context.Background(), sqlbuilder.Sum(sqlfrag.Const("f_age")))
 
-	Then(t, "聚合函数 helper 会生成对应 SQL",
+	Then(
+		t, "聚合函数 helper 会生成对应 SQL",
 		Expect(countQ, Equal("COUNT(1)")),
 		Expect(avgQ, Equal("AVG(f_age)")),
 		Expect(anyValueQ, Equal("ANY_VALUE(f_name)")),

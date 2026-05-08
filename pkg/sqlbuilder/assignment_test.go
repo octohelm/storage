@@ -12,14 +12,16 @@ import (
 
 func TestAssignment(t *testing.T) {
 	t.Run("ColumnsAndValues", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.WithContextInjector(
 				Toggles{
 					ToggleUseValues: true,
 				},
 				ColumnsAndValues(Cols("a", "b"), 1, 2, 3, 4),
 			),
-			testutil.BeFragment(`
+			testutil.BeFragment(
+				`
 (a,b)
 VALUES
 	(?,?),

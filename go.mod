@@ -11,11 +11,11 @@ tool (
 // +gengo:import:group=0_controlled
 require (
 	// +skill:enumeration-guideline
-	github.com/octohelm/enumeration v0.0.0-20260424074548-309e324da628
+	github.com/octohelm/enumeration v0.0.0-20260508083658-4717c31ed563
 	// +skill:gengo-guideline
-	github.com/octohelm/gengo v0.0.0-20260429071238-a7c74f0d08fb
+	github.com/octohelm/gengo v0.0.0-20260508082215-12ad0e3d1026
 	// +skill:testing-guideline
-	github.com/octohelm/x v0.0.0-20260423102402-017813b113b1
+	github.com/octohelm/x v0.0.0-20260508075008-3bb151cb7bd8
 )
 
 require (
@@ -44,5 +44,5 @@ require (
 	modernc.org/libc v1.72.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	mvdan.cc/gofumpt v0.9.2 // indirect
+	mvdan.cc/gofumpt v0.10.0 // indirect
 )

@@ -28,7 +28,8 @@ func TestJoinVariants(t *testing.T) {
 		RightJoinOnAs[joinedOrgUser](model.OrgUserT.OrgID, model.OrgT.ID),
 	))
 
-	Then(t, "不同 join 构造器生成对应关键字",
+	Then(
+		t, "不同 join 构造器生成对应关键字",
 		Expect(strings.Contains(full, "FULL JOIN t_user"), Equal(true)),
 		Expect(strings.Contains(cross, "CROSS JOIN t_user"), Equal(true)),
 		Expect(strings.Contains(inner, "INNER JOIN t_user"), Equal(true)),

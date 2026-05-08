@@ -16,7 +16,8 @@ import (
 func TestEndpoint(t *testing.T) {
 	endpoint, err := ParseEndpoint("postgres://user:pass@localhost:5432/app?sslmode=disable")
 
-	Then(t, "ParseEndpoint 拆分连接串字段",
+	Then(
+		t, "ParseEndpoint 拆分连接串字段",
 		Expect(err, Equal(error(nil))),
 		Expect(endpoint.Scheme, Equal("postgres")),
 		Expect(endpoint.Hostname, Equal("localhost")),
@@ -30,25 +31,29 @@ func TestEndpoint(t *testing.T) {
 		Expect(endpoint.IsTLS(), Equal(true)),
 	)
 
-	Then(t, "Endpoint 可序列化为安全文本",
+	Then(
+		t, "Endpoint 可序列化为安全文本",
 		Expect(endpoint.String(), Equal("postgres://user:pass@localhost:5432/app?sslmode=disable")),
 		Expect(endpoint.SecurityString(), Equal("postgres://user:----@localhost:5432/app?sslmode=disable")),
 	)
 
 	var unmarshaled Endpoint
-	Then(t, "Endpoint 支持 text unmarshal",
+	Then(
+		t, "Endpoint 支持 text unmarshal",
 		ExpectDo(func() error {
 			return unmarshaled.UnmarshalText([]byte("sqlite:///tmp/app.sqlite"))
 		}),
 	)
-	Then(t, "Endpoint 反序列化后可读取字段",
+	Then(
+		t, "Endpoint 反序列化后可读取字段",
 		Expect(unmarshaled.IsZero(), Equal(false)),
 		Expect(unmarshaled.Base(), Equal("app")),
 		Expect(unmarshaled.IsTLS(), Equal(false)),
 	)
 
 	text, err := unmarshaled.MarshalText()
-	Then(t, "MarshalText 输出连接串",
+	Then(
+		t, "MarshalText 输出连接串",
 		Expect(err, Equal(error(nil))),
 		Expect(string(text), Equal("sqlite:///tmp/app.sqlite")),
 	)
@@ -69,12 +74,14 @@ func TestEndpointOverrides(t *testing.T) {
 		ExtraOverwrite:    "sslmode=disable&connect_timeout=1",
 	}
 
-	Then(t, "EndpointOverrides 应用覆盖值",
+	Then(
+		t, "EndpointOverrides 应用覆盖值",
 		ExpectDo(func() error {
 			return overrides.PatchEndpoint(&endpoint)
 		}),
 	)
-	Then(t, "EndpointOverrides 覆盖用户名密码和额外参数",
+	Then(
+		t, "EndpointOverrides 覆盖用户名密码和额外参数",
 		Expect(endpoint.Path, Equal("/target")),
 		Expect(endpoint.Username, Equal("user")),
 		Expect(endpoint.Password, Equal("pass")),
@@ -85,14 +92,16 @@ func TestEndpointOverrides(t *testing.T) {
 	)
 
 	sqliteEndpoint := Endpoint{Scheme: "sqlite", Path: "/tmp/origin.sqlite"}
-	Then(t, "sqlite 数据库名不通过 NameOverwrite 改写路径",
+	Then(
+		t, "sqlite 数据库名不通过 NameOverwrite 改写路径",
 		ExpectDo(func() error {
 			return (&EndpointOverrides{NameOverwrite: "target"}).PatchEndpoint(&sqliteEndpoint)
 		}),
 		Expect(sqliteEndpoint.Path, Equal("/tmp/origin.sqlite")),
 	)
 
-	Then(t, "非法 query 覆盖会返回错误",
+	Then(
+		t, "非法 query 覆盖会返回错误",
 		ExpectDo(func() error {
 			return (&EndpointOverrides{ExtraOverwrite: "%zz"}).PatchEndpoint(&endpoint)
 		}, ErrorMatch(mustRegexp("invalid URL escape"))),
@@ -113,7 +122,8 @@ func TestDatabaseLifecycle(t *testing.T) {
 	d.ApplyCatalog("unit", &sqlbuilder.Tables{})
 	d.tables.Add(table)
 
-	Then(t, "Database 初始化 sqlite adapter 并注册 catalog",
+	Then(
+		t, "Database 初始化 sqlite adapter 并注册 catalog",
 		ExpectDo(func() error {
 			return d.Init(ctx)
 		}),
@@ -128,7 +138,8 @@ func TestDatabaseLifecycle(t *testing.T) {
 		}
 	})
 
-	Then(t, "Init 可重复调用且 Session 可注入上下文",
+	Then(
+		t, "Init 可重复调用且 Session 可注入上下文",
 		ExpectDo(func() error {
 			return d.Init(ctx)
 		}),
@@ -138,7 +149,8 @@ func TestDatabaseLifecycle(t *testing.T) {
 
 	defaulted := &Database{EndpointOverrides: EndpointOverrides{NameOverwrite: "fallback"}}
 	defaulted.SetDefaults()
-	Then(t, "SetDefaults 为缺省 endpoint 生成 sqlite 路径",
+	Then(
+		t, "SetDefaults 为缺省 endpoint 生成 sqlite 路径",
 		Expect(defaulted.Endpoint.Scheme, Equal("sqlite")),
 		Expect(defaulted.Endpoint.Base(), Equal("fallback")),
 	)

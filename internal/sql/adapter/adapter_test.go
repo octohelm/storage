@@ -42,13 +42,15 @@ func TestRegisterAndOpen(t *testing.T) {
 	Register(&fakeAdapter{}, "unitadapter-alias")
 
 	opened, err := Open(context.Background(), "unitadapter-alias://host/db")
-	Then(t, "Open 根据 scheme 找到已注册 adapter",
+	Then(
+		t, "Open 根据 scheme 找到已注册 adapter",
 		Expect(err, Equal(error(nil))),
 		Expect(opened.(*fakeAdapter).dsn.Scheme, Equal("unitadapter-alias")),
 	)
 
 	_, err = Open(context.Background(), "missing://host/db")
-	Then(t, "Open 对未知 scheme 返回明确错误",
+	Then(
+		t, "Open 对未知 scheme 返回明确错误",
 		Expect(err.Error(), Equal("missing adapter for missing")),
 	)
 }
@@ -62,7 +64,8 @@ func TestSqlDoContext(t *testing.T) {
 
 	ctx := ContextWithSqlDo(context.Background(), db)
 
-	Then(t, "ContextWithSqlDo 可写入并读取 SQL 执行器",
+	Then(
+		t, "ContextWithSqlDo 可写入并读取 SQL 执行器",
 		Expect(SqlDoFromContext(ctx) == db, Equal(true)),
 		Expect(SqlDoFromContext(context.Background()), Equal(SqlDo(nil))),
 	)
@@ -84,7 +87,8 @@ func TestWrappedDBExecQueryAndTransaction(t *testing.T) {
 	result, err := wrapped.Exec(ctx, sqlfrag.Pair("UPDATE t SET f = ?", 1))
 	rowsAffected, _ := result.RowsAffected()
 
-	Then(t, "Exec 收集 fragment 并执行 SQL",
+	Then(
+		t, "Exec 收集 fragment 并执行 SQL",
 		Expect(err, Equal(error(nil))),
 		Expect(rowsAffected, Equal(int64(1))),
 	)
@@ -95,7 +99,8 @@ func TestWrappedDBExecQueryAndTransaction(t *testing.T) {
 		defer rows.Close()
 	}
 
-	Then(t, "Query 收集 fragment 并返回 rows",
+	Then(
+		t, "Query 收集 fragment 并返回 rows",
 		Expect(err, Equal(error(nil))),
 		Expect(rows != nil, Equal(true)),
 	)
@@ -108,7 +113,8 @@ func TestWrappedDBExecQueryAndTransaction(t *testing.T) {
 		return err
 	})
 
-	Then(t, "Transaction 在无外层事务时提交成功动作",
+	Then(
+		t, "Transaction 在无外层事务时提交成功动作",
 		Expect(err, Equal(error(nil))),
 	)
 
@@ -119,11 +125,13 @@ func TestWrappedDBExecQueryAndTransaction(t *testing.T) {
 		return errAction
 	})
 
-	Then(t, "Transaction 在动作返回错误时回滚",
+	Then(
+		t, "Transaction 在动作返回错误时回滚",
 		Expect(err, Equal(errAction)),
 	)
 
-	Then(t, "空 fragment 不执行 SQL",
+	Then(
+		t, "空 fragment 不执行 SQL",
 		ExpectMustValue(func() (sql.Result, error) {
 			return wrapped.Exec(ctx, nil)
 		}, Equal(sql.Result(nil))),
@@ -132,7 +140,8 @@ func TestWrappedDBExecQueryAndTransaction(t *testing.T) {
 		}, Equal((*sql.Rows)(nil))),
 	)
 
-	Then(t, "sqlmock 所有预期均满足",
+	Then(
+		t, "sqlmock 所有预期均满足",
 		ExpectDo(mock.ExpectationsWereMet),
 	)
 }
@@ -150,13 +159,15 @@ func TestWrappedDBErrors(t *testing.T) {
 
 	mock.ExpectExec("DELETE FROM t").WillReturnError(driver.ErrBadConn)
 	_, err = wrapped.Exec(context.Background(), sqlfrag.Pair("DELETE FROM t"))
-	Then(t, "Exec 错误会经过 convertErr 包装",
+	Then(
+		t, "Exec 错误会经过 convertErr 包装",
 		ExpectDo(func() error { return err }, ErrorMatch(regexp.MustCompile(`^exec failed: converted: .*: DELETE FROM t$`))),
 	)
 
 	mock.ExpectQuery("SELECT f FROM t").WillReturnError(driver.ErrBadConn)
 	_, err = wrapped.Query(context.Background(), sqlfrag.Pair("SELECT f FROM t"))
-	Then(t, "Query 错误保留原始错误",
+	Then(
+		t, "Query 错误保留原始错误",
 		ExpectDo(func() error { return err }, ErrorMatch(regexp.MustCompile(`^query failed: .*: SELECT f FROM t$`))),
 	)
 }

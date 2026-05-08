@@ -22,9 +22,11 @@ func TestWithStmt(t *testing.T) {
 					TypedColOf[int](g.T(), "f_group_id"),
 					TypedColOf[int](gr.T(), "f_group_id"),
 				)).
-					From(gr.T(),
+					From(
+						gr.T(),
 						RightJoin(g.T()).On(
-							TypedColOf[int](g.T(), "f_group_id").V(EqCol(TypedColOf[int](gr.T(), "f_group_id")))),
+							TypedColOf[int](g.T(), "f_group_id").V(EqCol(TypedColOf[int](gr.T(), "f_group_id"))),
+						),
 					)
 				return s
 			}).
@@ -33,7 +35,8 @@ func TestWithStmt(t *testing.T) {
 						TypedColOf[int](g.T(), "f_group_id"),
 						TypedColOf[int](gr.T(), "f_group_id"),
 					)).
-						From(gr.T(),
+						From(
+							gr.T(),
 							RightJoin(g.T()).On(
 								TypedColOf[int](g.T(), "f_group_id").V(
 									EqCol(TypedColOf[int](gr.T(), "f_group_id")),
@@ -72,7 +75,8 @@ FROM t_group_with_parent
 					)).
 						From(gr.T(), RightJoin(g.T()).On(
 							TypedColOf[int](g.T(), "f_group_id").V(
-								EqCol(TypedColOf[int](gr.T(), "f_group_id"))),
+								EqCol(TypedColOf[int](gr.T(), "f_group_id")),
+							),
 						))
 					return s
 				}).Exec(func(tables ...Table) sqlfrag.Fragment {

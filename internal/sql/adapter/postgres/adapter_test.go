@@ -42,7 +42,8 @@ func TestCatalog(t *testing.T) {
 		ctx := testutil.NewContext(t)
 
 		tables, err := a.Catalog(ctx)
-		b.Then("could got catalog",
+		b.Then(
+			"could got catalog",
 			bdd.NoError(err),
 		)
 
@@ -61,19 +62,22 @@ func TestMigrate(t *testing.T) {
 		b.When("do migrate", func(b bdd.T) {
 			v1 := sqlbuildercatalog.From(&model.User{})
 
-			b.Then("success",
+			b.Then(
+				"success",
 				bdd.NoError(migrator.Migrate(ctx, adt, v1)),
 			)
 
 			b.When("do migrate v2", func(b bdd.T) {
 				v2 := sqlbuildercatalog.From(&model.UserV2{})
 
-				b.Then("success",
+				b.Then(
+					"success",
 					bdd.NoError(migrator.Migrate(ctx, adt, v2)),
 				)
 
 				b.When("rollback", func(b bdd.T) {
-					b.Then("success",
+					b.Then(
+						"success",
 						bdd.NoError(migrator.Migrate(ctx, adt, v1)),
 					)
 				})

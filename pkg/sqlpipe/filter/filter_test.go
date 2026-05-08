@@ -26,7 +26,8 @@ func TestBuildWhere(t *testing.T) {
 	})
 
 	q, args := sqlfrag.Collect(context.Background(), frag)
-	Then(t, "BuildWhere 组合 AND 和字符串操作",
+	Then(
+		t, "BuildWhere 组合 AND 和字符串操作",
 		Expect(q, Equal("(f_name = ?) AND (f_name LIKE ?)")),
 		Expect(args, Equal([]any{"alice", "a%"})),
 	)
@@ -35,7 +36,8 @@ func TestBuildWhere(t *testing.T) {
 		return model.UserT.Name.V(create(seq))
 	})
 	q, args = sqlfrag.Collect(context.Background(), inFrag)
-	Then(t, "BuildWhere 支持 IN",
+	Then(
+		t, "BuildWhere 支持 IN",
 		Expect(q, Equal("f_name IN (?,?)")),
 		Expect(args, Equal([]any{"a", "b"})),
 	)
@@ -47,7 +49,8 @@ func TestAsWhereAndHelpers(t *testing.T) {
 	)
 
 	q, args := sqlfrag.Collect(context.Background(), src)
-	Then(t, "AsWhere 把 Filter 转换为 SourceOperator",
+	Then(
+		t, "AsWhere 把 Filter 转换为 SourceOperator",
 		Expect(q, Equal("SELECT *\nFROM t_user\nWHERE f_name LIKE ?")),
 		Expect(args, Equal([]any{"%ali%"})),
 	)
@@ -55,12 +58,14 @@ func TestAsWhereAndHelpers(t *testing.T) {
 	sub := slices.Collect(SubFilters(rootfilter.Or(rootfilter.Eq("a"), rootfilter.Eq("b"))))
 	values := slices.Collect(Values(rootfilter.In("a", "b")))
 
-	Then(t, "SubFilters 和 Values 提取子规则和值",
+	Then(
+		t, "SubFilters 和 Values 提取子规则和值",
 		Expect(len(sub), Equal(2)),
 		Expect(values, Equal([]string{"a", "b"})),
 	)
 
-	Then(t, "空 Filter 不生成 where 条件",
+	Then(
+		t, "空 Filter 不生成 where 条件",
 		Expect(BuildWhere[string](nil, nil), Equal(sqlfrag.Fragment(nil))),
 	)
 }

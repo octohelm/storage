@@ -39,7 +39,8 @@ func (recv RecvFunc[M]) Items(c context.Context) iter.Seq2[*M, error] {
 			defer close(chItem)
 			defer close(chErr)
 
-			chErr <- recv(ctx,
+			chErr <- recv(
+				ctx,
 				func(item *M) error {
 					chItem <- item
 					return nil

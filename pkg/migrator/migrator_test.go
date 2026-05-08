@@ -84,22 +84,26 @@ func TestMigrateAndCreateTables(t *testing.T) {
 	target.Add(sqlbuilder.TableFromModel(&model.User{}))
 
 	a := &migratorAdapter{catalog: &sqlbuilder.Tables{}}
-	Then(t, "Migrate 在目标表存在差异时执行迁移",
+	Then(
+		t, "Migrate 在目标表存在差异时执行迁移",
 		ExpectDo(func() error {
 			return Migrate(context.Background(), a, target)
 		}),
 	)
-	Then(t, "Migrate 会执行迁移 SQL",
+	Then(
+		t, "Migrate 会执行迁移 SQL",
 		Expect(a.execed > 0, Equal(true)),
 	)
 
 	a.execed = 0
-	Then(t, "CreateTables 直接按目标 Catalog 创建",
+	Then(
+		t, "CreateTables 直接按目标 Catalog 创建",
 		ExpectDo(func() error {
 			return CreateTables(context.Background(), a, target)
 		}),
 	)
-	Then(t, "CreateTables 会执行建表 SQL",
+	Then(
+		t, "CreateTables 会执行建表 SQL",
 		Expect(a.execed > 0, Equal(true)),
 	)
 }

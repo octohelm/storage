@@ -22,17 +22,20 @@ type byAge struct {
 func TestComposeAndUtil(t *testing.T) {
 	c := filter.Compose(byNick{}, byAge{})
 
-	Then(t, "Compose 先注册字段定义但零值不生成规则",
+	Then(
+		t, "Compose 先注册字段定义但零值不生成规则",
 		Expect(c.IsZero(), Equal(true)),
 	)
 
-	Then(t, "Compose 可从 where/or 文本恢复结构化过滤器",
+	Then(
+		t, "Compose 可从 where/or 文本恢复结构化过滤器",
 		ExpectDo(func() error {
 			return c.UnmarshalText([]byte(`or(where("nick",eq("alice")),where("Age",gt(18)))`))
 		}),
 	)
 
-	Then(t, "Compose 反序列化后保留规则和过滤对象",
+	Then(
+		t, "Compose 反序列化后保留规则和过滤对象",
 		Expect(c.IsZero(), Equal(false)),
 		Expect(len(c.Filters), Equal(2)),
 		ExpectMustValue(func() (string, error) {
@@ -47,7 +50,8 @@ func TestComposeAndUtil(t *testing.T) {
 		filter.Gte(3),
 	}
 
-	Then(t, "MapFilter、MapWhere 与 First 只返回匹配项",
+	Then(
+		t, "MapFilter、MapWhere 与 First 只返回匹配项",
 		Expect(slices.Collect(filter.MapFilter[int](slices.Values(items), func(f *filter.Filter[int]) (string, bool) {
 			return f.String(), true
 		})), Equal([]string{"eq(1)", "gte(3)"})),
@@ -75,13 +79,15 @@ func TestComposeAndUtil(t *testing.T) {
 
 	unsupported := filter.Compose(byNick{})
 	err := unsupported.UnmarshalText([]byte(`or(where("missing",eq("alice")))`))
-	Then(t, "Compose 遇到未注册字段时返回明确错误",
+	Then(
+		t, "Compose 遇到未注册字段时返回明确错误",
 		Expect(err != nil, Equal(true)),
 		Expect(err.Error(), Equal("unsupported ql field `missing`")),
 	)
 
 	preloaded := filter.Compose(byNick{Nick: filter.Eq("alice")})
-	Then(t, "Compose 会把非零初始过滤器转成单条 where",
+	Then(
+		t, "Compose 会把非零初始过滤器转成单条 where",
 		Expect(preloaded.IsZero(), Equal(false)),
 		ExpectMustValue(func() (string, error) {
 			raw, err := preloaded.MarshalText()
@@ -91,7 +97,8 @@ func TestComposeAndUtil(t *testing.T) {
 }
 
 func TestFilterConstructorsAndText(t *testing.T) {
-	Then(t, "Filter 构造器写入正确 op",
+	Then(
+		t, "Filter 构造器写入正确 op",
 		Expect(filter.Eq(1).Op(), Equal(filter.OP__EQ)),
 		Expect(filter.Neq(1).Op(), Equal(filter.OP__NEQ)),
 		Expect(filter.Lt(1).Op(), Equal(filter.OP__LT)),
@@ -117,16 +124,19 @@ func TestFilterConstructorsAndText(t *testing.T) {
 		yield(3)
 		yield(4)
 	}))
-	Then(t, "InSeq 和 NotinSeq 收集序列值",
+	Then(
+		t, "InSeq 和 NotinSeq 收集序列值",
 		Expect(len(slices.Collect(seq.Args())), Equal(2)),
 		Expect(len(slices.Collect(notSeq.Args())), Equal(2)),
 	)
 
 	f := filter.Filter[int]{}
-	Then(t, "Filter 支持文本和字面值解析",
+	Then(
+		t, "Filter 支持文本和字面值解析",
 		ExpectDo(func() error { return f.UnmarshalText([]byte("eq(1)")) }),
 	)
-	Then(t, "函数解析后保留 op 和参数",
+	Then(
+		t, "函数解析后保留 op 和参数",
 		Expect(f.Op(), Equal(filter.OP__EQ)),
 		Expect(len(slices.Collect(f.Args())), Equal(1)),
 		Expect(f.String(), Equal("eq(1)")),
@@ -134,10 +144,12 @@ func TestFilterConstructorsAndText(t *testing.T) {
 		Expect(len(f.OneOf()), Equal(1)),
 	)
 
-	Then(t, "纯字面值按 Eq 处理",
+	Then(
+		t, "纯字面值按 Eq 处理",
 		ExpectDo(func() error { return f.UnmarshalText([]byte(`2`)) }),
 	)
-	Then(t, "字面值解析后转成 Eq",
+	Then(
+		t, "字面值解析后转成 Eq",
 		Expect(f.Op(), Equal(filter.OP__EQ)),
 		Expect(len(slices.Collect(f.Args())), Equal(1)),
 	)
@@ -147,7 +159,8 @@ func TestWhereAndArgAccessors(t *testing.T) {
 	w := filter.Where("age", filter.Eq(1), filter.Gt(2))
 	text, _ := w.MarshalText()
 
-	Then(t, "Where 暴露参数、操作符和文本",
+	Then(
+		t, "Where 暴露参数、操作符和文本",
 		Expect(w.Op(), Equal(filter.OP__WHERE)),
 		Expect(w.IsZero(), Equal(false)),
 		Expect(len(slices.Collect(w.Args())), Equal(2)),
@@ -156,7 +169,8 @@ func TestWhereAndArgAccessors(t *testing.T) {
 	)
 
 	var parsed filter.Rule = filter.Where[int]("")
-	Then(t, "Where 可从文本反序列化",
+	Then(
+		t, "Where 可从文本反序列化",
 		Expect(parsed != nil, Equal(true)),
 	)
 }

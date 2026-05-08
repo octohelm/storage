@@ -60,7 +60,7 @@ func (g *groupBy) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			}
 		}
 
-		if !(sqlfrag.IsNil(g.havingCond)) {
+		if !sqlfrag.IsNil(g.havingCond) {
 			if !yield(" HAVING ", nil) {
 				return
 			}

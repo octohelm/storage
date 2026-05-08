@@ -11,7 +11,8 @@ import (
 
 func TestHelpers(t *testing.T) {
 	ctx := testutil.NewContext(t)
-	Then(t, "NewContext 返回可用上下文",
+	Then(
+		t, "NewContext 返回可用上下文",
 		Expect(ctx != nil, Equal(true)),
 	)
 

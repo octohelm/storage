@@ -37,7 +37,8 @@ WHERE f_a = ?`, 1))
 					),
 					Comment("comment"),
 				),
-			testutil.BeFragment(`
+			testutil.BeFragment(
+				`
 SELECT *
 FROM T
 WHERE f_a = ?
@@ -48,7 +49,8 @@ WHERE f_a = ?
 	t.Run("select with target", func(t *testing.T) {
 		testingx.Expect[sqlfrag.Fragment](t,
 			Select(Col("F_a")).
-				From(table,
+				From(
+					table,
 					Where(
 						TypedCol[int]("F_a").V(Eq(1)),
 					),
@@ -66,7 +68,8 @@ WHERE f_a = ?`, 1))
 				Where(TypedCol[int]("F_a").V(Eq(1))),
 				ForUpdate(),
 			),
-			testutil.BeFragment(`
+			testutil.BeFragment(
+				`
 SELECT *
 FROM T
 WHERE f_a = ?

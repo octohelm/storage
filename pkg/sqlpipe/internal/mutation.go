@@ -154,7 +154,7 @@ func (m *Mutation[M]) PrepareAssignments(ctx context.Context, t sqlbuilder.Table
 			for sfv := range structs.AllFieldValue(ctx, values[0]) {
 				if includes.F(sfv.Field.FieldName) != nil || !reflectx.IsEmptyValue(sfv.Value) {
 					if col := t.F(sfv.Field.FieldName); col != nil {
-						if !(yield(sqlbuilder.CastColumn[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))) {
+						if !yield(sqlbuilder.CastColumn[any](col).By(sqlbuilder.Value(sfv.Value.Interface()))) {
 							return
 						}
 					}
@@ -169,7 +169,7 @@ func (m *Mutation[M]) PrepareAssignments(ctx context.Context, t sqlbuilder.Table
 		return func(yield func(sqlbuilder.Assignment) bool) {
 			for sfv := range structs.AllFieldValue(ctx, values[0]) {
 				if col := cols.F(sfv.Field.FieldName); col != nil {
-					if !(yield(sqlbuilder.CastColumn[any](col).By(sqlbuilder.Value(sfv.Value.Interface())))) {
+					if !yield(sqlbuilder.CastColumn[any](col).By(sqlbuilder.Value(sfv.Value.Interface()))) {
 						return
 					}
 				}

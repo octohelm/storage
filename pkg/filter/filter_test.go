@@ -25,7 +25,8 @@ func TestFilter(t *testing.T) {
 			t.Run(c.query, func(t *testing.T) {
 				data := MustValue(t, c.filter.MarshalText)
 
-				Then(t, "Marshal 结果应符合预期",
+				Then(
+					t, "Marshal 结果应符合预期",
 					Expect(string(data), Equal(c.query)),
 				)
 
@@ -39,7 +40,8 @@ func TestFilter(t *testing.T) {
 					return f.(encoding.TextUnmarshaler).UnmarshalText(data)
 				})
 
-				Then(t, "Unmarshal 且再次 Marshal 后结果应一致",
+				Then(
+					t, "Unmarshal 且再次 Marshal 后结果应一致",
 					ExpectMustValue(f.MarshalText, Equal(data)),
 				)
 			})
@@ -53,7 +55,8 @@ func TestFilter(t *testing.T) {
 			return f.UnmarshalText([]byte("1"))
 		})
 
-		Then(t, "单值应解析为 eq 规则",
+		Then(
+			t, "单值应解析为 eq 规则",
 			Expect(f.String(), Equal("eq(1)")),
 		)
 	})
@@ -66,7 +69,8 @@ func TestFilter(t *testing.T) {
 
 		expected := `or(where("item.name",eq("x")),where("item.id",in(1,2,3,4)))`
 
-		Then(t, "组合 Filter 应正确序列化",
+		Then(
+			t, "组合 Filter 应正确序列化",
 			ExpectMustValue(c.MarshalText, Equal([]byte(expected))),
 		)
 
@@ -77,7 +81,8 @@ func TestFilter(t *testing.T) {
 				return cc.UnmarshalText([]byte(expected))
 			})
 
-			Then(t, "反序列化后应能还原相同的规则",
+			Then(
+				t, "反序列化后应能还原相同的规则",
 				ExpectMustValue(cc.MarshalText, Equal([]byte(expected))),
 			)
 		})
@@ -87,7 +92,8 @@ func TestFilter(t *testing.T) {
 		t.Run("Nil filter handling", func(t *testing.T) {
 			var f *Filter[int]
 
-			Then(t, "空指针应被识别为 Nil",
+			Then(
+				t, "空指针应被识别为 Nil",
 				Expect(f, Be(cmp.Nil[*Filter[int]]())),
 			)
 		})

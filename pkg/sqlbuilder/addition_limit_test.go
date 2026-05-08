@@ -41,7 +41,8 @@ LIMIT 1
 					),
 					Limit(-1),
 				),
-			testutil.BeFragment(`
+			testutil.BeFragment(
+				`
 SELECT *
 FROM T
 WHERE f_a = ?
@@ -59,7 +60,8 @@ WHERE f_a = ?
 					),
 					Limit(10).Offset(200),
 				),
-			testutil.BeFragment(`
+			testutil.BeFragment(
+				`
 SELECT *
 FROM T
 WHERE f_a = ?

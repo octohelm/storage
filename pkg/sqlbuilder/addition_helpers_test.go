@@ -26,7 +26,8 @@ func TestAdditionsAndFieldValueHelpers(t *testing.T) {
 	orderQ, _ := sqlfrag.Collect(context.Background(), orderBy)
 	distinctQ, _ := sqlfrag.Collect(context.Background(), distinct)
 
-	Then(t, "Returning、OnConflict、OrderBy、DistinctOn 生成片段",
+	Then(
+		t, "Returning、OnConflict、OrderBy、DistinctOn 生成片段",
 		Expect(retQ, Equal("RETURNING f_name")),
 		Expect(conflictQ, Equal("ON CONFLICT (f_name) DO NOTHING")),
 		Expect(conflictUpdateQ, Equal("ON CONFLICT (f_name) DO UPDATE SET f_name = ?")),

@@ -26,7 +26,8 @@ func TestOrderBy(t *testing.T) {
 						TypedCol[int]("F_a").V(Eq(1)),
 					),
 				),
-			testutil.BeFragment(`
+			testutil.BeFragment(
+				`
 SELECT *
 FROM T
 WHERE f_a = ?

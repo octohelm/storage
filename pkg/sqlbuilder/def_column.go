@@ -210,7 +210,8 @@ func (c *column[T]) Frag(ctx context.Context) iter.Seq2[string, []any] {
 		}
 
 		if toggles.Is(ToggleNeedAutoAlias) {
-			return sqlfrag.Pair("?.? AS ?",
+			return sqlfrag.Pair(
+				"?.? AS ?",
 				c.table,
 				sqlfrag.Const(c.name),
 				sqlfrag.Pair(sqlfrag.SafeProjected(c.table.TableName(), c.name)),

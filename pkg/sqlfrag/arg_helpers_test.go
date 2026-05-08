@@ -39,7 +39,8 @@ func TestIterArgsTypedSlices(t *testing.T) {
 	qa, argsa := collectSeq(iterArgs(context.Background(), []any{"a", 1}))
 	q4, args4 := collectSeq(iterArgs(context.Background(), []struct{ N int }{{1}, {2}}))
 
-	Then(t, "iterArgs 支持多种切片类型",
+	Then(
+		t, "iterArgs 支持多种切片类型",
 		Expect(q, Equal("?,?")),
 		Expect(args, Equal([]any{true, false})),
 		Expect(qs, Equal("?,?")),
@@ -86,7 +87,8 @@ func TestIterArgFallbacks(t *testing.T) {
 	q5, args5 := collectSeq(iterArg(context.Background(), []any{}))
 	q6, args6 := collectSeq(iterArg(context.Background(), []byte("ab")))
 
-	Then(t, "iterArg 支持 reflect.Seq、默认值、[]any 和空 fragment 输出",
+	Then(
+		t, "iterArg 支持 reflect.Seq、默认值、[]any 和空 fragment 输出",
 		Expect(q, Equal("?,?")),
 		Expect(args, Equal([]any{1, 2})),
 		Expect(q2, Equal("")),

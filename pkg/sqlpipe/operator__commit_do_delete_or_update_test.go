@@ -33,9 +33,10 @@ WHERE f_name = ?
 
 	t.Run("do update", func(t *testing.T) {
 		updated := src.Pipe(
-			sqlpipe.DoUpdateSet(&model.User{
-				Name: "a",
-			},
+			sqlpipe.DoUpdateSet(
+				&model.User{
+					Name: "a",
+				},
 				model.UserT.Name,
 			),
 		)
@@ -49,9 +50,10 @@ WHERE f_name = ?
 
 	t.Run("do update omit", func(t *testing.T) {
 		updated := src.Pipe(
-			sqlpipe.DoUpdateSetOmit(&model.User{
-				Name: "a",
-			},
+			sqlpipe.DoUpdateSetOmit(
+				&model.User{
+					Name: "a",
+				},
 				model.UserT.Username,
 				model.UserT.Gender,
 				model.UserT.Age,
@@ -110,7 +112,8 @@ WHERE f_name = ?
 				sqlpipe.Returning[model.User](),
 			)
 
-			testingx.Expect[sqlfrag.Fragment](t, withReturning, testutil.BeFragment(`
+			testingx.Expect[sqlfrag.Fragment](t, withReturning, testutil.BeFragment(
+				`
 DELETE FROM t_user
 WHERE f_name = ?
 RETURNING *

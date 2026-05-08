@@ -78,13 +78,15 @@ func TestWrapAndConnector(t *testing.T) {
 	}, "primary", nil)
 
 	roConnector, err := conn.OpenConnector("postgres://user:pass@localhost/db?_ro=true&sslmode=disable")
-	Then(t, "OpenConnector 会移除 _ro 并在名字后追加 ::ro",
+	Then(
+		t, "OpenConnector 会移除 _ro 并在名字后追加 ::ro",
 		Expect(err, Equal(error(nil))),
 		Expect(roConnector.(*loggerConnector).opt.name, Equal("primary::ro")),
 		Expect(roConnector.(*loggerConnector).dsn, Equal("postgres://user:pass@localhost/db?sslmode=disable")),
 	)
 
-	Then(t, "非法 dsn 返回错误",
+	Then(
+		t, "非法 dsn 返回错误",
 		ExpectDo(func() error {
 			_, err := conn.OpenConnector("://bad")
 			return err
@@ -100,23 +102,27 @@ func TestLoggerConnAndHelpers(t *testing.T) {
 	}
 
 	_, err := conn.QueryContext(context.Background(), "SELECT ?", []driver.NamedValue{{Ordinal: 1, Value: 1}})
-	Then(t, "QueryContext 会把 ? 改写为 $1",
+	Then(
+		t, "QueryContext 会把 ? 改写为 $1",
 		Expect(err, Equal(error(nil))),
 		Expect(raw.query, Equal("SELECT $1")),
 	)
 
 	_, err = conn.ExecContext(context.Background(), "UPDATE t SET f = ?", []driver.NamedValue{{Ordinal: 1, Value: 2}})
-	Then(t, "ExecContext 会把 ? 改写为 $1",
+	Then(
+		t, "ExecContext 会把 ? 改写为 $1",
 		Expect(err, Equal(error(nil))),
 		Expect(raw.exec, Equal("UPDATE t SET f = $1")),
 	)
 
 	_, err = conn.BeginTx(context.Background(), driver.TxOptions{})
-	Then(t, "BeginTx 返回 loggingTx 包装",
+	Then(
+		t, "BeginTx 返回 loggingTx 包装",
 		Expect(err, Equal(error(nil))),
 	)
 
-	Then(t, "replaceValueHolder 与 startTimer 提供稳定辅助行为",
+	Then(
+		t, "replaceValueHolder 与 startTimer 提供稳定辅助行为",
 		Expect(replaceValueHolder("a ? b ?"), Equal("a $1 b $2")),
 		ExpectMustValue(func() (bool, error) {
 			timer := startTimer()
@@ -125,12 +131,14 @@ func TestLoggerConnAndHelpers(t *testing.T) {
 		}, Equal(true)),
 	)
 
-	Then(t, "默认 ErrorLevel 为 1，显式函数可覆盖",
+	Then(
+		t, "默认 ErrorLevel 为 1，显式函数可覆盖",
 		Expect(opt{}.ErrorLevel(errors.New("x")), Equal(1)),
 		Expect(opt{errorLevel: func(err error) int { return 3 }}.ErrorLevel(errors.New("x")), Equal(3)),
 	)
 
-	Then(t, "Prepare 明确禁止使用",
+	Then(
+		t, "Prepare 明确禁止使用",
 		ExpectMustValue(func() (panicked bool, err error) {
 			defer func() {
 				panicked = recover() != nil
@@ -144,13 +152,15 @@ func TestLoggerConnAndHelpers(t *testing.T) {
 func TestLoggingTx(t *testing.T) {
 	logger := logr.FromContext(logr.WithLogger(context.Background(), slog.Logger(slog.Default())))
 	tx := &loggingTx{tx: &stubTx{}, logger: logger}
-	Then(t, "Commit 与 Rollback 透传到底层事务",
+	Then(
+		t, "Commit 与 Rollback 透传到底层事务",
 		Expect(tx.Commit(), Equal(error(nil))),
 		Expect(tx.Rollback(), Equal(error(nil))),
 	)
 
 	failTx := &loggingTx{tx: &stubTx{err: errors.New("tx failed")}, logger: logger}
-	Then(t, "事务错误向上传递",
+	Then(
+		t, "事务错误向上传递",
 		ExpectDo(failTx.Commit, ErrorMatch(regexp.MustCompile("tx failed"))),
 		ExpectDo(failTx.Rollback, ErrorMatch(regexp.MustCompile("tx failed"))),
 	)

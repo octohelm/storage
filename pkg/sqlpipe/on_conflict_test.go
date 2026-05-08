@@ -19,7 +19,8 @@ func TestOnConflictBranches(t *testing.T) {
 	}
 
 	q, _ := sqlfrag.Collect(context.Background(), base.toOnConflictAddition(context.Background(), 0))
-	Then(t, "默认 on conflict 走 DO NOTHING",
+	Then(
+		t, "默认 on conflict 走 DO NOTHING",
 		Expect(q, Equal("ON CONFLICT (f_name,f_deleted_at) DO NOTHING")),
 	)
 
@@ -28,7 +29,8 @@ func TestOnConflictBranches(t *testing.T) {
 		updates: []modelscoped.Column[model.User]{model.UserT.Name},
 	}
 	q, _ = sqlfrag.Collect(context.Background(), update.toOnConflictAddition(context.Background(), 0))
-	Then(t, "显式 updates 会生成 DO UPDATE SET",
+	Then(
+		t, "显式 updates 会生成 DO UPDATE SET",
 		Expect(q, Equal("ON CONFLICT (f_name,f_deleted_at) DO UPDATE SET f_name = EXCLUDED.f_name")),
 	)
 
@@ -39,13 +41,15 @@ func TestOnConflictBranches(t *testing.T) {
 		},
 	}
 	q, args := sqlfrag.Collect(context.Background(), withFn.toOnConflictAddition(context.Background(), 0))
-	Then(t, "自定义 with 回调优先于默认策略",
+	Then(
+		t, "自定义 with 回调优先于默认策略",
 		Expect(q, Equal("ON CONFLICT (f_name,f_deleted_at) DO UPDATE SET f_name = ?")),
 		Expect(args, Equal([]any{"alice"})),
 	)
 
 	q, _ = sqlfrag.Collect(context.Background(), base.toOnConflictAddition(context.Background(), flags.ForReturning))
-	Then(t, "返回行场景会回退为自更新冲突列",
+	Then(
+		t, "返回行场景会回退为自更新冲突列",
 		Expect(q, Equal("ON CONFLICT (f_name,f_deleted_at) DO UPDATE SET f_name = EXCLUDED.f_name")),
 	)
 }

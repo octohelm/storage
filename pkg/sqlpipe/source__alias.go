@@ -59,7 +59,8 @@ func (s *sourceAlias[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) 
 	}, s.patchers...)...)
 
 	return b.WithFlag(s.GetFlag(ctx)).WithSource(
-		sqlfrag.Pair("? AS ?",
+		sqlfrag.Pair(
+			"? AS ?",
 			sqlfrag.Block(stmt),
 			sqlfrag.Const(s.name),
 		),

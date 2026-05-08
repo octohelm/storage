@@ -75,7 +75,8 @@ func (s *aggregatedSource[S, O]) ApplyStmt(ctx context.Context, b *internal.Buil
 		stmt := internal.BuildStmt(ctx, src)
 
 		return b.WithSource(
-			sqlfrag.Pair("? AS ?",
+			sqlfrag.Pair(
+				"? AS ?",
 				sqlfrag.Block(stmt),
 				sqlfrag.Const((*new(S)).TableName()),
 			),

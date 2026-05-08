@@ -11,11 +11,13 @@ import (
 )
 
 func TestStmtUpdate(t *testing.T) {
-	t0 := T("t_0",
+	t0 := T(
+		"t_0",
 		Col("f_a"),
 		Col("f_b"),
 	)
-	t1 := T("t_1",
+	t1 := T(
+		"t_1",
 		Col("f_a"),
 	)
 

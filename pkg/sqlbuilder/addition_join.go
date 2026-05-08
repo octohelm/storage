@@ -91,7 +91,7 @@ func (j *join) Frag(ctx context.Context) iter.Seq2[string, []any] {
 			}
 		}
 
-		if !(sqlfrag.IsNil(j.joinCondition)) {
+		if !sqlfrag.IsNil(j.joinCondition) {
 			if !yield(" ON ", nil) {
 				return
 			}

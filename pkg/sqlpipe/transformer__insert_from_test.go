@@ -23,7 +23,8 @@ func TestInsertFrom(t *testing.T) {
 				sqlpipe.Project[model.User](
 					model.UserT.Name,
 					sqlfrag.Pair("?", 1),
-				)),
+				),
+			),
 			model.OrgT.Name,
 			model.OrgT.ID,
 		).Pipe(

@@ -10,7 +10,8 @@ import (
 func TestSeqOperators(t *testing.T) {
 	values := Of(1, 2, 3, 4)
 
-	Then(t, "Map 和 Filter 保持 iter.Seq 的惰性组合语义",
+	Then(
+		t, "Map 和 Filter 保持 iter.Seq 的惰性组合语义",
 		Expect(
 			slices.Collect(Map(Filter(values, func(v int) bool {
 				return v%2 == 0
@@ -27,7 +28,8 @@ func TestSeqOperators(t *testing.T) {
 		break
 	}
 
-	Then(t, "yield 返回 false 时 Of 停止遍历",
+	Then(
+		t, "yield 返回 false 时 Of 停止遍历",
 		Expect(visited, Equal([]int{1})),
 	)
 }

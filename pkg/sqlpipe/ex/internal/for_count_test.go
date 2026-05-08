@@ -19,7 +19,8 @@ func TestForCount(t *testing.T) {
 	)
 
 	q, _ := sqlfrag.Collect(context.Background(), src)
-	Then(t, "ForCount 去掉排序和分页标记",
+	Then(
+		t, "ForCount 去掉排序和分页标记",
 		Expect(q, Equal("SELECT *\nFROM t_user")),
 	)
 }

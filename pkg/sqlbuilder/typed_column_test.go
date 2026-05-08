@@ -12,7 +12,8 @@ import (
 )
 
 func TestTypedColumnValuers(t *testing.T) {
-	tUser := sqlbuilder.T("t_user",
+	tUser := sqlbuilder.T(
+		"t_user",
 		sqlbuilder.Col("f_id", sqlbuilder.ColField("ID")),
 		sqlbuilder.Col("f_name", sqlbuilder.ColField("Name")),
 	)
@@ -47,7 +48,8 @@ func TestTypedColumnValuers(t *testing.T) {
 	qLt, argsLt := sqlfrag.Collect(context.Background(), idCol.V(sqlbuilder.Lt(9)))
 	qLte, argsLte := sqlfrag.Collect(context.Background(), idCol.V(sqlbuilder.Lte(9)))
 
-	Then(t, "TypedColumn 支持各类比较和匹配 valuer",
+	Then(
+		t, "TypedColumn 支持各类比较和匹配 valuer",
 		Expect(qEq, Equal("f_name = ?")),
 		Expect(argsEq, Equal([]any{"alice"})),
 		Expect(qEqCol, Equal("f_id = f_ref")),
@@ -89,7 +91,8 @@ func TestTypedColumnValuers(t *testing.T) {
 	qIncr, argsIncr := sqlfrag.Collect(context.Background(), idCol.By(sqlbuilder.Incr(1)))
 	qDes, argsDes := sqlfrag.Collect(context.Background(), idCol.By(sqlbuilder.Des(1)))
 
-	Then(t, "Value、AsValue、Incr、Des 可直接生成 assignment",
+	Then(
+		t, "Value、AsValue、Incr、Des 可直接生成 assignment",
 		Expect(qValue, Equal("f_created = ?")),
 		Expect(argsValue, Equal([]any{"x"})),
 		Expect(qAsValue, Equal("f_created = f_name")),
@@ -99,7 +102,8 @@ func TestTypedColumnValuers(t *testing.T) {
 		Expect(argsDes, Equal([]any{1})),
 	)
 
-	Then(t, "空 In/NotIn 返回 nil fragment",
+	Then(
+		t, "空 In/NotIn 返回 nil fragment",
 		Expect(sqlfrag.IsNil(sqlbuilder.In[int]()(idCol)), Equal(true)),
 		Expect(sqlfrag.IsNil(sqlbuilder.NotIn[int]()(idCol)), Equal(true)),
 	)

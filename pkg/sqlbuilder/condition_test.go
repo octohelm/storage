@@ -38,7 +38,8 @@ func TestConditionsAndCombination(t *testing.T) {
 		sqlbuilder.Select(sqlfrag.Const("3")),
 	))
 
-	Then(t, "条件组合和集合操作都会生成 SQL",
+	Then(
+		t, "条件组合和集合操作都会生成 SQL",
 		Expect(condQ, Equal("(a = ?) AND ((b = ?) OR (c = ?))")),
 		Expect(condArgs, Equal([]any{1, 2, 3})),
 		Expect(seqQ, Equal("(a = ?) XOR (b = ?)")),

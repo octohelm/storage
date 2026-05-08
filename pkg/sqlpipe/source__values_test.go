@@ -32,7 +32,8 @@ func TestSourceValues(t *testing.T) {
 
 		src := sqlpipe.Values(users, model.UserT.Name)
 
-		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(
+			`
 INSERT INTO t_user (f_name)
 VALUES
 	(?),
@@ -46,7 +47,8 @@ VALUES
 				sqlpipe.OnConflictDoNothing(model.UserT.I.IName),
 			)
 
-			testingx.Expect[sqlfrag.Fragment](t, withOnConflict, testutil.BeFragment(`
+			testingx.Expect[sqlfrag.Fragment](t, withOnConflict, testutil.BeFragment(
+				`
 INSERT INTO t_user (f_name)
 VALUES
 	(?),
@@ -61,7 +63,8 @@ ON CONFLICT (f_name,f_deleted_at) DO NOTHING
 					sqlpipe.Returning[model.User](),
 				)
 
-				testingx.Expect[sqlfrag.Fragment](t, withReturning, testutil.BeFragment(`
+				testingx.Expect[sqlfrag.Fragment](t, withReturning, testutil.BeFragment(
+					`
 INSERT INTO t_user (f_name)
 VALUES
 	(?),
@@ -79,7 +82,8 @@ RETURNING *
 				sqlpipe.Returning[model.User](),
 			)
 
-			testingx.Expect[sqlfrag.Fragment](t, withReturning, testutil.BeFragment(`
+			testingx.Expect[sqlfrag.Fragment](t, withReturning, testutil.BeFragment(
+				`
 INSERT INTO t_user (f_name)
 VALUES
 	(?),
@@ -101,7 +105,8 @@ RETURNING *
 			},
 		}
 
-		src := sqlpipe.ValuesOmit(users,
+		src := sqlpipe.ValuesOmit(
+			users,
 			model.UserT.Nickname,
 			model.UserT.Username,
 			model.UserT.Gender,
@@ -110,7 +115,8 @@ RETURNING *
 			model.UserT.UpdatedAt,
 			model.UserT.DeletedAt,
 		)
-		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(
+			`
 INSERT INTO t_user (f_name)
 VALUES
 	(?),
@@ -122,7 +128,8 @@ VALUES
 
 	t.Run("single value helpers", func(t *testing.T) {
 		src := sqlpipe.Value(&model.User{Name: "1"}, model.UserT.Name)
-		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(`
+		testingx.Expect[sqlfrag.Fragment](t, src, testutil.BeFragment(
+			`
 INSERT INTO t_user (f_name)
 VALUES
 	(?)
@@ -133,7 +140,8 @@ VALUES
 		srcSeq := sqlpipe.ValueSeq(func(yield func(*model.User) bool) {
 			yield(&model.User{Name: "1"})
 		}, model.UserT.Name)
-		testingx.Expect[sqlfrag.Fragment](t, srcSeq, testutil.BeFragment(`
+		testingx.Expect[sqlfrag.Fragment](t, srcSeq, testutil.BeFragment(
+			`
 INSERT INTO t_user (f_name)
 VALUES
 	(?)
@@ -153,7 +161,8 @@ VALUES
 		srcOmit := sqlpipe.ValueSeqOmit(func(yield func(*model.User) bool) {
 			yield(&model.User{Name: "1"})
 		}, model.UserT.Nickname, model.UserT.Username, model.UserT.Gender, model.UserT.Age, model.UserT.CreatedAt, model.UserT.UpdatedAt, model.UserT.DeletedAt)
-		testingx.Expect[sqlfrag.Fragment](t, srcOmit, testutil.BeFragment(`
+		testingx.Expect[sqlfrag.Fragment](t, srcOmit, testutil.BeFragment(
+			`
 INSERT INTO t_user (f_name)
 VALUES
 	(?)

@@ -59,7 +59,8 @@ func (s *distinctOn[M]) ApplyStmt(ctx context.Context, b *internal.Builder[M]) *
 			WithDefaultProjects(x.DefaultProjects...).
 			WithProjects(x.Projects...).
 			WithSource(
-				sqlfrag.Pair("? AS ?",
+				sqlfrag.Pair(
+					"? AS ?",
 					sqlfrag.Block(stmt),
 					sqlfrag.Const(m.TableName()),
 				),

@@ -51,22 +51,26 @@ func TestSessionBasics(t *testing.T) {
 	roAdapter := &stubAdapter{name: "ro"}
 	s := NewWithReadOnly(mainAdapter, roAdapter, "primary")
 
-	Then(t, "Session 返回名称和只读 adapter",
+	Then(
+		t, "Session 返回名称和只读 adapter",
 		Expect(s.Name(), Equal("primary")),
 		Expect(s.Adapter(), Equal(Adapter(mainAdapter))),
 		Expect(s.Adapter(ReadOnly()), Equal(Adapter(roAdapter))),
 	)
 
-	Then(t, "Session.Tx 透传到底层 adapter",
+	Then(
+		t, "Session.Tx 透传到底层 adapter",
 		ExpectDo(func() error {
 			return s.Tx(context.Background(), func(ctx context.Context) error { return nil })
 		}),
 	)
-	Then(t, "Session.Tx 调用底层事务",
+	Then(
+		t, "Session.Tx 调用底层事务",
 		Expect(mainAdapter.tx, Equal(1)),
 	)
 
-	Then(t, "Session.T 支持模型和表",
+	Then(
+		t, "Session.T 支持模型和表",
 		Expect(s.T(&model.User{}).TableName(), Equal("t_user")),
 		Expect(s.T(model.UserT).TableName(), Equal("t_user")),
 	)
@@ -80,14 +84,16 @@ func TestSessionContextAndRegistry(t *testing.T) {
 	catalog.Add(sqlbuilder.TableFromModel(&model.User{}))
 	RegisterCatalog("primary", catalog)
 
-	Then(t, "FromContext 和 For 根据名称与模型查找 session",
+	Then(
+		t, "FromContext 和 For 根据名称与模型查找 session",
 		Expect(FromContext(ctx, "primary").Name(), Equal("primary")),
 		Expect(For(ctx, "primary").Name(), Equal("primary")),
 		Expect(For(ctx, &model.User{}).Name(), Equal("primary")),
 		Expect(For(ctx, tableWrapper{}).Name(), Equal("primary")),
 	)
 
-	Then(t, "MustFor 在目标不存在时 panic",
+	Then(
+		t, "MustFor 在目标不存在时 panic",
 		ExpectMustValue(func() (panicked bool, err error) {
 			defer func() { panicked = recover() != nil }()
 			_ = MustFor(context.Background(), "missing")
@@ -97,12 +103,14 @@ func TestSessionContextAndRegistry(t *testing.T) {
 }
 
 func TestHelpers(t *testing.T) {
-	Then(t, "Recv 透传 scanner.Recv",
+	Then(
+		t, "Recv 透传 scanner.Recv",
 		Expect(Recv(func(v *int) error { return nil }) != nil, Equal(true)),
 		Expect(Scan != nil, Equal(true)),
 	)
 
-	Then(t, "InTx 识别非事务上下文",
+	Then(
+		t, "InTx 识别非事务上下文",
 		Expect(InTx(context.Background()), Equal(false)),
 	)
 }

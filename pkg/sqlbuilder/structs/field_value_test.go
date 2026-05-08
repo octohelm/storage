@@ -36,14 +36,16 @@ func TestAllFieldValue(t *testing.T) {
 		Old:  "legacy",
 	}))
 
-	Then(t, "AllFieldValue 会跳过 deprecated 字段",
+	Then(
+		t, "AllFieldValue 会跳过 deprecated 字段",
 		Expect(len(values), Equal(1)),
 		Expect(values[0].Field.FieldName, Equal("Name")),
 		Expect(values[0].Value.Interface(), Equal(any("alice"))),
 	)
 
 	modelValues := slices.Collect(AllFieldValue(context.Background(), &userModel{Name: "alice"}))
-	Then(t, "AllFieldValue 会继承模型表名",
+	Then(
+		t, "AllFieldValue 会继承模型表名",
 		Expect(modelValues[0].TableName, Equal("t_user")),
 	)
 
@@ -53,7 +55,8 @@ func TestAllFieldValue(t *testing.T) {
 		return v.Field.FieldName == "Name" && v.TableName == "t_org"
 	})
 
-	Then(t, "AllFieldValue 会尊重 alias 覆盖",
+	Then(
+		t, "AllFieldValue 会尊重 alias 覆盖",
 		Expect(orgName >= 0, Equal(true)),
 	)
 }
@@ -64,7 +67,8 @@ func TestAllFieldValueOmitZero(t *testing.T) {
 
 	omitted := slices.Collect(AllFieldValueOmitZero(context.Background(), rv, "Name"))
 
-	Then(t, "AllFieldValueOmitZero 会初始化空指针 reflect.Value 并保留显式排除字段",
+	Then(
+		t, "AllFieldValueOmitZero 会初始化空指针 reflect.Value 并保留显式排除字段",
 		Expect(ptr != nil, Equal(true)),
 		Expect(len(omitted), Equal(1)),
 		Expect(omitted[0].Field.FieldName, Equal("Name")),

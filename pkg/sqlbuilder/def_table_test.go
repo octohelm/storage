@@ -11,18 +11,21 @@ import (
 )
 
 func TestTable_Expr(t *testing.T) {
-	tUser := T("t_user",
+	tUser := T(
+		"t_user",
 		Col("f_id", ColField("ID"), ColTypeOf(uint64(0), ",autoincrement")),
 		Col("f_name", ColField("Name"), ColTypeOf("", ",size=128,default=''")),
 	)
 
-	tUserRole := T("t_user_role",
+	tUserRole := T(
+		"t_user_role",
 		Col("f_id", ColField("ID"), ColTypeOf(uint64(0), ",autoincrement")),
 		Col("f_user_id", ColField("UserID"), ColTypeOf(uint64(0), "")),
 	)
 
 	t.Run("replace table", func(t *testing.T) {
-		testingx.Expect(t,
+		testingx.Expect(
+			t,
 			tUser.(TableCanFragment).Fragment("#.*"),
 			testutil.BeFragment("t_user.*"),
 		)

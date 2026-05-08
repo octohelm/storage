@@ -118,7 +118,7 @@ func iterArg(ctx context.Context, v any) iter.Seq2[string, []any] {
 }
 
 func iterArgs(ctx context.Context, arg any) iter.Seq2[string, []any] {
-	switch x := (arg).(type) {
+	switch x := arg.(type) {
 	case []bool:
 		return Values[bool](slices.Values(x)).Frag(ctx)
 	case []string:

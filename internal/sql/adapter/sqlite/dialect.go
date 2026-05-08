@@ -182,7 +182,8 @@ func (c *dialect) ModifyColumn(col sqlbuilder.Column, prevCol sqlbuilder.Column)
 		sqlbuilder.ColDef(sqlbuilder.GetColumnDef(prevCol)),
 	).Of(sqlbuilder.GetColumnTable(prevCol))
 
-	return sqlfrag.JoinValues("",
+	return sqlfrag.JoinValues(
+		"",
 		sqlfrag.Pair("\nALTER TABLE @table RENAME COLUMN @prevCol TO @tmpCol;", sqlfrag.NamedArgSet{
 			"table":   sqlbuilder.GetColumnTable(prevCol),
 			"prevCol": prevCol,

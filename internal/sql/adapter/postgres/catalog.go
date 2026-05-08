@@ -27,7 +27,8 @@ func catalog(ctx context.Context, a adapter.Adapter, dbName string) (*sqlbuilder
 
 	tableSchema := "public"
 
-	stmt := sqlbuilder.Select(sqlbuilder.ColumnCollect(tableColumnSchema.Cols())).From(tableColumnSchema,
+	stmt := sqlbuilder.Select(sqlbuilder.ColumnCollect(tableColumnSchema.Cols())).From(
+		tableColumnSchema,
 		sqlbuilder.Where(
 			sqlbuilder.And(
 				sqlbuilder.TypedColOf[string](tableColumnSchema, "TABLE_SCHEMA").V(sqlbuilder.Eq(tableSchema)),
@@ -85,7 +86,8 @@ func catalog(ctx context.Context, a adapter.Adapter, dbName string) (*sqlbuilder
 		{
 			rows, err := a.Query(
 				ctx,
-				sqlfrag.Pair(`
+				sqlfrag.Pair(
+					`
 SELECT connamespace::regnamespace    AS schemaname,
        conrelid::regclass        AS tablename,
        conname                   AS indexname,
@@ -94,7 +96,8 @@ FROM pg_constraint
 WHERE connamespace = ?::regnamespace
 ORDER BY conrelid::regclass::text, contype DESC;
 `, tableSchema,
-				))
+				),
+			)
 			if err != nil {
 				return nil, err
 			}

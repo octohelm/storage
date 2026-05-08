@@ -22,7 +22,8 @@ type joinedOrgUser struct {
 func TestProjectSortAndHelpers(t *testing.T) {
 	base := FromAll[model.User]()
 
-	Then(t, "Columns helper 透传列序列",
+	Then(
+		t, "Columns helper 透传列序列",
 		Expect(len(slices.Collect(Columns(model.UserT.Name, model.UserT.Age))), Equal(2)),
 	)
 
@@ -40,7 +41,8 @@ func TestProjectSortAndHelpers(t *testing.T) {
 		CastDescSort[model.User](model.OrgT.ID),
 	))
 
-	Then(t, "Project、DefaultProject、CastSelect 和 Sort 会生成预期片段",
+	Then(
+		t, "Project、DefaultProject、CastSelect 和 Sort 会生成预期片段",
 		Expect(strings.Contains(selected, "SELECT 1"), Equal(true)),
 		Expect(strings.Contains(defaultSelected, "SELECT f_name"), Equal(true)),
 		Expect(strings.Contains(castSelected, "SELECT f_name"), Equal(true)),
@@ -49,7 +51,8 @@ func TestProjectSortAndHelpers(t *testing.T) {
 
 	ascQ, _ := sqlfrag.Collect(context.Background(), modelscoped.AscOrder(model.UserT.Name))
 	descQ, _ := sqlfrag.Collect(context.Background(), modelscoped.DescOrder(model.UserT.ID))
-	Then(t, "modelscoped 排序 helper 透传到底层 sqlbuilder.Order",
+	Then(
+		t, "modelscoped 排序 helper 透传到底层 sqlbuilder.Order",
 		Expect(ascQ, Equal("(f_name) ASC")),
 		Expect(descQ, Equal("(f_id) DESC")),
 	)

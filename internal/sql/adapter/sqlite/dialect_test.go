@@ -14,7 +14,8 @@ import (
 func TestSqliteDialect(t *testing.T) {
 	c := &dialect{}
 
-	table := sqlbuilder.T("t",
+	table := sqlbuilder.T(
+		"t",
 		sqlbuilder.Col("f_id", sqlbuilder.ColTypeOf(uint64(0), ",autoincrement")),
 		sqlbuilder.Col("f_old_name", sqlbuilder.ColTypeOf("", ",deprecated=f_name")),
 		sqlbuilder.Col("f_name", sqlbuilder.ColTypeOf("", ",size=128,default=''")),

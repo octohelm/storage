@@ -11,7 +11,8 @@ import (
 
 func TestValueConstructors(t *testing.T) {
 	empty := Values([]*model.User(nil))
-	Then(t, "空 Values 返回 noop source",
+	Then(
+		t, "空 Values 返回 noop source",
 		Expect((*noop[model.User])(nil) == nil, Equal(true)),
 		Expect(empty.IsNil(), Equal(true)),
 	)
@@ -26,7 +27,8 @@ func TestValueConstructors(t *testing.T) {
 		yield(&model.User{Name: "alice"})
 	}), model.UserT.Age)
 
-	Then(t, "单值和序列构造器都会生成可用 source",
+	Then(
+		t, "单值和序列构造器都会生成可用 source",
 		Expect(src.IsNil(), Equal(false)),
 		Expect(srcOmit.IsNil(), Equal(false)),
 		Expect(srcOmitZero.IsNil(), Equal(false)),

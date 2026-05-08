@@ -10,7 +10,7 @@ import (
 func BenchmarkCols(b *testing.B) {
 	cols := Cols()
 
-	(cols).(ColumnCollectionManger).AddCol(
+	cols.(ColumnCollectionManger).AddCol(
 		Col("f_id", ColField("ID"), ColTypeOf(1, `,autoincrement`)),
 		Col("f_name", ColField("Name"), ColTypeOf(1, ``)),
 		Col("f_f1", ColField("F1"), ColTypeOf(1, ``)),

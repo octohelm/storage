@@ -15,42 +15,48 @@ import (
 
 func TestFragment(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.Const(""),
 			testutil.BeFragment(""),
 		)
 	})
 
 	t.Run("const fragment", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.Const("SELECT 1"),
 			testutil.BeFragment("SELECT 1"),
 		)
 	})
 
 	t.Run("flatten seq", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.Pair(`#ID IN (?)`, slices.Values([]any{28, 29, 30})),
 			testutil.BeFragment("#ID IN (?,?,?)", 28, 29, 30),
 		)
 	})
 
 	t.Run("flatten typed seq", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.Pair(`#ID IN (?)`, slices.Values([]int{28, 29, 30})),
 			testutil.BeFragment("#ID IN (?,?,?)", 28, 29, 30),
 		)
 	})
 
 	t.Run("flatten slice", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.Pair(`#ID IN (?)`, []int{28, 29, 30}),
 			testutil.BeFragment("#ID IN (?,?,?)", 28, 29, 30),
 		)
 	})
 
 	t.Run("flatten slice composed", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.Pair(`DO UPDATE SET f_name = ?`, []any{
 				sqlfrag.Pair("EXCLUDED.?", sqlfrag.Const("f_name")),
 			}),
@@ -59,14 +65,16 @@ func TestFragment(t *testing.T) {
 	})
 
 	t.Run("flatten with sub frag ", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
 			sqlfrag.Pair(`#ID = ?`, sqlfrag.Pair("#ID + ?", 1)),
 			testutil.BeFragment("#ID = #ID + ?", 1),
 		)
 	})
 
 	t.Run("flatten with CustomValueArg", func(t *testing.T) {
-		testingx.Expect(t,
+		testingx.Expect(
+			t,
 			sqlfrag.Pair(`#Point = ?`, Point{1, 1}),
 			testutil.BeFragment("#Point = ST_GeomFromText(?)", Point{1, 1}),
 		)
@@ -74,14 +82,16 @@ func TestFragment(t *testing.T) {
 
 	t.Run("named arg", func(t *testing.T) {
 		t.Run("with named arg", func(t *testing.T) {
-			testingx.Expect(t,
+			testingx.Expect(
+				t,
 				sqlfrag.Pair(`time > @left AND time < @right`, sql.Named("left", 1), sql.Named("right", 10)),
 				testutil.BeFragment("time > ? AND time < ?", 1, 10),
 			)
 		})
 
 		t.Run("with named arg set", func(t *testing.T) {
-			testingx.Expect(t,
+			testingx.Expect(
+				t,
 				sqlfrag.Pair(`time > @left AND time < @right`, sqlfrag.NamedArgSet{
 					"left":  1,
 					"right": 10,
@@ -91,7 +101,8 @@ func TestFragment(t *testing.T) {
 		})
 
 		t.Run("deep nested", func(t *testing.T) {
-			testingx.Expect(t,
+			testingx.Expect(
+				t,
 				sqlfrag.Pair(`CREATE TABLE IF NOT EXISTS @table @col`, sqlfrag.NamedArgSet{
 					"table": sqlfrag.Pair("t"),
 					"col": sqlfrag.Block(

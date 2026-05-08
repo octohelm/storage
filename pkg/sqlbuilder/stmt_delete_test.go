@@ -14,8 +14,10 @@ func TestStmtDelete(t *testing.T) {
 	table := T("T")
 
 	t.Run("delete", func(t *testing.T) {
-		testingx.Expect[sqlfrag.Fragment](t,
-			Delete().From(table,
+		testingx.Expect[sqlfrag.Fragment](
+			t,
+			Delete().From(
+				table,
 				Where(TypedCol[int]("F_a").V(Eq(1))),
 				Comment("Comment"),
 			),
