@@ -13,6 +13,7 @@
 | `migrator` | 基于 catalog 的数据库结构迁移 |
 | `sqltype` | 时间、JSON、可空值、软删除等常见字段类型 |
 | `filter` | 可序列化过滤规则，配合 `sqlpipe/filter` 使用 |
+| `sort` | 基于枚举类型的排序选项，正序/逆序可枚举，适用于 API 参数绑定与排序 UI 生成 |
 
 每层入口通过 `go doc` 查阅：
 - `go doc github.com/octohelm/storage/pkg/sqlfrag`
@@ -22,6 +23,7 @@
 - `go doc github.com/octohelm/storage/pkg/migrator`
 - `go doc github.com/octohelm/storage/pkg/sqltype`
 - `go doc github.com/octohelm/storage/pkg/filter`
+- `go doc github.com/octohelm/storage/pkg/sort`
 
 ## 选型指南
 

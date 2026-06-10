@@ -1,4 +1,3 @@
-//go:generate go tool gen .
 package filter
 
 import (

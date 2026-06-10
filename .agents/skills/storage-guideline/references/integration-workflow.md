@@ -45,7 +45,7 @@
 ### Web API 查询
 
 1. 用 `sqlbuilder.TableFromModel(...)` 或现有模型表定义表达表结构。
-2. 用 `sqlpipe.FromAll[T]()` 加 `Where`、`Project`、`Limit`、`Sort` 组织查询。
+2. 用 `sqlpipe.FromAll[T]()` 加 `Where`、`Project`、`Limit`、`Sort` 组织查询。排序参数可通过 `sort.By[E]` 表达可枚举的排序选项（正序/逆序）。
 3. 若请求参数需要文本过滤规则，增加 `filter` 和 `sqlpipe/filter`。
 4. 最后才接 `session` 与 `pkg/sqlpipe/ex` 执行。
 

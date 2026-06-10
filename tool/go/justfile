@@ -1,42 +1,52 @@
-# 列出 Go 工具链入口
-[group('meta')]
-default:
-    @just --list --unsorted
+# 透传 go 命令
+[group("runtime")]
+[no-cd]
+go *args:
+    @go {{ args }}
 
 # 整理依赖
-[group('env')]
+[group("env")]
 [no-cd]
 dep:
     go mod tidy
 
-# 运行全部测试
-[group('test')]
+# 更新依赖
+[group("env")]
 [no-cd]
-test *args:
-    CGO_ENABLED=1 go test {{ args }} -count=1 -failfast ./...
+update:
+    go get -u ./...
+
+# 编译
+[group("build")]
+[no-cd]
+build path='./...' *args:
+    go build {{ args }} {{ path }}
+
+# 运行测试
+[group("test")]
+[no-cd]
+test path='./...' *args:
+    go test -count=1 -failfast {{ args }} {{ path }}
 
 # 格式化
-[group('fmt')]
+[group("fmt")]
 [no-cd]
-fmt path='./...':
-    go fix {{ path }}
-    go tool fmt {{ path }}
-
-# 更新依赖
-[group('env')]
-[no-cd]
-update path='./...':
-    go get -u {{ path }}
+fmt path='./...' *args:
+    go tool fmt {{ args }} {{ path }}
 
 # 代码生成
-[group('build')]
+[group("build")]
 [no-cd]
-gen:
-    go generate -v ./...
-    go generate -v ./testdata/model/...
+gen path='./...' *args:
+    go tool gen {{ path }} {{ args }}
 
 # 安装 agent skills
-[group('env')]
+[group("env")]
 [no-cd]
 skills-install:
     go tool skills-install
+
+# 列出所有可用命令
+[group("meta")]
+default:
+    @just --list

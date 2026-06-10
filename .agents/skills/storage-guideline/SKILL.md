@@ -22,13 +22,14 @@ src := sqlpipe.FromAll[Org]().
 - 只拼 SQL 片段 → `sqlfrag`
 - 需要表/列/条件表达 → `sqlbuilder`
 - 需要查询管道（Where/Join/Project/Limit）→ `sqlpipe`
+- 需要排序选项枚举（如 API 参数绑定、UI 排序下拉）→ `sort`
 - 需要执行 → `sqlpipe` + `session` + `pkg/sqlpipe/ex`
 - 需要迁移 → `sqlbuilder` + `migrator`
 - 需要过滤 API → `filter` + `sqlpipe/filter`
 
 **原则**：缺哪层接哪层。已有 repository 就只补缺失能力，不整套重建。
 
-API 细节以 `go doc` 为准：`go doc github.com/octohelm/storage/pkg/sqlfrag` / `sqlbuilder` / `sqlpipe` / `session`。
+API 细节以 `go doc` 为准：`go doc github.com/octohelm/storage/pkg/sqlfrag` / `sqlbuilder` / `sqlpipe` / `sort` / `session`。
 
 ## 更多
 

@@ -1,3 +1,4 @@
+// +gengo:runtimedoc
 package time
 
 import (

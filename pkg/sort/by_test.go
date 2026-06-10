@@ -28,11 +28,13 @@ type labeler interface {
 }
 
 func TestByIsZero(t *testing.T) {
-	Then(t, "零值 By 的 IsZero 返回 true",
+	Then(
+		t, "零值 By 的 IsZero 返回 true",
 		Expect(new(sort.By[UserSortBy]).IsZero(), Equal(true)),
 	)
 
-	Then(t, "UnmarshalText 非空文本后 IsZero 返回 false",
+	Then(
+		t, "UnmarshalText 非空文本后 IsZero 返回 false",
 		ExpectMustValue(func() (bool, error) {
 			var b sort.By[UserSortBy]
 			if err := b.UnmarshalText([]byte("user~id!asc")); err != nil {
@@ -44,7 +46,8 @@ func TestByIsZero(t *testing.T) {
 }
 
 func TestByMarshalTextRoundtrip(t *testing.T) {
-	Then(t, "文本序列化往返一致",
+	Then(
+		t, "文本序列化往返一致",
 		ExpectMustValue(func() (string, error) {
 			var b sort.By[UserSortBy]
 			if err := b.UnmarshalText([]byte("user~name!desc")); err != nil {
@@ -60,21 +63,25 @@ func TestByEnumValues(t *testing.T) {
 	var b sort.By[UserSortBy]
 	values := b.EnumValues()
 
-	Then(t, "EnumValues 返回 4 个排序选项（2 字段 × 2 方向）",
+	Then(
+		t, "EnumValues 返回 4 个排序选项（2 字段 × 2 方向）",
 		Expect(len(values), Equal(4)),
 	)
 
-	Then(t, "正序选项的 Label 正确",
+	Then(
+		t, "正序选项的 Label 正确",
 		Expect(values[0].(labeler).Label(), Equal("user~id正序")),
 		Expect(values[2].(labeler).Label(), Equal("user~name正序")),
 	)
 
-	Then(t, "逆序选项的 Label 正确",
+	Then(
+		t, "逆序选项的 Label 正确",
 		Expect(values[1].(labeler).Label(), Equal("user~id逆序")),
 		Expect(values[3].(labeler).Label(), Equal("user~name逆序")),
 	)
 
-	Then(t, "选项序列化为 field!order 格式",
+	Then(
+		t, "选项序列化为 field!order 格式",
 		ExpectMustValue(func() (string, error) {
 			raw, err := values[0].(encoding.TextMarshaler).MarshalText()
 			return string(raw), err

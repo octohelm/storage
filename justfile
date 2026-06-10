@@ -7,6 +7,4 @@ default:
 serve-dbs:
     cd hack && docker compose up -d
 
-# Go 工具链入口
-[group: 'toolchain']
 mod go 'tool/go'

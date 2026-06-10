@@ -1,3 +1,7 @@
+// Package sort 提供基于枚举类型的排序选项 [By]，可生成排序方向（正序/逆序）的可枚举列表，
+// 适用于 API 参数绑定、排序 UI 选项生成等场景。
+//
+// [By] 本身实现了 enumeration.CanEnumValues，配合 enumeration 生态可直接作为枚举值使用。
 package sort
 
 import (
