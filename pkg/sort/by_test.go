@@ -57,6 +57,28 @@ func TestByMarshalTextRoundtrip(t *testing.T) {
 			return string(raw), err
 		}, Equal("user~name!desc")),
 	)
+
+	Then(
+		t, "UnmarshalText 后 Field 被正确解析",
+		ExpectMustValue(func() (UserSortBy, error) {
+			var b sort.By[UserSortBy]
+			if err := b.UnmarshalText([]byte("user~name!desc")); err != nil {
+				return "", err
+			}
+			return b.Field, nil
+		}, Equal(UserSortByName)),
+	)
+
+	Then(
+		t, "UnmarshalText 后 Order 被正确解析",
+		ExpectMustValue(func() (sort.Order, error) {
+			var b sort.By[UserSortBy]
+			if err := b.UnmarshalText([]byte("user~name!desc")); err != nil {
+				return "", err
+			}
+			return b.Order, nil
+		}, Equal(sort.Desc)),
+	)
 }
 
 func TestByEnumValues(t *testing.T) {

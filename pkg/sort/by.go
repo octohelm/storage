@@ -5,9 +5,13 @@
 package sort
 
 import (
+	"bytes"
 	"cmp"
 	"fmt"
+	"strconv"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/octohelm/enumeration/pkg/enumeration"
 )
@@ -23,11 +27,11 @@ type By[E enumeration.CanEnumValues] struct {
 	Field E
 	Order Order
 
-	value string
+	raw []byte
 }
 
 func (a *By[E]) IsZero() bool {
-	return a.value == ""
+	return a == nil || len(a.raw) == 0
 }
 
 func (s By[E]) EnumValues() (values []any) {
@@ -54,15 +58,59 @@ func (s By[E]) EnumValues() (values []any) {
 }
 
 func (v By[E]) MarshalText() ([]byte, error) {
-	return []byte(v.value), nil
+	if len(v.raw) != 0 {
+		return []byte(v.raw[:]), nil
+	}
+
+	data, err := json.Marshal(v.Field)
+	if err != nil {
+		return nil, err
+	}
+
+	fieldStr := string(data)
+
+	if len(data) > 0 && data[0] == '"' {
+		fieldStr, err = strconv.Unquote(fieldStr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return fmt.Appendf(nil, "%s!%s", fieldStr, string(cmp.Or(v.Order, Asc))), nil
 }
 
 func (v *By[E]) UnmarshalText(data []byte) error {
-	by := By[E]{
-		value: string(data),
+	// 空字符串保持零值
+	if len(data) == 0 {
+		*v = By[E]{}
+		return nil
 	}
 
-	*v = by
+	parts := bytes.SplitN(data, []byte("!"), 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid sort format: %s", data)
+	}
+	field, order := parts[0], parts[1]
+
+	vv := &By[E]{}
+
+	if err := json.Unmarshal(strconv.AppendQuote(nil, string(field)), &vv.Field); err != nil {
+		return fmt.Errorf("unknown sort field: %s: %w", field, err)
+	}
+
+	switch strings.ToLower(string(order)) {
+	case "asc":
+		vv.Order = Asc
+	case "desc":
+		vv.Order = Desc
+	default:
+		return fmt.Errorf("unknown sort order: %s", order)
+	}
+
+	vv.raw = data[:]
+
+	*v = *vv
+
 	return nil
 }
 
