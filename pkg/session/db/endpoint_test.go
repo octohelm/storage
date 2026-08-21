@@ -147,7 +147,7 @@ func TestDatabaseLifecycle(t *testing.T) {
 		Expect(FromContextName(d.InjectContext(ctx), "unit"), Equal("unit")),
 	)
 
-	defaulted := &Database{EndpointOverrides: EndpointOverrides{NameOverwrite: "fallback"}}
+	defaulted := &Database{NameOverwrite: "fallback"}
 	defaulted.SetDefaults()
 	Then(
 		t, "SetDefaults 为缺省 endpoint 生成 sqlite 路径",

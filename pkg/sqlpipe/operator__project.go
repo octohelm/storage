@@ -16,9 +16,7 @@ func Returning[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorProject, func(src Source[M]) Source[M] {
 		if len(cols) == 0 {
 			return &projectedSource[M]{
-				Embed: Embed[M]{
-					Underlying: src,
-				},
+				Underlying: src,
 				projects: []sqlfrag.Fragment{
 					sqlfrag.Const("*"),
 				},
@@ -26,9 +24,7 @@ func Returning[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 		}
 
 		return &projectedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			projects: slicesx.Map(cols, func(col modelscoped.Column[M]) sqlfrag.Fragment {
 				return col
 			}),
@@ -43,9 +39,7 @@ func Select[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 			return src
 		}
 		return &projectedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			projects: slicesx.Map(cols, func(col modelscoped.Column[M]) sqlfrag.Fragment {
 				return col
 			}),
@@ -60,9 +54,7 @@ func CastSelect[M Model, U Model](cols ...modelscoped.Column[U]) SourceOperator[
 			return src
 		}
 		return &projectedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			projects: slicesx.Map(cols, func(col modelscoped.Column[U]) sqlfrag.Fragment {
 				return col
 			}),
@@ -74,10 +66,8 @@ func CastSelect[M Model, U Model](cols ...modelscoped.Column[U]) SourceOperator[
 func Project[M Model](projects ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorProject, func(src Source[M]) Source[M] {
 		return &projectedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			projects: projects,
+			Underlying: src,
+			projects:   projects,
 		}
 	})
 }
@@ -86,11 +76,9 @@ func Project[M Model](projects ...sqlfrag.Fragment) SourceOperator[M] {
 func DefaultProject[M Model](projects ...sqlfrag.Fragment) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorSetting, func(src Source[M]) Source[M] {
 		return &projectedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			projects:  projects,
-			asDefault: true,
+			Underlying: src,
+			projects:   projects,
+			asDefault:  true,
 		}
 	})
 }

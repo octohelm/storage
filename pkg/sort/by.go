@@ -7,11 +7,10 @@ package sort
 import (
 	"bytes"
 	"cmp"
+	"encoding/json/v2"
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/go-json-experiment/json"
 
 	"github.com/octohelm/enumeration/pkg/enumeration"
 )

@@ -2,11 +2,10 @@ package filter
 
 import (
 	"bytes"
+	"encoding/json/v2"
 	"go/ast"
 	"reflect"
 	"strings"
-
-	"github.com/go-json-experiment/json"
 
 	slicesx "github.com/octohelm/x/slices"
 
@@ -39,7 +38,7 @@ func Compose(filters ...any) *Composed {
 					name := f.Name
 
 					if tagName, ok := f.Tag.Lookup("name"); ok {
-						n := strings.SplitN(tagName, ",", 2)[0]
+						n, _, _ := strings.Cut(tagName, ",")
 						if n != "" {
 							name = n
 						}

@@ -16,10 +16,8 @@ import (
 // AggregateGroupBy 基于分组列和投影列构造聚合数据源。
 func AggregateGroupBy[S Model, O Model](src Source[S], by iter.Seq[modelscoped.Column[S]], cols ...modelscoped.Column[O]) Source[O] {
 	return &aggregatedSource[S, O]{
-		Embed: Embed[S]{
-			Underlying: src,
-		},
-		groupBy: sqlfrag.NonNil(by),
+		Underlying: src,
+		groupBy:    sqlfrag.NonNil(by),
 		projects: slicesx.Map(cols, func(col modelscoped.Column[O]) sqlfrag.Fragment {
 			return col
 		}),
@@ -32,9 +30,7 @@ func AggregateGroupBy[S Model, O Model](src Source[S], by iter.Seq[modelscoped.C
 // Aggregate 构造不带分组列的聚合数据源。
 func Aggregate[S Model, O Model](src Source[S], cols ...modelscoped.Column[O]) Source[O] {
 	return &aggregatedSource[S, O]{
-		Embed: Embed[S]{
-			Underlying: src,
-		},
+		Underlying: src,
 		projects: slicesx.Map(cols, func(col modelscoped.Column[O]) sqlfrag.Fragment {
 			return col
 		}),

@@ -85,9 +85,9 @@ func (e Endpoint) Host() string {
 
 // String 把端点格式化为连接串。
 func (e Endpoint) String() string {
-	u := url.URL{}
-	u.Scheme = e.Scheme
-	u.Host = e.Host()
+	u := url.URL{
+		Scheme: e.Scheme,
+		Host:   e.Host()}
 
 	if e.Extra != nil {
 		u.RawQuery = e.Extra.Encode()

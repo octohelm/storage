@@ -40,10 +40,8 @@ func DescSort[M Model](col modelscoped.Column[M], ex ...sqlfrag.Fragment) Source
 
 func newSortedSource[M Model](src Source[M], order sqlbuilder.Order) Source[M] {
 	return &sortedSource[M]{
-		Embed: Embed[M]{
-			Underlying: src,
-		},
-		order: order,
+		Underlying: src,
+		order:      order,
 	}
 }
 

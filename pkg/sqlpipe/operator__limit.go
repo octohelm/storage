@@ -37,10 +37,8 @@ func Limit[M Model](limit int64, optFns ...LimitOptionFunc) SourceOperator[M] {
 		}
 
 		s := &limitedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			limit: limit,
+			Underlying: src,
+			limit:      limit,
 		}
 		s.build(optFns...)
 		return s

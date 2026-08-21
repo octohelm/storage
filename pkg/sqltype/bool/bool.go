@@ -1,9 +1,8 @@
 package bool
 
 import (
+	"encoding/json/v2"
 	"strconv"
-
-	"github.com/go-json-experiment/json"
 )
 
 // Bool 表示带 unknown 状态的三值布尔类型。

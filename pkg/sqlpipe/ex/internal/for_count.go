@@ -13,9 +13,7 @@ import (
 func ForCount[M sqlpipe.Model]() sqlpipe.SourceOperator[M] {
 	return sqlpipe.SourceOperatorFunc[M](sqlpipe.OperatorSetting, func(src sqlpipe.Source[M]) sqlpipe.Source[M] {
 		return &forCount[M]{
-			Embed: sqlpipe.Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 		}
 	})
 }

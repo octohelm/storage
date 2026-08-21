@@ -218,9 +218,7 @@ func (j *joinSourcerOperator[M, B, S, T]) OperatorType() OperatorType {
 
 func (j *joinSourcerOperator[M, B, S, T]) Next(from Source[M]) Source[M] {
 	return &joinedSource[M]{
-		Embed: Embed[M]{
-			Underlying: from,
-		},
+		Underlying: from,
 		applyAsAddition: func(ctx context.Context, b *internal.Builder[M]) sqlbuilder.JoinAddition {
 			where := j.on.V(sqlbuilder.EqCol(j.from))
 			return j.create(ctx, b).On(j.mayPatchWhere(where))

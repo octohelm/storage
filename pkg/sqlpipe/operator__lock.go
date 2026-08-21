@@ -42,10 +42,8 @@ func NoWait() func(LockOption) {
 func ForUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			lockFor: lockForUpdate,
+			Underlying: src,
+			lockFor:    lockForUpdate,
 		}
 		op.build(optionFns...)
 		return op
@@ -56,10 +54,8 @@ func ForUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 func ForNoKeyUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			lockFor: lockForNoKeyUpdate,
+			Underlying: src,
+			lockFor:    lockForNoKeyUpdate,
 		}
 		op.build(optionFns...)
 		return op
@@ -70,10 +66,8 @@ func ForNoKeyUpdate[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 func ForShare[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			lockFor: lockForShare,
+			Underlying: src,
+			lockFor:    lockForShare,
 		}
 		op.build(optionFns...)
 		return op
@@ -84,10 +78,8 @@ func ForShare[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 func ForKeyShare[M Model](optionFns ...func(LockOption)) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorLock, func(src Source[M]) Source[M] {
 		op := &lockedSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			lockFor: lockForKeyShare,
+			Underlying: src,
+			lockFor:    lockForKeyShare,
 		}
 		op.build(optionFns...)
 		return op

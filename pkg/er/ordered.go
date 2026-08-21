@@ -1,14 +1,13 @@
 package er
 
 import (
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
 	"iter"
 	"strconv"
-
-	"github.com/go-json-experiment/json"
-	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/octohelm/x/container/list"
 )

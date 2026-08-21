@@ -12,10 +12,8 @@ import (
 // Wrap 把 *sql.DB 包装为仓库内部统一使用的 DB 接口。
 func Wrap(d *sql.DB, convertErr func(err error) error) DB {
 	return &db{
-		DB: d,
-		option: option{
-			convertErr: convertErr,
-		},
+		DB:         d,
+		convertErr: convertErr,
 	}
 }
 

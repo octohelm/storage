@@ -1,9 +1,8 @@
 package filter
 
 import (
+	"encoding/json/v2"
 	"strconv"
-
-	"github.com/go-json-experiment/json"
 
 	encodingx "github.com/octohelm/x/encoding"
 )

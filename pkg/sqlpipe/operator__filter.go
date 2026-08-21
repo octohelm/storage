@@ -126,9 +126,7 @@ func newFilteredSource[M Model](src Source[M], op FilterOp, builder func(ctx con
 		return x.with(op, builder)
 	default:
 		return &filteredSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			whereBuilders: []*whereBuilder{
 				{
 					op: op,

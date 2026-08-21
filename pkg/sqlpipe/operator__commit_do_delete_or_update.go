@@ -13,9 +13,7 @@ import (
 func DoDelete[M Model]() SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		return &updateOrDeleteSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			mutation: &internal.Mutation[M]{
 				ForDelete: internal.DeleteTypeSoft,
 			},
@@ -27,9 +25,7 @@ func DoDelete[M Model]() SourceOperator[M] {
 func DoDeleteHard[M Model]() SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		return &updateOrDeleteSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			mutation: &internal.Mutation[M]{
 				ForDelete: internal.DeleteTypeHard,
 			},
@@ -47,9 +43,7 @@ func DoUpdate[M Model, T any](col modelscoped.TypedColumn[M, T], valuer sqlbuild
 		}
 
 		s := &updateOrDeleteSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			mutation: &internal.Mutation[M]{
 				ForUpdate: true,
 				Assignments: []sqlbuilder.Assignment{
@@ -65,9 +59,7 @@ func DoUpdate[M Model, T any](col modelscoped.TypedColumn[M, T], valuer sqlbuild
 func DoUpdateSet[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		s := &updateOrDeleteSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			mutation: &internal.Mutation[M]{
 				ForUpdate: true,
 				Strict: internal.Strict[M]{
@@ -88,9 +80,7 @@ func DoUpdateSet[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator
 func DoUpdateSetOmit[M Model](m *M, columns ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		s := &updateOrDeleteSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			mutation: &internal.Mutation[M]{
 				ForUpdate: true,
 				Strict: internal.Strict[M]{
@@ -112,9 +102,7 @@ func DoUpdateSetOmit[M Model](m *M, columns ...modelscoped.Column[M]) SourceOper
 func DoUpdateSetOmitZero[M Model](m *M, exclude ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorCommit, func(src Source[M]) Source[M] {
 		s := &updateOrDeleteSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			mutation: &internal.Mutation[M]{
 				ForUpdate: true,
 				OmitZero: internal.OmitZero[M]{

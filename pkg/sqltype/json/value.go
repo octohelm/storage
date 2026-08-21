@@ -2,9 +2,8 @@ package json
 
 import (
 	"database/sql/driver"
-
-	"github.com/go-json-experiment/json"
-	jsonv1 "github.com/go-json-experiment/json/v1"
+	jsonv1 "encoding/json"
+	"encoding/json/v2"
 )
 
 // ValueOf 用指针值创建 Value 包装。

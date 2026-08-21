@@ -2,9 +2,8 @@ package directive
 
 import (
 	"bytes"
+	"encoding/json/v2"
 	"strings"
-
-	"github.com/go-json-experiment/json"
 )
 
 // MarshalDirective 把函数名和参数编码为 directive 文本。

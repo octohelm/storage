@@ -15,10 +15,8 @@ import (
 func OnConflictDoNothing[M sqlbuilder.Model](cols modelscoped.ColumnSeq[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorOnConflict, func(src Source[M]) Source[M] {
 		return &onConflictSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			cols: cols,
+			Underlying: src,
+			cols:       cols,
 		}
 	})
 }
@@ -27,11 +25,9 @@ func OnConflictDoNothing[M sqlbuilder.Model](cols modelscoped.ColumnSeq[M]) Sour
 func OnConflictDoUpdateSet[M sqlbuilder.Model](cols modelscoped.ColumnSeq[M], toUpdates ...modelscoped.Column[M]) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorOnConflict, func(src Source[M]) Source[M] {
 		return &onConflictSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			cols:    cols,
-			updates: toUpdates,
+			Underlying: src,
+			cols:       cols,
+			updates:    toUpdates,
 		}
 	})
 }
@@ -43,11 +39,9 @@ func OnConflictDoWith[M sqlbuilder.Model](
 ) SourceOperator[M] {
 	return SourceOperatorFunc[M](OperatorOnConflict, func(src Source[M]) Source[M] {
 		return &onConflictSource[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
-			cols: cols,
-			with: with,
+			Underlying: src,
+			cols:       cols,
+			with:       with,
 		}
 	})
 }

@@ -17,9 +17,7 @@ import (
 // FromCatalog 根据 catalog 和 session 提取 ER 数据库结构。
 func FromCatalog(ctx context.Context, s session.Session, catalog sqlbuilder.Catalog) *er.OrderedDatabase {
 	erd := &er.OrderedDatabase{
-		Head: er.Head{
-			Name: s.Name(),
-		},
+		Name: s.Name(),
 	}
 
 	c := &collector{
@@ -54,9 +52,7 @@ func (c *collector) tables(ctx context.Context, catalog sqlbuilder.Catalog) iter
 	return func(yield func(*er.OrderedTable) bool) {
 		for table := range catalog.Tables() {
 			t := &er.OrderedTable{
-				Head: er.Head{
-					Name: table.TableName(),
-				},
+				Name: table.TableName(),
 			}
 
 			v, ok := table.(interface{ New() sqlbuilder.Model })
@@ -91,9 +87,7 @@ func (c *collector) columns(ctx context.Context, table sqlbuilder.Table, m sqlbu
 			}
 
 			c2 := &er.OrderedColumn{
-				Head: er.Head{
-					Name: col.Name(),
-				},
+				Name: col.Name(),
 				Type: def.DataType,
 			}
 
@@ -125,9 +119,7 @@ func (c *collector) constraints(ctx context.Context, table sqlbuilder.Table, m s
 			}
 
 			c2 := &er.OrderedConstraint{
-				Head: er.Head{
-					Name: key.Name(),
-				},
+				Name:    key.Name(),
 				Unique:  key.IsUnique(),
 				Primary: key.IsPrimary(),
 			}

@@ -18,9 +18,7 @@ func DistinctOn[M Model](cols ...modelscoped.Column[M]) SourceOperator[M] {
 			return src
 		}
 		return &distinctOn[M]{
-			Embed: Embed[M]{
-				Underlying: src,
-			},
+			Underlying: src,
 			on: slicesx.Map(cols, func(col modelscoped.Column[M]) sqlfrag.Fragment {
 				return col
 			}),

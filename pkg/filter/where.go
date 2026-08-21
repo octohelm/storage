@@ -2,10 +2,9 @@ package filter
 
 import (
 	"bytes"
+	"encoding/json/v2"
 	"iter"
 	"slices"
-
-	"github.com/go-json-experiment/json"
 
 	slicesx "github.com/octohelm/x/slices"
 
