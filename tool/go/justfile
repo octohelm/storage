@@ -34,6 +34,12 @@ test path='./...' *args:
 fmt path='./...' *args:
     go tool fmt {{ args }} {{ path }}
 
+# 格式化
+[group("lint")]
+[no-cd]
+lint path='./...' *args:
+    go vet {{ args }} {{ path }}
+
 # 代码生成
 [group("build")]
 [no-cd]

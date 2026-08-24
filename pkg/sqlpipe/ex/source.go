@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"iter"
 	"slices"
-	"sync"
 
 	"github.com/octohelm/storage/internal/sql/adapter"
 	"github.com/octohelm/storage/internal/sql/scanner"
@@ -58,7 +57,6 @@ type Executor[M sqlpipe.Model] struct {
 	src       sqlpipe.Source[M]
 	operators []sqlpipe.SourceOperator[M]
 
-	once      sync.Once
 	prepared  sqlpipe.Source[M]
 	forCommit bool
 }
@@ -125,7 +123,7 @@ func (e *Executor[M]) session(ctx context.Context) session.Session {
 }
 
 func (e *Executor[M]) source() sqlpipe.Source[M] {
-	e.once.Do(func() {
+	if e.prepared == nil {
 		s := e.src
 		if s == nil {
 			s = sqlpipe.From[M]()
@@ -147,7 +145,7 @@ func (e *Executor[M]) source() sqlpipe.Source[M] {
 		}
 
 		e.prepared = s
-	})
+	}
 
 	return e.prepared
 }
