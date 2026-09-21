@@ -212,9 +212,15 @@ func (idxSchema *indexSchema) ToKey(table sqlbuilder.Table) sqlbuilder.Key {
 		name = "PRIMARY"
 		colParts = idxSchema.INDEX_DEF[len("PRIMARY KEY"):]
 	} else {
-		// USING <method> (f_col_1,f_col_2)
+		// USING <method> (f_col_1,f_col_2) 为 pg_indexes 中的索引定义；
+		// 无 USING 的定义来自 pg_constraint（如 UNIQUE / FOREIGN KEY / CHECK 约束），
+		// 对应索引信息在 pg_indexes 中已存在，跳过以免重复添加或解析越界
+		using := reUsing.FindStringSubmatch(idxSchema.INDEX_DEF)
+		if using == nil {
+			return nil
+		}
 		name = strings.ToLower(idxSchema.INDEX_NAME[len(table.TableName())+1:])
-		method = strings.ToUpper(reUsing.FindString(idxSchema.INDEX_DEF)[6:])
+		method = strings.ToUpper(using[1])
 		colParts = strings.TrimSpace(reUsing.Split(idxSchema.INDEX_DEF, 2)[1])
 	}
 
